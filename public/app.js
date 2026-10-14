@@ -5,8 +5,10 @@
   const alertBox = document.getElementById('alert');
   const connection = document.getElementById('connection');
   const soundBtn = document.getElementById('sound-btn');
+  const musicBtn = document.getElementById('music-btn');
   const ENTRY_KEY = 'spotsprint:session';
   const SOUND_KEY = 'spotsprint:muted';
+  const MUSIC_KEY = 'spotsprint:musicEnabled';
   const query = new URLSearchParams(location.search);
   const suggestedCode = (query.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
   const format = n => String(n).padStart(2, '0');
@@ -24,6 +26,12 @@
   let view = null;
   let session = readSession();
   let localMuted = localStorage.getItem(SOUND_KEY) === 'true';
+  let musicEnabled = localStorage.getItem(MUSIC_KEY) !== 'false';
+  let musicTimer = null;
+  let musicBus = null;
+  let musicStep = 0;
+  let nextMusicTime = 0;
+  let musicDucked = false;
   let audio = null;
   let lastEventId = null;
   let winningEventShown = null;
@@ -46,6 +54,7 @@
     sessionStorage.removeItem(ENTRY_KEY);
     socket.clearRoom();
     view = null;
+    stopMusic();
   }
   function escape(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
@@ -59,7 +68,7 @@
       if (audio.state === 'suspended') audio.resume().catch(() => {});
     } catch { /* Browser has no Web Audio support. The game still works. */ }
   }
-  function tone(frequency, delay, duration, volume = .07, type = 'sine') {
+  function tone(frequency, delay, duration, volume = .07, type = 'sine', destination = null) {
     if (!audio || localMuted) return;
     const at = audio.currentTime + delay;
     const oscillator = audio.createOscillator();
@@ -70,7 +79,7 @@
     gain.gain.exponentialRampToValueAtTime(volume, at + .015);
     gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
     oscillator.connect(gain);
-    gain.connect(audio.destination);
+    gain.connect(destination || audio.destination);
     oscillator.start(at);
     oscillator.stop(at + duration + .02);
   }
@@ -78,6 +87,7 @@
     if (localMuted || !audio) return;
     try {
       if (which === 'correct') { tone(660, 0, .12); tone(990, .11, .22); }
+      if (which === 'celebrate') { [740, 988, 1175, 1480].forEach((f,i)=>tone(f, i*.13, .22, .105, 'triangle')); tone(1960, .58, .27, .075); }
       if (which === 'wrong') { tone(230, 0, .18, .045, 'triangle'); tone(180, .12, .16, .035, 'triangle'); }
       if (which === 'flip') tone(480, 0, .09, .025, 'sine');
       if (which === 'start') { tone(450, 0, .1); tone(640, .13, .1); tone(880, .27, .25); }
@@ -86,9 +96,63 @@
       }
     } catch { /* Never block game play for unavailable audio. */ }
   }
+  // Original, copyright-free 120 BPM synth loop, generated in the browser.
+  // It plays on the teacher's projector only and stops outside active gameplay.
+  const MELODY = [
+    659, 784, 988, null, 784, 659, 587, 659,
+    523, 659, 784, 880, 988, null, 784, 659,
+    698, 880, 1047, null, 880, 698, 659, 587,
+    659, 784, 988, 1175, 1047, 988, 784, null
+  ];
+  const BASS = [131, 131, 175, 175, 110, 110, 196, 196];
+  const BEAT_SECONDS = .25; // Eighth-note steps at 120 BPM.
+  function scheduleMusic() {
+    if (!audio || !musicBus) return;
+    while (nextMusicTime < audio.currentTime + .24) {
+      const n = musicStep % MELODY.length;
+      const delay = Math.max(0, nextMusicTime - audio.currentTime);
+      if (MELODY[n]) tone(MELODY[n], delay, .19, .026, 'triangle', musicBus);
+      if (n % 4 === 0) tone(BASS[Math.floor(n / 4) % BASS.length], delay, .34, .035, 'sine', musicBus);
+      if (n % 2 === 0) tone(880, delay + .008, .035, .006, 'square', musicBus);
+      if (n % 4 === 2) tone(250, delay, .09, .009, 'triangle', musicBus);
+      musicStep++;
+      nextMusicTime += BEAT_SECONDS;
+    }
+  }
+  function stopMusic() {
+    if (musicTimer) clearInterval(musicTimer);
+    musicTimer = null;
+    if (musicBus && audio) {
+      musicBus.gain.setTargetAtTime(.0001, audio.currentTime, .035);
+      // Old scheduled oscillators fade through their own bus when stopped.
+    }
+    musicBus = null;
+    musicDucked = false;
+  }
+  function syncMusic() {
+    const shouldPlay = view?.role === 'teacher' && view.status === 'playing' && musicEnabled && !localMuted && Boolean(audio);
+    if (!shouldPlay) { stopMusic(); return; }
+    if (!musicTimer) {
+      musicBus = audio.createGain();
+      musicBus.gain.value = .0001;
+      musicBus.connect(audio.destination);
+      musicStep = 0;
+      nextMusicTime = audio.currentTime + .08;
+      musicTimer = setInterval(scheduleMusic, 95);
+      scheduleMusic();
+    }
+    const duck = Boolean(view.pendingMatch);
+    if (musicDucked !== duck || musicBus.gain.value < .05) {
+      musicBus.gain.setTargetAtTime(duck ? .22 : .85, audio.currentTime, .12);
+      musicDucked = duck;
+    }
+  }
   function setSoundUI() {
     soundBtn.innerHTML = localMuted ? '🔇 <span>Sound off</span>' : '🔊 <span>Sound on</span>';
     soundBtn.setAttribute('aria-pressed', String(!localMuted));
+    musicBtn.hidden = view?.role !== 'teacher';
+    musicBtn.innerHTML = musicEnabled ? '🎵 <span>Music on</span>' : '🎶 <span>Music off</span>';
+    musicBtn.setAttribute('aria-pressed', String(musicEnabled));
   }
   function toast(message, error = false) {
     clearTimeout(toastTimeout);
@@ -131,7 +195,7 @@
   function teacherControls() {
     const buttons = [];
     if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-accent full" data-action="start">▶ Start the race <span>→</span></button>');
-    if (view.status === 'playing') buttons.push('<button type="button" class="btn btn-outline full" data-action="pause">⏸ Pause game</button>');
+    if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
     if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-accent full" data-action="start">↻ Race again (same settings)</button>');
     if (view.status !== 'lobby') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby / change cards</button>');
@@ -174,6 +238,7 @@
     const playing = ['playing','paused'].includes(view.status);
     const done = view.status === 'finished';
     const winner = view.players.find(p => p.id === view.winnerId);
+    const celebrating = Boolean(view.pendingMatch);
     screen.innerHTML = `<div class="room-header">
       <div><div class="eyebrow">TEACHER DASHBOARD <span class="eyebrow-dot">●</span> ${view.status.toUpperCase()}</div>
       <h1>${done ? 'We have a winner!' : playing ? 'Find the matching picture!' : 'Your classroom is ready.'}</h1>
@@ -183,8 +248,8 @@
     ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
     <div class="game-grid teacher-grid">
       <section class="board-panel ${playing ? 'active-board' : ''}">
-        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'The shared card goes here'}</h2></div><span class="board-badge">${playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
-        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'The shared card goes here'}</h2></div><span class="board-badge">${celebrating ? '✨ NEXT CARD IN 3…' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
+        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-count"><b>3</b><b>2</b><b>1</b></span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
         <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
       </section>
       <aside class="sidebar">
@@ -217,11 +282,12 @@
       return;
     }
     const myPoints = view.me?.points || 0;
+    const celebrating = Boolean(view.pendingMatch);
     screen.innerHTML = `<div class="student-header"><div><div class="eyebrow">ROOM ${escape(view.code)} <span class="eyebrow-dot">●</span> ${done ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><h1>${done ? (view.winnerId === view.me.id ? 'You won the race! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me.name)}!`}</h1><p>${done ? (view.winnerId === view.me.id ? 'Incredible spotting! You cleared every card first.' : `${escape(winner?.name || 'A classmate')} cleared their cards first. Great effort!`) : 'Tap the picture on YOUR card that also appears on the shared card.'}</p></div>
       <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
       ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge">⚡ ${view.cardsToWin - myPoints} LEFT</span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' })}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span id="guess-feedback">${view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">👆 Tap the picture!</span></div>
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating })}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+       <div class="board-bottom"><span id="guess-feedback">${celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 3 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 3 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">👆 Tap the picture!</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -240,15 +306,16 @@
     const old = view;
     view = next;
     if (!initial && next.lastEvent?.id && next.lastEvent.id !== lastEventId) {
-      if (next.lastEvent.won) playSound('win');
-      else if (next.lastEvent.playerId === next.me?.id || next.role === 'teacher') playSound('correct');
-      else playSound('flip');
+      if (next.role === 'teacher') playSound('celebrate');
+      else if (next.lastEvent.playerId === next.me?.id) playSound('correct');
     } else if (!initial && old?.status === 'lobby' && next.status === 'playing') {
       playSound('start');
     }
+    if (!initial && old?.status !== 'finished' && next.status === 'finished') playSound('win');
     lastEventId = next.lastEvent?.id || null;
     if (next.status !== 'finished') winningEventShown = null;
     render();
+    syncMusic();
   }
   function launchConfetti() {
     const container = document.createElement('div');
@@ -304,6 +371,15 @@
       localStorage.setItem(SOUND_KEY, String(localMuted));
       unlockAudio();
       setSoundUI();
+      syncMusic();
+      return;
+    }
+    if (action === 'music') {
+      musicEnabled = !musicEnabled;
+      localStorage.setItem(MUSIC_KEY, String(musicEnabled));
+      unlockAudio();
+      setSoundUI();
+      syncMusic();
       return;
     }
     if (action === 'create') {
@@ -355,7 +431,7 @@
       return;
     }
     if (action === 'guess') {
-      if (choiceLocked || view.status !== 'playing' || !view.myCard) return;
+      if (choiceLocked || view.status !== 'playing' || !view.myCard || view.pendingMatch) return;
       choiceLocked = true;
       button.classList.add('guess-pending');
       const symbol = Number(button.dataset.symbol);

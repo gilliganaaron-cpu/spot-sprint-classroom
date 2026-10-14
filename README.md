@@ -72,3 +72,9 @@ To make it accessible through a normal HTTPS website from every student device, 
 - Environment variable: `PORT` (defaults to `3000`)
 
 **Game mechanics note:** There are 57 cards (8 pictures each). The server ensures the central card is *different* from every student's current card, so the exactly-one-match rule is always valid. A successful student's own card and the shared class card advance in one atomic server-side turn. Other students must then spot the new match. Disconnected players can return to the same game from their browser tab.
+
+## Big-screen celebrations and music (2026 update)
+
+When any student selects the correct match, the server immediately awards their point and broadcasts their name to all screens. The shared teacher card **does not flip for three seconds**. During the wait the teacher screen shows a colourful, flashing name announcement, a 3–2–1 countdown, and a short arcade-style success jingle. All further guesses are locked until the next card is dealt; the last winning card also gets a full three-second celebration before the winner is announced.
+
+An original synthesised 120-BPM looping background tune plays on the **teacher screen only** while a race is running. It becomes quieter for each celebration. The top-right **Music on/off** control is independent of the overall **Sound on/off** control. The tune and sound effects use browser Web Audio, require no sound assets or external services, and are subject to the browser's user-interaction policy: click Create Game or Start to unlock audio. Music is stopped during pauses, in the lobby and after the race.

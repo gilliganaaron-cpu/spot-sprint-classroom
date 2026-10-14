@@ -9,6 +9,7 @@ const { SYMBOLS, DECK, getSharedSymbol } = require('./deck');
 
 const rooms = new Map();
 const MAX_PLAYERS = 40;
+const CELEBRATION_MS = 3000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
@@ -53,6 +54,7 @@ function view(room, role, playerId) {
     myCard:p?.inRound ? topCard(p) : null,
     me:p ? { id:p.id, name:p.name, points:p.points, inRound:p.inRound } : null,
     winnerId:room.winnerId, lastEvent:room.lastEvent,
+    pendingMatch:room.pendingMatch ? { eventId:room.pendingMatch.eventId, playerName:room.pendingMatch.playerName, symbol:room.pendingMatch.symbol, endsAt:room.pendingMatch.endsAt } : null,
     startedAt:room.startedAt, endedAt:room.endedAt
   };
 }
@@ -66,6 +68,28 @@ function broadcast(room) {
   for (const p of room.players.values()) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
+}
+// Only the server can advance the shared card, three seconds after a correct match.
+// A single pending match per room prevents overlapping celebrations or stale guesses.
+function finalizeMatch(room, eventId) {
+  if (!room.pendingMatch || room.pendingMatch.eventId !== eventId || rooms.get(room.code) !== room) return false;
+  const pending = room.pendingMatch;
+  clearTimeout(room.pendingTimer);
+  room.pendingTimer = null;
+  room.pendingMatch = null;
+  const player = room.players.get(pending.playerId);
+  if (!player) return false;
+  player.hand.shift();
+  if (pending.won) {
+    room.status = 'finished';
+    room.winnerId = player.id;
+    room.endedAt = Date.now();
+  } else {
+    room.teacherCard = chooseCenter(room, pending.oldCenter);
+    room.cardTurn++;
+  }
+  broadcast(room);
+  return true;
 }
 function resolveAuth(body, role) {
   const room = rooms.get(String(body?.session?.code || '').toUpperCase());
@@ -95,7 +119,7 @@ function action(body) {
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
       status:'lobby', cardsToWin:7, teacherCard:null, cardTurn:0,
-      winnerId:null, lastEvent:null, eventNumber:0,
+      winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null,
       startedAt:null, endedAt:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
@@ -141,6 +165,9 @@ function action(body) {
     if (!['lobby','finished'].includes(room.status)) return failure('A race is already running.');
     const connected = [...room.players.values()].filter(x => x.stream);
     if (!connected.length) return failure('Wait for at least one student to join.');
+    clearTimeout(room.pendingTimer);
+    room.pendingTimer = null;
+    room.pendingMatch = null;
     room.status = 'playing';
     room.winnerId = null;
     room.startedAt = Date.now();
@@ -162,11 +189,15 @@ function action(body) {
   }
   if (command === 'room:pause') {
     if (!['playing','paused'].includes(room.status)) return failure('The race is not running.');
+    if (room.pendingMatch) return failure('Wait for the new card before pausing.');
     room.status = room.status === 'playing' ? 'paused' : 'playing';
     broadcast(room);
     return success();
   }
   if (command === 'room:reset') {
+    clearTimeout(room.pendingTimer);
+    room.pendingTimer = null;
+    room.pendingMatch = null;
     room.status = 'lobby';
     room.teacherCard = null;
     room.winnerId = null;
@@ -182,6 +213,7 @@ function action(body) {
   }
   if (command === 'game:match') {
     if (room.status !== 'playing' || !p.inRound || !p.hand.length) return failure('The race is not active.');
+    if (room.pendingMatch) return failure('Get ready for the next picture!', { cooldown:true });
     if (Date.now() < p.lockUntil) return failure('Try again in a moment.',{ cooldown:true });
     const own = topCard(p);
     if (data.cardTurn !== room.cardTurn || data.cardId !== own.id) return failure('The card has changed.',{ stale:true });
@@ -190,20 +222,18 @@ function action(body) {
       p.lockUntil = Date.now() + 500;
       return { ok:true, correct:false };
     }
-    const oldCenter = room.teacherCard.id;
-    p.hand.shift();
+    // Award the point immediately, but HOLD the shared card for the full celebration.
+    // Leave all player cards in place until the flip so everybody stays in sync.
     p.points++;
     const won = p.points >= room.cardsToWin;
-    if (won) {
-      room.status = 'finished'; room.winnerId = p.id; room.endedAt = Date.now();
-    } else {
-      room.teacherCard = chooseCenter(room, oldCenter);
-      room.cardTurn++;
-    }
     room.eventNumber++;
-    room.lastEvent = { id:room.eventNumber, playerId:p.id, playerName:p.name, symbol:SYMBOLS[correct][0], points:p.points, won };
+    const eventId = room.eventNumber;
+    const endsAt = Date.now() + CELEBRATION_MS;
+    room.lastEvent = { id:eventId, playerId:p.id, playerName:p.name, symbol:SYMBOLS[correct][0], points:p.points, won };
+    room.pendingMatch = { eventId, playerId:p.id, playerName:p.name, symbol:SYMBOLS[correct][0], oldCenter:room.teacherCard.id, won, endsAt };
     broadcast(room);
-    return { ok:true, correct:true, won };
+    room.pendingTimer = setTimeout(() => finalizeMatch(room, eventId), CELEBRATION_MS);
+    return { ok:true, correct:true, won, celebrationMs:CELEBRATION_MS };
   }
   return failure('Unknown game action.');
 }
@@ -296,4 +326,4 @@ setInterval(() => {
 },15000).unref();
 
 if (require.main===module) server.listen(PORT,'0.0.0.0',()=>console.log(`Spot Sprint ready at http://localhost:${PORT}`));
-module.exports = { server, action, rooms, view };
+module.exports = { server, action, rooms, view, finalizeMatch, CELEBRATION_MS };
