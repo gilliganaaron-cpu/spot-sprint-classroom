@@ -2672,3 +2672,115 @@ html.teacher-active .teacher-header-actions .header-start-compact {
 @media(max-width:540px) {
  html.teacher-active .teacher-header-actions .header-start-compact {width:65px !important;min-width:65px !important;max-width:65px !important;flex-basis:65px !important;}
 }
+
+/* v32 — Student readability, fullscreen beside the in-game counter, and clearer lobby join text. */
+/* Keep the network state for assistive technology without using top-bar width. */
+.header-right #connection {
+  position:absolute !important;width:1px !important;height:1px !important;
+  margin:-1px !important;padding:0 !important;border:0 !important;
+  overflow:hidden !important;clip-path:inset(50%) !important;white-space:nowrap !important;
+}
+
+/* Use nearly all the website panel for a large two-line projector-readable address. */
+html.teacher-active .header-join-site {
+  padding:4px 3px !important;gap:0 !important;
+  flex:1 1 clamp(220px,23vw,355px) !important;min-width:165px !important;
+}
+html.teacher-active .header-join-site .join-globe {display:none;}
+html.teacher-active .header-join-site > div {width:100%;min-width:0;text-align:center;}
+html.teacher-active .header-join-site small {font-size:clamp(10px,.82vw,12px);margin-bottom:2px;}
+html.teacher-active .header-join-site strong {
+  display:block;max-width:100%;
+  font-size:clamp(22px,2.16vw,30px) !important;
+  line-height:.99 !important;letter-spacing:-.9px !important;
+  white-space:normal !important;overflow-wrap:anywhere;word-break:normal;
+  text-wrap:balance;
+}
+/* Preserve the existing top strip at tighter projector widths. */
+@media (min-width:1021px) and (max-width:1250px) {
+  html.teacher-active .header-join-site {min-width:158px !important;}
+  html.teacher-active .header-join-site strong {font-size:clamp(21px,2.05vw,26px) !important;}
+}
+@media (max-width:1020px) {
+  html.teacher-active .header-join-site {min-width:150px !important;flex:1 1 210px !important;}
+  html.teacher-active .header-join-site strong {font-size:clamp(20px,2.7vw,27px) !important;}
+}
+@media (max-width:540px) {
+  html.teacher-active .header-join-site strong {font-size:clamp(16px,4.6vw,22px) !important;}
+}
+
+/* The lobby's note is deliberately a text glyph, so its red can be controlled. */
+html.teacher-lobby .header-right .music-btn {
+  color:#ff596f !important;
+  border-color:rgba(255,100,126,.78) !important;
+  background:rgba(115,25,52,.3) !important;
+  text-shadow:0 0 10px rgba(255,76,108,.42);
+}
+
+/* Give both game cards the viewing room. The shared card takes priority over leaderboard. */
+html.student-active.student-card-view .topbar {
+  height:62px !important;min-height:62px !important;flex-basis:62px !important;
+  padding:2px 0 !important;flex-wrap:nowrap !important;
+}
+html.student-active.student-card-view .brand-complete-logo {max-height:57px;}
+html.student-active.student-card-view #fullscreen-btn {display:none !important;}
+html.student-active.student-card-view .student-game-content .student-grid {
+  grid-template-columns:minmax(0,1.1fr) minmax(340px,.94fr) !important;
+  gap:10px;min-height:0;
+}
+.student-panel-actions {display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto;}
+.student-game-fullscreen-btn {
+  display:grid;place-items:center;flex:0 0 43px;
+  width:43px;height:44px;padding:0;
+  color:#a5e7ff;background:rgba(63,75,137,.32);
+  border:1px solid rgba(157,196,255,.4);border-radius:14px;
+  font-size:29px;line-height:1;touch-action:manipulation;
+}
+.student-game-fullscreen-btn:hover,.student-game-fullscreen-btn:focus-visible {
+  color:#fff;background:rgba(95,168,255,.22);
+  border-color:rgba(165,221,255,.9);
+}
+html.student-active .student-game-content .student-sidebar .shared-card-section {
+  display:flex;flex:1 1 76% !important;min-height:0;
+  padding:6px 10px 5px !important;
+}
+html.student-active .student-game-content .student-sidebar .mini-stage {
+  flex:1 1 auto;min-height:0;height:auto;max-height:none;
+  padding:1px 0 3px;overflow:hidden;
+}
+html.student-active .student-game-content .student-sidebar .mini-stage .picture-card-small {
+  display:block;width:min(100%,68dvh,580px) !important;
+  height:auto !important;max-height:100% !important;
+  aspect-ratio:1 / 1 !important;margin:auto;
+}
+html.student-active .student-game-content .student-sidebar > .sidebar-section:last-child {
+  flex:0 1 clamp(90px,16dvh,175px) !important;min-height:78px;
+}
+html.student-active .student-game-content .student-sidebar > .sidebar-section:last-child .player-list {
+  overflow-y:auto !important;
+}
+/* Chromebook/tablet landscape: preserve side-by-side cards down to 760px. */
+@media (min-width:760px) and (max-width:950px) {
+  html.student-active.student-card-view .app-shell {height:100dvh !important;min-height:0 !important;}
+  html.student-active.student-card-view .student-header-info {flex:1 1 auto;order:initial;}
+  html.student-active.student-card-view .screen {overflow:hidden;}
+  html.student-active.student-card-view .student-game-content .student-grid {
+    grid-template-columns:minmax(0,1.06fr) minmax(300px,.94fr) !important;
+    overflow:hidden !important;
+  }
+  html.student-active.student-card-view .student-game-content .student-sidebar {overflow:hidden;}
+  html.student-active.student-card-view .student-game-content .student-sidebar .shared-card-section {display:flex !important;}
+}
+/* Narrow phones keep their single-column layout and a usable tap target. */
+@media (max-width:759px) {
+  html.student-active.student-card-view .topbar {
+    height:auto !important;min-height:72px !important;flex-basis:auto !important;
+    flex-wrap:wrap !important;padding:4px 0 !important;
+  }
+  html.student-active.student-card-view .student-game-content .student-grid {
+    grid-template-columns:1fr !important;overflow:visible !important;
+  }
+  html.student-active.student-card-view .student-game-content .student-sidebar .shared-card-section {display:none !important;}
+  .student-game-fullscreen-btn {width:38px;height:40px;flex-basis:38px;font-size:24px;}
+  .student-panel-actions {gap:5px;}
+}
