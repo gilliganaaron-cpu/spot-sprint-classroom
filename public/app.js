@@ -155,65 +155,152 @@
       }
     } catch { /* Never block game play for unavailable audio. */ }
   }
-  // Two original, browser-synthesised instrumental tracks: a playful lobby
-  // theme and a faster race theme. No downloads, third-party audio or royalties.
-  // Played on the teacher projector only, never on every student device.
+  // Original royalty-free chip-synth score. The teacher's browser synthesises
+  // two distinct arrangements in real time — students only hear scoring cues.
+  // Audio only starts after a user interaction (browser autoplay requirement).
+  let musicNoiseBuffer = null;
+  function chipVoice(freq, delay, duration, volume, voice = 'lead') {
+    if (!audio || !musicBus || !freq) return;
+    const t = audio.currentTime + Math.max(0, delay);
+    const osc = audio.createOscillator();
+    const filter = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    const bass = voice === 'bass';
+    const pad = voice === 'pad';
+    osc.type = bass ? 'sawtooth' : pad ? 'triangle' : voice === 'bell' ? 'sine' : 'square';
+    osc.frequency.setValueAtTime(freq, t);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(bass ? 600 : pad ? 1300 : voice === 'bell' ? 3600 : 2400, t);
+    filter.Q.value = bass ? 1.2 : .7;
+    const attack = pad ? .04 : .006;
+    const release = pad ? .19 : bass ? .10 : .055;
+    const hold = Math.max(.01, duration - release);
+    gain.gain.setValueAtTime(.0001, t);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002, volume), t + attack);
+    gain.gain.setValueAtTime(Math.max(.0002, volume * (pad ? .83 : .7)), t + hold);
+    gain.gain.exponentialRampToValueAtTime(.0001, t + duration);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(musicBus);
+    osc.start(t);
+    osc.stop(t + duration + .025);
+  }
+  function chipDrum(kind, delay, level = 1) {
+    if (!audio || !musicBus) return;
+    const t = audio.currentTime + Math.max(0, delay);
+    if (kind === 'kick') {
+      const osc = audio.createOscillator();
+      const gain = audio.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(148, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + .12);
+      gain.gain.setValueAtTime(.0001, t);
+      gain.gain.exponentialRampToValueAtTime(.085 * level, t + .004);
+      gain.gain.exponentialRampToValueAtTime(.0001, t + .17);
+      osc.connect(gain); gain.connect(musicBus);
+      osc.start(t); osc.stop(t + .19);
+      return;
+    }
+    if (!musicNoiseBuffer) {
+      musicNoiseBuffer = audio.createBuffer(1, Math.ceil(audio.sampleRate * .22), audio.sampleRate);
+      const samples = musicNoiseBuffer.getChannelData(0);
+      // Deterministic noise for predictable levels from session to session.
+      let seed = 11821;
+      for (let i = 0; i < samples.length; i++) {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        samples[i] = (seed / 2147483648 - 1) * .8;
+      }
+    }
+    const source = audio.createBufferSource();
+    const highpass = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    source.buffer = musicNoiseBuffer;
+    highpass.type = 'highpass';
+    highpass.frequency.value = kind === 'snare' ? 1300 : 6000;
+    const length = kind === 'snare' ? .14 : .048;
+    const volume = (kind === 'snare' ? .038 : .012) * level;
+    gain.gain.setValueAtTime(.0001, t);
+    gain.gain.exponentialRampToValueAtTime(volume, t + .003);
+    gain.gain.exponentialRampToValueAtTime(.0001, t + length);
+    source.connect(highpass);highpass.connect(gain);gain.connect(musicBus);
+    source.start(t); source.stop(t + length + .01);
+  }
   const TRACKS = {
     lobby: {
-      bpm: 122,
+      bpm: 116,
+      // Bright C-major hooks and a relaxed bouncy bass.
       melody: [
-        659, 784, 988, null, 880, 784, 659, null,
+        659, 784, 988, null, 1047, 988, 784, 659,
         587, 659, 784, 880, 784, 659, 587, null,
-        659, 784, 1047, 988, 880, 784, 659, null,
+        659, 784, 1047, 1175, 1047, 988, 880, 784,
         698, 784, 880, 784, 659, 587, 523, null
       ],
-      bass: [131, 147, 165, 147, 131, 147, 175, 196],
+      bass: [131,196,147,220,165,247,147,220],
       chords: [
-        [523, 659, 784], [587, 698, 880], [659, 784, 988], [587, 740, 880],
-        [523, 659, 784], [494, 659, 784], [587, 698, 880], [440, 659, 784]
-      ]
+        [262,330,392], [294,349,440], [330,392,494], [294,370,440],
+        [262,330,392], [247,330,392], [294,349,440], [220,330,392]
+      ],
+      arp: [523,659,784,1047,659,784,988,784]
     },
     playing: {
-      bpm: 134,
+      bpm: 148,
+      // A minor-key, rising-action race theme, distinct from the lobby melody.
       melody: [
-        784, 988, 1175, 988, 880, 784, 698, null,
-        784, 988, 1175, 1319, 1175, 988, 880, null,
-        880, 988, 1175, 988, 1319, 1175, 988, 880,
-        784, 880, 988, 1175, 1047, 988, 880, null
+        659, 784, 988, 784, 1175, 988, 784, null,
+        698, 831, 988, 1109, 988, 831, 698, null,
+        784, 988, 1175, 1319, 1175, 988, 880, 784,
+        659, 784, 988, 1175, 1047, 988, 784, null
       ],
-      bass: [110, 110, 131, 131, 147, 147, 165, 165],
+      bass: [82.4,123.5,98,146.8,110,164.8,98,146.8],
       chords: [
-        [392, 523, 659], [440, 554, 698], [494, 659, 784], [523, 659, 784],
-        [440, 554, 698], [494, 659, 784], [523, 659, 784], [587, 740, 880]
-      ]
+        [330,392,494], [349,415,523], [392,494,587], [330,415,494],
+        [330,392,494], [294,370,440], [392,494,587], [330,392,494]
+      ],
+      arp: [659,784,988,1175,988,784,740,988]
     }
   };
   function scheduleMusic() {
     if (!audio || !musicBus || !musicMode) return;
     const track = TRACKS[musicMode];
+    const racing = musicMode === 'playing';
+    const stepDuration = 30 / track.bpm;  // Eighth-note sequence.
     while (nextMusicTime < audio.currentTime + .24) {
       const n = musicStep % track.melody.length;
-      const stepInBar = n % 8;
+      const eighth = n % 8;
       const delay = Math.max(0, nextMusicTime - audio.currentTime);
-      if (track.melody[n]) tone(track.melody[n], delay, musicMode === 'lobby' ? .18 : .16, musicMode === 'lobby' ? .02 : .024, stepInBar % 4 === 0 ? 'triangle' : 'square', musicBus);
-      if (stepInBar % 4 === 0) {
-        tone(track.bass[Math.floor(n / 4) % track.bass.length], delay, .33, .028, 'sine', musicBus);
-        for (const [i, f] of track.chords[Math.floor(n / 4) % track.chords.length].entries()) {
-          tone(f, delay, musicMode === 'lobby' ? .34 : .28, Math.max(.004, .012 - i * .002), i === 0 ? 'triangle' : 'sine', musicBus);
-        }
-        tone(72, delay, .09, musicMode === 'lobby' ? .018 : .025, 'sine', musicBus);
+      const melody = track.melody[n];
+      if (melody) chipVoice(melody, delay, racing ? .17 : .21,
+        racing ? .017 : .016, 'lead');
+      // Bass provides the rhythmic pulse, with a softer syncopated pickup.
+      if (eighth % 2 === 0) {
+        chipVoice(track.bass[Math.floor(n / 4) % track.bass.length], delay,
+          stepDuration * (racing ? 1.55 : 1.72), racing ? .043 : .033, 'bass');
+      } else if (racing && eighth === 7) {
+        chipVoice(track.bass[Math.floor(n / 4) % track.bass.length] * 1.5,
+          delay, .09, .014, 'bass');
       }
-      if (stepInBar === 4) tone(190, delay, .10, musicMode === 'playing' ? .009 : .006, 'triangle', musicBus);
-      if (stepInBar === 0 || stepInBar === 4) tone(58, delay, .16, .012, 'sine', musicBus);
-      if (musicMode === 'playing' && stepInBar === 6) tone(track.bass[Math.floor(n / 4) % track.bass.length] * 2, delay + .025, .14, .008, 'triangle', musicBus);
-      if (musicMode === 'lobby' && [2,6].includes(stepInBar)) tone(392, delay, .12, .009, 'triangle', musicBus);
-      if (stepInBar % 2 === 0) tone(musicMode === 'lobby' ? 1280 : 1450, delay + .01, .03, musicMode === 'lobby' ? .0032 : .0042, 'square', musicBus);
-      if (musicMode === 'lobby' && stepInBar === 6) tone(1568, delay, .12, .0075, 'sine', musicBus);
-      if (musicMode === 'lobby' && stepInBar === 2) tone(1047, delay + .045, .15, .007, 'sine', musicBus);
-      if (musicMode === 'playing' && [1,3,5,7].includes(stepInBar)) tone(1760, delay + .015, .025, .0034, 'square', musicBus);
-      if (musicMode === 'playing' && stepInBar === 7) tone(880, delay, .18, .010, 'sine', musicBus);
+      // Sustained chord pads stay behind the lead so the melody is clear.
+      if (eighth === 0 || (racing && eighth === 4)) {
+        const chord = track.chords[Math.floor(n / 4) % track.chords.length];
+        chord.forEach((f,i)=>chipVoice(f, delay, racing ? .43 : .63,
+          racing ? .0070 - i * .0005 : .0090 - i * .0009, 'pad'));
+      }
+      // Short, quiet arpeggios add depth without cluttering the melody.
+      if (eighth % 2 === 1 || (racing && eighth === 6)) {
+        const arp = track.arp[(n + (racing ? 2 : 0)) % track.arp.length];
+        chipVoice(arp, delay + .025, .13, racing ? .008 : .006, 'bell');
+      }
+      if (eighth === 0 || eighth === 4 || (racing && eighth === 6)) {
+        chipDrum('kick',delay,eighth === 0 ? 1 : .8);
+      }
+      if (eighth === 2 || eighth === 6) chipDrum('snare',delay,racing ? 1 : .78);
+      if (racing || eighth % 2 === 0) chipDrum('hat',delay,racing ? .8 : .6);
+      if (racing && eighth % 2 === 0) chipDrum('hat',delay + stepDuration * .5,.37);
+      // Little high notes at the ends of phrases give the score an arcade feel.
+      if (eighth === 7 && n % 16 === 15)
+        chipVoice(racing ? 1760 : 1568,delay,.18,.009,'bell');
       musicStep++;
-      nextMusicTime += 30 / track.bpm;
+      nextMusicTime += stepDuration;
     }
   }
   function stopMusic() {
@@ -235,7 +322,14 @@
       musicMode = mode;
       musicBus = audio.createGain();
       musicBus.gain.value = .0001;
-      musicBus.connect(audio.destination);
+      const outputCompressor = audio.createDynamicsCompressor();
+      outputCompressor.threshold.value = -20;
+      outputCompressor.knee.value = 18;
+      outputCompressor.ratio.value = 3.2;
+      outputCompressor.attack.value = .008;
+      outputCompressor.release.value = .16;
+      musicBus.connect(outputCompressor);
+      outputCompressor.connect(audio.destination);
       musicStep = 0;
       nextMusicTime = audio.currentTime + .08;
       musicTimer = setInterval(scheduleMusic, 95);
@@ -243,7 +337,7 @@
     }
     const duck = Boolean(view.pendingMatch);
     if (musicDucked !== duck || musicBus.gain.value < .05) {
-      musicBus.gain.setTargetAtTime(duck ? .13 : (mode === 'lobby' ? .75 : .85), audio.currentTime, .12);
+      musicBus.gain.setTargetAtTime(duck ? .18 : (mode === 'lobby' ? .80 : .84), audio.currentTime, .12);
       musicDucked = duck;
     }
   }
