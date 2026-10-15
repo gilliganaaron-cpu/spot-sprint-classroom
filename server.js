@@ -50,8 +50,9 @@ function view(room, role, playerId) {
   return {
     code:room.code, role, status:room.status, cardsToWin:room.cardsToWin,
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
-    teacherCard:room.teacherCard, cardTurn:room.cardTurn,
-    myCard:p?.inRound ? topCard(p) : null,
+    teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
+    countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
+    myCard:p?.inRound && room.status !== 'countdown' ? topCard(p) : null,
     me:p ? { id:p.id, name:p.name, points:p.points, inRound:p.inRound, lockedOut:Boolean(p.blockedTurn && p.blockedTurn === room.cardTurn) } : null,
     winnerId:room.winnerId, lastEvent:room.lastEvent,
     pendingMatch:room.pendingMatch ? { eventId:room.pendingMatch.eventId, playerName:room.pendingMatch.playerName, symbol:room.pendingMatch.symbol, endsAt:room.pendingMatch.endsAt } : null,
@@ -91,6 +92,44 @@ function finalizeMatch(room, eventId) {
   broadcast(room);
   return true;
 }
+// A fresh round always keeps the same room, player IDs, names and SSE streams.
+// Students temporarily offline stay registered and rejoin their active round.
+function startRound(room) {
+  if (room.players.size === 0) return failure('Wait for at least one student to join.');
+  clearTimeout(room.pendingTimer);
+  clearTimeout(room.wrongTurnTimer);
+  clearTimeout(room.startTimer);
+  room.pendingTimer = room.wrongTurnTimer = room.startTimer = null;
+  room.pendingMatch = null;
+  room.status = 'countdown';
+  room.winnerId = null;
+  room.startedAt = Date.now();
+  room.countdownEndsAt = room.startedAt + 3000;
+  room.endedAt = null;
+  room.cardTurn = 1;
+  room.lastEvent = null;
+  const initial = crypto.randomInt(DECK.length);
+  room.teacherCard = cardView(initial);
+  for (const student of room.players.values()) {
+    student.inRound = true;
+    student.points = 0;
+    student.lockUntil = 0;
+    student.blockedTurn = 0;
+    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(cardView);
+  }
+  broadcast(room);
+  const code = room.code;
+  const end = room.countdownEndsAt;
+  room.startTimer = setTimeout(() => {
+    room.startTimer = null;
+    if (rooms.get(code) !== room || room.status !== 'countdown' || room.countdownEndsAt !== end) return;
+    room.status = 'playing';
+    room.countdownEndsAt = null;
+    broadcast(room);
+  }, 3000);
+  return success({ status:'countdown', code:room.code, countdownEndsAt:end });
+}
+
 function resolveAuth(body, role) {
   const room = rooms.get(String(body?.session?.code || '').toUpperCase());
   if (!room || body?.session?.role !== role) return null;
@@ -120,7 +159,7 @@ function action(body) {
       code, hostToken:token(), hostStream:null, players:new Map(),
       status:'lobby', cardsToWin:10, teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
-      startedAt:null, endedAt:null, createdAt:Date.now(), updatedAt:Date.now()
+      startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
     return success({ code, token:room.hostToken, view:view(room, 'teacher') });
@@ -163,32 +202,11 @@ function action(body) {
   }
   if (command === 'room:start') {
     if (!['lobby','finished'].includes(room.status)) return failure('A race is already running.');
-    const connected = [...room.players.values()].filter(x => x.stream);
-    if (!connected.length) return failure('Wait for at least one student to join.');
-    clearTimeout(room.pendingTimer);
-    clearTimeout(room.wrongTurnTimer);
-    room.pendingTimer = null;
-    room.wrongTurnTimer = null;
-    room.pendingMatch = null;
-    room.status = 'playing';
-    room.winnerId = null;
-    room.startedAt = Date.now();
-    room.endedAt = null;
-    room.cardTurn = 1;
-    room.lastEvent = null;
-    const initial = crypto.randomInt(DECK.length);
-    room.teacherCard = cardView(initial);
-    for (const student of room.players.values()) {
-      student.inRound = Boolean(student.stream);
-      student.points = 0;
-      student.lockUntil = 0;
-      student.blockedTurn = 0;
-      student.hand = student.inRound
-        ? shuffle(DECK.map((_,i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(cardView)
-        : [];
-    }
-    broadcast(room);
-    return success();
+    return startRound(room);
+  }
+  if (command === 'room:restart') {
+    // Explicit 'new round' keeps everyone in the existing session / code.
+    return startRound(room);
   }
   if (command === 'room:pause') {
     if (!['playing','paused'].includes(room.status)) return failure('The race is not running.');
@@ -200,6 +218,9 @@ function action(body) {
   if (command === 'room:reset') {
     clearTimeout(room.pendingTimer);
     clearTimeout(room.wrongTurnTimer);
+    clearTimeout(room.startTimer);
+    room.startTimer = null;
+    room.countdownEndsAt = null;
     room.pendingTimer = null;
     room.wrongTurnTimer = null;
     room.pendingMatch = null;
@@ -218,7 +239,6 @@ function action(body) {
   }
   if (command === 'game:match') {
     if (room.status !== 'playing' || !p.inRound || !p.hand.length) return failure('The race is not active.');
-    if (room.cardTurn === 1 && room.startedAt && Date.now() - room.startedAt < 3000) return failure('Wait for the starting countdown.', { cooldown:true });
     if (room.pendingMatch) return failure('Get ready for the next picture!', { cooldown:true });
     if ((p.blockedTurn && p.blockedTurn === room.cardTurn) || Date.now() < p.lockUntil) return failure('Wait for the next card.',{ cooldown:true, locked:true });
     const own = topCard(p);
@@ -310,7 +330,7 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/logo-mark.svg':'logo-mark.svg'
+  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp'
 };
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml' };
 const server = http.createServer((req,res) => {

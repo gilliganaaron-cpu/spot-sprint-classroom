@@ -4,6 +4,7 @@ const { action, rooms, finalizeMatch, CELEBRATION_MS } = require('../server');
 const { DECK, getSharedSymbol } = require('../deck');
 
 const call = (actionName, data, session = null) => action({ action: actionName, data, session });
+function skipCountdown(room) { clearTimeout(room.startTimer); room.startTimer = null; room.status = 'playing'; room.countdownEndsAt = null; }
 
 test('teacher creates room, student joins, correct taps clear cards and declare a winner', () => {
   const teacher = call('room:create', {});
@@ -19,10 +20,10 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
   r.hostStream = { write() {}, writableEnded:false, destroyed:false };
   r.players.get(s.token).stream = { write() {}, writableEnded:false, destroyed:false };
   assert.equal(call('room:start', {}, tAuth).ok, true);
-  assert.equal(r.status, 'playing');
+  assert.equal(r.status, 'countdown');
   const blockedDuringStart = call('game:match', { symbol:DECK[r.players.get(s.token).hand[0].id][0], cardTurn:r.cardTurn, cardId:r.players.get(s.token).hand[0].id }, sAuth);
   assert.equal(blockedDuringStart.ok, false, 'countdown blocks early guesses');
-  r.startedAt -= 3100; // Fast-forward the opening countdown in this logic test.
+  skipCountdown(r); // test real countdown separately; exercise live game deterministically.
   for (let i=0; i<5; i++) {
     const p = r.players.get(s.token);
     const before = r.teacherCard.id;
@@ -55,8 +56,9 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
   assert.equal(r.status,'finished');
   assert.equal(r.winnerId,s.token);
   assert.equal(call('room:start',{},tAuth).ok,true);
-  assert.equal(r.status,'playing');
+  assert.equal(r.status,'countdown');
   assert.equal(r.players.get(s.token).points,0);
+  skipCountdown(r);
   assert.equal(call('room:pause',{},tAuth).ok,true);
   assert.equal(r.status,'paused');
   assert.equal(call('room:pause',{},tAuth).ok,true);
@@ -88,7 +90,7 @@ test('reset during celebration cancels pending card change, and pause is blocked
   const sAuth={role:'student',code:teacher.code,token:student.token};
   room.players.get(student.token).stream={write(){},writableEnded:false,destroyed:false};
   call('room:start',{},tAuth);
-  room.startedAt -= 3100;
+  skipCountdown(room);
   const card=room.players.get(student.token).hand[0].id;
   const symbol=getSharedSymbol(room.teacherCard.id,card);
   assert.equal(call('game:match',{symbol,cardTurn:room.cardTurn,cardId:card},sAuth).correct,true);
@@ -111,7 +113,7 @@ test('one wrong guess locks a player until the shared card flips', () => {
   const room=rooms.get(teacher.code);
   for (const player of room.players.values()) player.stream={write(){},writableEnded:false,destroyed:false};
   assert.equal(call('room:start',{},tAuth).ok,true);
-  room.startedAt -= 3100;
+  skipCountdown(room);
   const p=room.players.get(student.token);
   const card=p.hand[0].id;
   const center=room.teacherCard.id;
@@ -147,7 +149,7 @@ test('every student receives the matching player celebration for 2 seconds', () 
  const bAuth={role:'student',code:teacher.code,token:beta.token};
  for(const p of room.players.values())p.stream={write(){}, writableEnded:false,destroyed:false};
  call('room:start',{},tAuth);
- room.startedAt -= 3100;
+ skipCountdown(room);
  const own=room.players.get(alpha.token).hand[0].id;
  const matching=getSharedSymbol(room.teacherCard.id,own);
  assert.equal(call('game:match',{symbol:matching,cardTurn:room.cardTurn,cardId:own},aAuth).correct,true);
@@ -158,4 +160,44 @@ test('every student receives the matching player celebration for 2 seconds', () 
  assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
  call('room:reset',{},tAuth);
  rooms.delete(teacher.code);
+});
+
+
+test('new round preserves joined students, code and their existing tokens through reconnection', () => {
+  const teacher = call('room:create', {});
+  const a = call('room:join', { code: teacher.code, name:'Jamie' });
+  const b = call('room:join', { code: teacher.code, name:'Alex' });
+  const room = rooms.get(teacher.code);
+  const tAuth = { role:'teacher', code:teacher.code, token:teacher.token };
+  const aAuth = { role:'student', code:teacher.code, token:a.token };
+  const bAuth = { role:'student', code:teacher.code, token:b.token };
+  // Simulate Alex's browser going offline just before the teacher starts.
+  room.players.get(a.token).stream = {write(){}, writableEnded:false, destroyed:false};
+  room.players.get(b.token).stream = null;
+  assert.equal(call('room:start',{},tAuth).ok,true);
+  assert.equal(room.status,'countdown');
+  assert.equal(call('room:resume', aAuth).view.myCard,null, 'first card is hidden until countdown completes');
+  assert.equal(call('room:resume', bAuth).view.myCard,null);
+  assert.equal(call('game:match',{symbol:1,cardId:1,cardTurn:1},aAuth).ok,false);
+  skipCountdown(room);
+  const firstA=call('room:resume',aAuth).view;
+  const firstB=call('room:resume',bAuth).view;
+  assert.equal(firstA.myCard.symbols.length,8);
+  assert.equal(firstB.myCard.symbols.length,8);
+  assert.equal(firstA.code,teacher.code);
+  assert.equal(firstB.code,teacher.code);
+  const next = call('room:restart',{},tAuth);
+  assert.equal(next.ok,true);
+  assert.equal(next.status,'countdown');
+  assert.equal(room.players.size,2);
+  assert.equal(room.players.get(a.token).points,0);
+  assert.equal(room.players.get(b.token).points,0);
+  assert.equal(call('room:resume',aAuth).ok,true);
+  assert.equal(call('room:resume',bAuth).ok,true, 'student rejoins using the same session token');
+  skipCountdown(room);
+  assert.equal(call('room:resume',bAuth).view.myCard.symbols.length,8);
+  assert.equal(call('room:reset',{},tAuth).ok,true);
+  assert.equal(room.players.size,2,'return to lobby does not kick students');
+  assert.equal(call('room:resume',bAuth).view.status,'lobby');
+  rooms.delete(teacher.code);
 });

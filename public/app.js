@@ -8,6 +8,7 @@
   const musicBtn = document.getElementById('music-btn');
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const ENTRY_KEY = 'spotsprint:session';
+  const HOST_KEY = 'spotsprint:teacherSession';
   const SOUND_KEY = 'spotsprint:muted';
   const MUSIC_KEY = 'spotsprint:musicEnabled';
   const query = new URLSearchParams(location.search);
@@ -62,16 +63,19 @@
   let countdownRerender = null;
 
   function readSession() {
-    try { return JSON.parse(sessionStorage.getItem(ENTRY_KEY) || 'null'); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem(ENTRY_KEY) || localStorage.getItem(HOST_KEY) || 'null'); } catch { return null; }
   }
   function saveSession(role, code, token) {
     session = { role, code, token };
     sessionStorage.setItem(ENTRY_KEY, JSON.stringify(session));
+    if (role === 'teacher') localStorage.setItem(HOST_KEY, JSON.stringify(session));
     socket.setRoom(session);
   }
   function clearSession() {
+    const previousSession = session;
     session = null;
     sessionStorage.removeItem(ENTRY_KEY);
+    if (previousSession?.role === 'teacher') localStorage.removeItem(HOST_KEY);
     socket.clearRoom();
     view = null;
     penaltyTurn = null;
@@ -187,7 +191,7 @@
     musicMode = null;
   }
   function syncMusic() {
-    const mode = view?.role === 'teacher' && ['lobby','playing'].includes(view.status) && musicEnabled && !localMuted && audio && audio.state === 'running' ? view.status : null;
+    const mode = view?.role === 'teacher' && ['lobby','playing','countdown'].includes(view.status) && musicEnabled && !localMuted && audio && audio.state === 'running' ? (view.status === 'countdown' ? 'playing' : view.status) : null;
     if (!mode) { stopMusic(); return; }
     if (musicMode !== mode) stopMusic();
     if (!musicTimer) {
@@ -263,8 +267,8 @@
     return `<div class="card-stack ${small ? 'card-stack-small' : ''}" data-depth="${depth}">${Array.from({ length: depth }, (_, i) => `<span class="stack-layer stack-layer-${i + 1}" aria-hidden="true"></span>`).join('')}<div class="stack-top">${cardHtml}</div></div>`;
   }
   function startCountdownMs() {
-    if (!view || view.status !== 'playing' || !view.startedAt || view.pendingMatch) return 0;
-    return Math.max(0, 3000 - (Date.now() - view.startedAt));
+    if (!view || view.status !== 'countdown' || !view.countdownEndsAt) return 0;
+    return Math.max(0, view.countdownEndsAt - Date.now());
   }
   function startCountdownNumber() {
     const ms = startCountdownMs();
@@ -272,8 +276,8 @@
   }
   function startCountdownOverlay(kind = 'teacher') {
     const n = startCountdownNumber();
-    if (!n) return '';
-    return `<div class="start-countdown-overlay ${kind === 'student' ? 'student-countdown' : ''}" role="status" aria-live="assertive"><div class="countdown-kicker">${kind === 'student' ? 'Get ready!' : 'Race begins in'}</div><strong class="countdown-number">${n}</strong><div class="countdown-caption">${kind === 'student' ? 'Tap only when the first card goes live.' : 'The first card appears after the countdown.'}</div></div>`;
+    if (!n && view?.status !== 'countdown') return '';
+    return `<div class="start-countdown-overlay ${kind === 'student' ? 'student-countdown' : ''}" role="status" aria-live="assertive"><div class="countdown-kicker">${kind === 'student' ? 'Get ready!' : 'Race begins in'}</div><strong class="countdown-number">${n || "GO!"}</strong><div class="countdown-caption">${kind === 'student' ? 'Tap only when the first card goes live.' : 'The first card appears after the countdown.'}</div></div>`;
   }
   function captureLeaderboardPositions() {
     const map = new Map();
@@ -297,7 +301,7 @@
   function queueCountdownRefresh() {
     if (countdownRerender) clearTimeout(countdownRerender);
     const ms = startCountdownMs();
-    if (ms > 0) countdownRerender = setTimeout(() => render(), Math.min(300, ms + 5));
+    if (ms > 1) countdownRerender = setTimeout(() => render(), Math.min(310, ms + 5));
   }
 
   function playerList(showProgress = true) {
@@ -319,11 +323,13 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-hero full" data-action="start"><span class="start-burst">✦</span><span class="start-main">START GAME</span><small>Launch the 3·2·1 countdown</small><span class="start-arrow">→</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>START</span></button>');
+    if (view.status === 'countdown') buttons.push('<span class="countdown-status-label">GET READY!</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
-    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-hero full" data-action="start"><span class="start-burst">↻</span><span class="start-main">PLAY AGAIN</span><small>Same settings, fresh countdown</small><span class="start-arrow">→</span></button>');
-    if (view.status !== 'lobby') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby / change cards</button>');
+    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>AGAIN</span></button>');
+    if (view.status !== 'lobby' && view.status !== 'countdown' && view.status !== 'finished') buttons.push('<button type="button" class="btn btn-quiet full" data-action="restart">↻ New round · keep students</button>');
+    if (view.status !== 'lobby' && view.status !== 'countdown') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby</button>');
     return buttons.join('');
   }
   function renderLanding() {
@@ -370,11 +376,11 @@
     </div>`;
   }
   function renderTeacher() {
-    const playing = ['playing','paused'].includes(view.status);
+    const playing = ['playing','paused','countdown'].includes(view.status);
     const done = view.status === 'finished';
     const winner = view.players.find(p => p.id === view.winnerId);
     const celebrating = Boolean(view.pendingMatch);
-    const countdownActive = startCountdownMs() > 0;
+    const countdownActive = view.status === 'countdown';
     screen.innerHTML = `<div class="teacher-top-row" aria-label="Classroom game setup">
       <section class="join-website-box">
         <div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
@@ -437,7 +443,7 @@
     }
     const myPoints = view.me?.points || 0;
     const celebrating = Boolean(view.pendingMatch);
-    const countdownActive = startCountdownMs() > 0;
+    const countdownActive = view.status === 'countdown';
     const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
     screen.innerHTML = `<div class="student-header"><div><div class="eyebrow">ROOM ${escape(view.code)} <span class="eyebrow-dot">●</span> ${done ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><h1>${done ? (view.winnerId === view.me.id ? 'You won the race! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me.name)}!`}</h1><p>${done ? (view.winnerId === view.me.id ? 'Incredible spotting! You cleared every card first.' : `${escape(winner?.name || 'A classmate')} cleared their cards first. Great effort!`) : 'Tap the picture on YOUR card that also appears on the shared card.'}</p></div>
       <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
@@ -452,12 +458,10 @@
     }
   }
   function render() {
-    const before = captureLeaderboardPositions();
     if (!view) renderLanding();
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
     setSoundUI();
-    animateLeaderboardRows(before);
     queueCountdownRefresh();
   }
   function updateView(next, initial = false) {
@@ -469,13 +473,16 @@
     if (!initial && next.lastEvent?.id && next.lastEvent.id !== lastEventId) {
       if (next.role === 'teacher') playSound('celebrate');
       else playSound('correct'); // All students hear a short cue, not just the scorer.
-    } else if (!initial && old?.status === 'lobby' && next.status === 'playing') {
+    } else if (!initial && next.status === 'countdown' && old?.status !== 'countdown') {
       playSound('start');
     }
     if (!initial && old?.status !== 'finished' && next.status === 'finished') playSound('win');
     lastEventId = next.lastEvent?.id || null;
     if (next.status !== 'finished') winningEventShown = null;
+    const ranksChanged = Boolean(old && ['playing','paused','finished'].includes(next.status) && old.players && next.players && old.players.some((p,i) => next.players[i]?.id !== p.id));
+    const beforeRanks = ranksChanged ? captureLeaderboardPositions() : null;
     render();
+    if (beforeRanks) animateLeaderboardRows(beforeRanks);
     syncMusic();
   }
   function launchConfetti() {
@@ -563,6 +570,7 @@
     }
     if (action === 'create') {
       if (creating) return;
+      if (session?.role === 'teacher') { await resume(); if (view?.role === 'teacher') return; }
       // Fullscreen must be requested directly in the user click, before the
       // asynchronous network request (otherwise browsers refuse it).
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -586,7 +594,13 @@
     if (!view) return;
     if (action === 'start') {
       const r = await send('room:start');
-      if (!r.ok) toast(r.error, true);
+      if (!r.ok) toast(r.error || 'Could not start the race.', true);
+      return;
+    }
+    if (action === 'restart') {
+      if (!confirm('Start a fresh round? Scores reset, but all students stay connected using the SAME room code.')) return;
+      const r = await send('room:restart');
+      if (!r.ok) toast(r.error || 'Could not restart the round.', true);
       return;
     }
     if (action === 'pause') {

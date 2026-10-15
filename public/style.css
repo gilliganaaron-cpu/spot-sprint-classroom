@@ -906,3 +906,73 @@ html.fullscreen-mode .teacher-sidebar .player-list {max-height:100%;overflow:hid
 /* Keep cards fully hidden until the 3–2–1 countdown finishes. */
 .countdown-card-placeholder {width:min(570px,94%);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 42% 35%,#fff4dc22,#65508d1c 75%,transparent);border:2px dashed #c4a7ed25;box-shadow:0 0 60px #180e3050;}
 .start-countdown-overlay {background:linear-gradient(155deg,#38264eee,#181a35f3);backdrop-filter:none;}
+
+
+/* Round 9: unmistakable circular Start button + high-contrast leaderboard */
+.top-controls-main .control-buttons {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.top-controls-main .btn-start-orb,
+.btn-start-orb {
+  display:block;
+  width:clamp(96px,8.9vw,130px); height:clamp(96px,8.9vw,130px);
+  min-height:0; padding:0; margin:0 auto;
+  position:relative; border-radius:50%; border:4px solid #ffe690;
+  overflow:hidden; isolation:isolate;
+  background:radial-gradient(circle at 38% 24%,#fff3a1,#ffb632 58%,#e96845 100%);
+  box-shadow:0 0 0 4px rgba(255,151,85,.20),0 0 26px #ffc751aa,0 11px 27px #10112b99;
+  flex:0 0 auto; cursor:pointer; transition:transform .18s,box-shadow .18s;
+}
+.btn-start-orb img { position:absolute; inset:-3%; width:106%;height:106%;object-fit:cover;pointer-events:none; }
+.btn-start-orb::after {
+  content:''; position:absolute;z-index:1;inset:auto 4% 0; height:35%;
+  background:linear-gradient(0deg,#261741ed,transparent); pointer-events:none;
+}
+.btn-start-orb > span {
+  position:absolute; bottom:5px; left:2px; right:2px; z-index:2;
+  margin:0; color:#fff; font-size:clamp(14px,1.4vw,19px);font-weight:950;
+  letter-spacing:1px; text-align:center; text-shadow:0 3px 8px #1c0929,0 1px 3px #18002c;
+}
+.btn-start-orb:hover { transform:translateY(-3px) scale(1.04);box-shadow:0 0 0 5px #ffd18a55,0 0 38px #ffc751bb,0 15px 34px #0b0825a9; }
+.btn-start-orb:active { transform:scale(.97); }
+.countdown-status-label { color:#ffe19a;font-size:15px;font-weight:900;letter-spacing:1px; }
+.teacher-sidebar .leaderboard-panel,
+.sidebar-section.leaderboard-panel {
+  background:linear-gradient(145deg,#fff2d7,#f9e5c9 48%,#f1d4af) !important;
+  border:2px solid #ffe2a5;
+  box-shadow:0 15px 40px #080c293d;
+  color:#2a1c39;
+  position:relative;
+}
+.teacher-sidebar .leaderboard-panel::before {
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.18;border-radius:inherit;
+  background:radial-gradient(circle at 20% 14%,#eaa34a99,transparent 22%),repeating-linear-gradient(145deg,transparent 0 19px,#a36a3940 19px 20px);
+}
+.teacher-sidebar .leaderboard-panel .sidebar-title {position:relative;z-index:1;}
+.teacher-sidebar .leaderboard-panel .sidebar-title h2,
+.teacher-sidebar .leaderboard-panel .player-count {color:#30213d;}
+.teacher-sidebar .leaderboard-panel .player-count {background:#e4c9a8;border-radius:100px;padding:5px 9px;}
+.teacher-sidebar .leaderboard-panel .player-list {position:relative;z-index:1;}
+.teacher-sidebar .leaderboard-panel .player-row {
+  background:linear-gradient(90deg,#fffaf0,#f4e6cf) !important;
+  color:#30233d;
+  border:1px solid #ae957b4f;
+  box-shadow:0 4px 10px #94744925;
+}
+.teacher-sidebar .leaderboard-panel .player-row::before {opacity:.12;}
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="1"] {background:linear-gradient(100deg,#ffd65f,#fff1af) !important;border-color:#d6a345;}
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="2"] {background:linear-gradient(100deg,#d7def0,#fff) !important;}
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="3"] {background:linear-gradient(100deg,#efb587,#fff0df) !important;}
+.teacher-sidebar .leaderboard-panel .player-row .player-name,
+.teacher-sidebar .leaderboard-panel .player-row .score,
+.teacher-sidebar .leaderboard-panel .player-row .rank {color:#2a1e37;}
+.teacher-sidebar .leaderboard-panel .player-row .rank {background:#523a6631;}
+.teacher-sidebar .leaderboard-panel .tiny-progress {background:#3d264023;}
+.teacher-sidebar .leaderboard-panel .tiny-progress span {background:#a65f96;}
+.teacher-sidebar .leaderboard-panel .empty-players {color:#574460;}
+@media(min-width:801px) and (max-height:900px) {
+  html.fullscreen-mode .top-controls-main .btn-start-orb {width:min(93px,13dvh);height:min(93px,13dvh);}
+}
+@media(max-width:860px) {
+  .top-controls-main .btn-start-orb {width:100px;height:100px;}
+}

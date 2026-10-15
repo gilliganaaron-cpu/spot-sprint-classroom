@@ -41,7 +41,11 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal((await post('room:settings',{cardsToWin:5},tAuth)).ok,true);
   assert.equal((await post('room:start',{},tAuth)).ok,true);
   const liveRoom = rooms.get(tRoom.code);
-  liveRoom.startedAt -= 3100; // Bypass only the countdown delay; verify gameplay over HTTP.
+  const during=(await post('room:resume',sAuth)).view;
+  assert.equal(during.status,'countdown');
+  assert.equal(during.myCard,null,'server hides first card until start countdown completes');
+  assert.equal((await post('game:match',{symbol:1,cardId:0,cardTurn:1},sAuth)).ok,false);
+  await new Promise(resolve=>setTimeout(resolve,3110));
   const current=(await post('room:resume',sAuth)).view;
   assert.equal(current.status,'playing');
   assert.equal(current.myCard.symbols.length,8);
