@@ -219,7 +219,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:90, timeEndsAt:null, timeRemainingMs:90000, timeTimer:null, winnerIds:[], theme:'mixed', teacherCard:null, cardTurn:0,
+      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'mixed', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
@@ -282,9 +282,9 @@ function action(body) {
     const theme = String(data.theme || room.theme || 'mixed');
     if (!Object.hasOwn(THEME_SYMBOLS, theme)) return failure('Choose a valid card set.');
     const gameMode = String(data.gameMode || room.gameMode || 'cards');
-    const timeLimitSec = Number(data.timeLimitSec ?? room.timeLimitSec ?? 90);
+    const timeLimitSec = Number(data.timeLimitSec ?? room.timeLimitSec ?? 120);
     if (!['cards','timed'].includes(gameMode)) return failure('Choose Cards or Timed.');
-    if (![60,90,120].includes(timeLimitSec)) return failure('Choose 60, 90 or 120 seconds.');
+    if (!Number.isInteger(timeLimitSec) || timeLimitSec < 60 || timeLimitSec > 360 || timeLimitSec % 60 !== 0) return failure('Choose a whole number of minutes between 1 and 6.');
     room.cardsToWin = n;
     room.gameMode = gameMode;
     room.timeLimitSec = timeLimitSec;

@@ -2615,3 +2615,60 @@ html.teacher-active .header-game-settings .challenge-panel {
 html.teacher-active .header-game-settings .challenge-panel .cards-range {
   margin:0 0 3px !important;height:10px !important;min-height:10px !important;
 }
+
+/* v29: 1–6 minute range and an aligned teacher strip about ten percent deeper. */
+html.teacher-active .topbar {
+  height:89px !important;min-height:89px !important;
+  padding:6px 0 5px !important;box-sizing:border-box;
+}
+html.teacher-active .teacher-header-info {align-items:center;min-height:72px;}
+html.teacher-active .header-join-site,
+html.teacher-active .header-room-code,
+html.teacher-active .header-game-settings .challenge-panel,
+html.teacher-active .header-game-settings .theme-panel {
+  height:72px !important;min-height:72px !important;max-height:72px !important;
+  box-sizing:border-box;
+}
+html.teacher-active .header-game-settings {
+  height:72px !important;min-height:72px !important;max-height:72px !important;gap:6px;
+}
+html.teacher-active .header-game-settings .challenge-panel {
+  padding:7px 8px 7px !important;justify-content:center;gap:4px !important;
+}
+html.teacher-active .header-game-settings .challenge-mode-toggle {height:23px !important;min-height:23px !important;gap:3px;}
+html.teacher-active .header-game-settings .challenge-mode-toggle button {height:23px !important;min-height:23px !important;line-height:21px !important;}
+html.teacher-active .header-game-settings .challenge-control-row {height:19px !important;min-height:19px !important;}
+html.teacher-active .header-game-settings .challenge-control-row strong,
+html.teacher-active .header-game-settings #time-range-value {
+  font-size:15px !important;line-height:18px !important;position:static !important;
+  transform:none !important;white-space:nowrap;color:#ffebac !important;
+  background:transparent !important;box-shadow:none !important;padding:0 1px !important;
+}
+html.teacher-active .header-game-settings input#time-limit.timed-range,
+html.teacher-active .header-game-settings input#cards-to-win.cards-range {
+  width:100%;height:12px !important;min-height:12px !important;
+  margin:1px 0 1px !important;touch-action:none;cursor:pointer;position:relative;z-index:5;
+}
+html.teacher-active .header-game-settings input#time-limit::-webkit-slider-thumb,
+html.teacher-active .header-game-settings input#cards-to-win::-webkit-slider-thumb {
+  width:25px !important;height:25px !important;cursor:grab;
+}
+html.teacher-active .header-game-settings input#time-limit::-moz-range-thumb,
+html.teacher-active .header-game-settings input#cards-to-win::-moz-range-thumb {width:23px !important;height:23px !important;}
+html.teacher-active .header-game-settings .theme-panel {justify-content:center;padding:7px 7px !important;gap:5px;}
+html.teacher-active .header-join-site strong {font-size:clamp(17px,1.46vw,22px) !important;line-height:1.01 !important;}
+html.teacher-active .header-room-code strong {font-size:clamp(39px,3.1vw,54px) !important;line-height:1 !important;}
+html.teacher-active .teacher-header-actions .header-start-compact {
+  width:71px !important;min-width:71px !important;max-width:71px !important;flex-basis:71px !important;white-space:nowrap;
+}
+@media(min-width:1021px) and (max-width:1250px) {
+ html.teacher-active .header-join-site strong {font-size:15px !important;}
+ html.teacher-active .header-room-code strong {font-size:37px !important;}
+}
+@media(max-width:1020px) {
+ html.teacher-active .topbar {height:auto !important;min-height:89px !important;flex-wrap:wrap;padding-bottom:8px !important;}
+ html.teacher-active .header-game-settings {max-height:72px !important;height:72px !important;}
+}
+@media(max-width:540px) {
+ html.teacher-active .teacher-header-actions .header-start-compact {width:65px !important;min-width:65px !important;max-width:65px !important;flex-basis:65px !important;}
+}

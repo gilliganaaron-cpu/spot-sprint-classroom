@@ -514,7 +514,13 @@
       if (count) count.textContent = cards;
     }
     const timePicker = teacherHeaderInfo.querySelector('#time-limit');
-    if (timePicker && timePicker.value !== String(view.timeLimitSec)) timePicker.value = String(view.timeLimitSec);
+    if (timePicker) {
+      const minutes = Math.max(1, Math.min(6, Math.round(view.timeLimitSec / 60)));
+      if (timePicker.value !== String(minutes)) timePicker.value = String(minutes);
+      timePicker.style.setProperty('--range-fill', String((minutes - 1) * 20) + '%');
+      const label = teacherHeaderInfo.querySelector('#time-range-value');
+      if (label) label.textContent = minutes + (minutes === 1 ? ' min' : ' mins');
+    }
     if (document.activeElement !== themePicker && themePicker.value !== view.theme)
       themePicker.value = view.theme;
   }
@@ -562,10 +568,11 @@
       '<strong id="cards-range-value">' + view.cardsToWin + '</strong></div>' +
       '<input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="' + view.cardsToWin +
       '" aria-label="Number of cards to win" style="--range-fill:' + ((view.cardsToWin-5)*5) + '%">';
+    const minutes = Math.max(1, Math.min(6, Math.round(view.timeLimitSec / 60)));
     const secondsControl = '<div class="challenge-control-row"><label for="time-limit">Time limit</label>' +
-      '<select id="time-limit" aria-label="Timed challenge duration">' +
-      [60,90,120].map(sec => '<option value="' + sec + '"' + (sec === view.timeLimitSec ? ' selected' : '') + '>' + sec + 's</option>').join('') +
-      '</select></div>';
+      '<strong id="time-range-value">' + minutes + (minutes === 1 ? ' min' : ' mins') + '</strong></div>' +
+      '<input id="time-limit" class="cards-range timed-range" type="range" min="1" max="6" step="1" value="' +
+      minutes + '" aria-label="Timed challenge length in minutes" style="--range-fill:' + ((minutes - 1) * 20) + '%">';
     const themeControl = '<div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label>' +
       '<div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">' +
       (view.availableThemes || ['mixed','sports','animals','emojis','scifi','festive']).map(key =>
@@ -903,7 +910,7 @@
       if (!['cards','timed'].includes(mode) || mode === view.gameMode || settingsSavePending) return;
       queuedSettings = {
         cardsToWin:Number(document.getElementById('cards-to-win')?.value || view.cardsToWin),
-        timeLimitSec:Number(document.getElementById('time-limit')?.value || view.timeLimitSec || 90),
+        timeLimitSec:Number(document.getElementById('time-limit')?.value || Math.round(view.timeLimitSec / 60) || 2) * 60,
         gameMode:mode,
         theme:document.getElementById('theme-select')?.value || view.theme
       };
@@ -1021,6 +1028,13 @@
       if (valueDisplay) valueDisplay.textContent = String(n);
       e.target.style.setProperty('--range-fill', `${(n-5)*5}%`);
     }
+    if (e.target.id === 'time-limit') {
+      sliderEditing = true;
+      const minutes = Number(e.target.value);
+      const text = document.getElementById('time-range-value');
+      if (text) text.textContent = minutes + (minutes === 1 ? ' min' : ' mins');
+      e.target.style.setProperty('--range-fill', String((minutes - 1) * 20) + '%');
+    }
     if (e.target.id === 'room-code') joinDraft.code = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0,4);
     if (e.target.id === 'player-name') joinDraft.name = e.target.value;
   });
@@ -1032,7 +1046,7 @@
     // Input updates the number immediately. One request saves on release;
     // a newer change supersedes any queued setting, so dragging feels stable.
     sliderEditing = true;
-    queuedSettings = { cardsToWin: n, theme, gameMode:view.gameMode, timeLimitSec:Number(document.getElementById('time-limit')?.value || view.timeLimitSec || 90) };
+    queuedSettings = { cardsToWin: n, theme, gameMode:view.gameMode, timeLimitSec:Number(document.getElementById('time-limit')?.value || Math.round(view.timeLimitSec / 60) || 2) * 60 };
     void flushGameSettings();
   });
   document.addEventListener('focusout', e => {

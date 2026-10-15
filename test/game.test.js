@@ -389,22 +389,29 @@ test('timed challenge scores by time, pauses safely, replenishes decks and keeps
   const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
   const aAuth={role:'student',code:teacher.code,token:alpha.token};
   const room=rooms.get(teacher.code);
-  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:90},tAuth).ok,true);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:120},tAuth).ok,true);
   assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:30},tAuth).ok,false);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:90},tAuth).ok,false);
+  for(const minutes of [1,2,3,4,5,6]) {
+    assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:minutes * 60},tAuth).ok,true);
+    assert.equal(room.timeLimitSec,minutes * 60);
+  }
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:420},tAuth).ok,false);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:120},tAuth).ok,true);
   assert.equal(call('room:start',{},tAuth).ok,true);
   assert.equal(room.players.get(alpha.token).hand.length,25,'timed rounds have enough cards to keep scoring');
   const startup=room.startTimer;
   clearTimeout(startup);
   startup._onTimeout(); // begins the timed race after the 3-2-1 countdown
   assert.equal(room.status,'playing');
-  assert.ok(room.timeEndsAt>Date.now()+88000);
+  assert.ok(room.timeEndsAt>Date.now()+118000);
   assert.equal(call('room:pause',{},tAuth).ok,true);
   assert.equal(room.status,'paused');
   assert.equal(room.timeEndsAt,null);
   assert.equal(room.timeTimer,null,'pausing cancels scheduled deadline');
   assert.equal(call('room:pause',{},tAuth).ok,true);
   assert.equal(room.status,'playing');
-  assert.ok(room.timeEndsAt>Date.now()+88000);
+  assert.ok(room.timeEndsAt>Date.now()+118000);
   for(let i=0;i<28;i++){
     const own=room.players.get(alpha.token).hand[0].id;
     const shared=getSharedSymbol(room.teacherCard.id,own);
@@ -425,7 +432,7 @@ test('timed challenge scores by time, pauses safely, replenishes decks and keeps
   assert.equal(call('room:restart',{},tAuth).ok,true);
   assert.equal(room.players.size,2,'students remain enrolled for next round');
   assert.equal(room.players.get(alpha.token).points,0);
-  assert.equal(room.timeRemainingMs,90000);
+  assert.equal(room.timeRemainingMs,120000);
   assert.equal(room.winnerIds.length,0);
   assert.equal(call('room:reset',{},tAuth).ok,true);
   rooms.delete(teacher.code);
