@@ -122,6 +122,7 @@
     penaltyTurn = null;
     if (wrongFlashTimeout) clearTimeout(wrongFlashTimeout);
     if (countdownRerender) clearTimeout(countdownRerender);
+    stopLobbyAudio();
     stopMusic();
   }
   function escape(s) {
