@@ -2296,3 +2296,33 @@ html.teacher-active .header-join-site { min-width:0; }
   .home-panel {padding:clamp(12px,2.8vw,22px);}
   .home-panel-head {margin-bottom:12px;}
 }
+
+/* v25: uninterrupted slider dragging and a forgiving touch target. */
+html.teacher-active .header-game-settings input#cards-to-win.cards-range {
+  display:block;
+  height:16px !important;
+  min-height:16px !important;
+  margin:7px 0 3px !important;
+  width:100%;
+  position:relative;
+  z-index:4;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+  cursor:pointer;
+}
+html.teacher-active .header-game-settings input#cards-to-win::-webkit-slider-thumb {
+  width:29px !important;height:29px !important;
+  border:3px solid #fff9e9;
+  cursor:grab;
+}
+html.teacher-active .header-game-settings input#cards-to-win::-webkit-slider-thumb:active {cursor:grabbing;}
+html.teacher-active .header-game-settings input#cards-to-win::-moz-range-thumb {
+  width:24px !important;height:24px !important;
+  border:3px solid #fff9e9;
+  cursor:grab;
+}
+html.teacher-active .header-game-settings input#cards-to-win:focus-visible {
+  outline:2px solid #baf0ff;
+  outline-offset:4px;
+}

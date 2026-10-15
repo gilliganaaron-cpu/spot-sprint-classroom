@@ -475,16 +475,59 @@
     const finished = view.status === 'finished';
     studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><strong>${finished ? (view.winnerId === view.me?.id ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on your card below to a picture on the shared teacher card to your right, or the main classroom screen'}</div></div><div class="student-live-score" aria-label="Your score ${scored} out of ${maximum}"><small>YOUR SCORE</small><strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div></div>`;
   }
+  // Keep teacher settings mounted while a room stays in the lobby.
+  // Server push messages must not replace the range input mid-drag.
+  let sliderEditing = false;
+  let settingsSavePending = false;
+  let queuedSettings = null;
+  function syncHeaderSettings(slider, themePicker) {
+    if (sliderEditing || settingsSavePending || queuedSettings) return;
+    const cards = String(view.cardsToWin);
+    if (slider.value !== cards) slider.value = cards;
+    slider.style.setProperty('--range-fill', String((view.cardsToWin - 5) * 5) + '%');
+    const count = teacherHeaderInfo.querySelector('#cards-range-value');
+    if (count) count.textContent = cards;
+    if (document.activeElement !== themePicker && themePicker.value !== view.theme)
+      themePicker.value = view.theme;
+  }
+  async function flushGameSettings() {
+    if (settingsSavePending) return;
+    settingsSavePending = true;
+    try {
+      while (queuedSettings && view?.role === 'teacher' && view.status === 'lobby') {
+        const change = queuedSettings;
+        queuedSettings = null;
+        const result = await send('room:settings', change);
+        if (!result.ok) toast(result.error || 'Could not update game settings.', true);
+        else if (result.view) updateView(result.view);
+      }
+    } finally {
+      settingsSavePending = false;
+      sliderEditing = false;
+      if (view?.role === 'teacher' && view.status === 'lobby') render();
+    }
+  }
   function updateTeacherHeader() {
     const isTeacher = view?.role === 'teacher';
     teacherHeaderInfo.hidden = !isTeacher;
     teacherHeaderActions.hidden = !isTeacher;
     document.documentElement.classList.toggle('teacher-active', isTeacher);
     if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
+    // Updating a scoreboard or receiving a network ping must not destroy the
+    // control with which the teacher is currently interacting.
+    const currentSlider = teacherHeaderInfo.querySelector('#cards-to-win');
+    const currentTheme = teacherHeaderInfo.querySelector('#theme-select');
+    if (view.status === 'lobby' && teacherHeaderInfo.dataset.roomCode === view.code &&
+        currentSlider && currentTheme) {
+      syncHeaderSettings(currentSlider, currentTheme);
+      teacherHeaderActions.innerHTML = teacherControls();
+      return;
+    }
     const topSettings = view.status === 'lobby'
       ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi','festive']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
       : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
     teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><small>Student website</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
+    teacherHeaderInfo.dataset.roomCode = view.code;
     teacherHeaderActions.innerHTML = teacherControls();
   }
   function renderLanding() {
@@ -866,8 +909,10 @@
   });
   document.addEventListener('input', e => {
     if (e.target.id === 'cards-to-win') {
+      sliderEditing = true;
       const n = Number(e.target.value);
-      document.getElementById('cards-range-value').textContent = String(n);
+      const valueDisplay = document.getElementById('cards-range-value');
+      if (valueDisplay) valueDisplay.textContent = String(n);
       e.target.style.setProperty('--range-fill', `${(n-5)*5}%`);
     }
     if (e.target.id === 'room-code') joinDraft.code = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0,4);
@@ -878,11 +923,11 @@
     if (view?.role !== 'teacher' || view.status !== 'lobby') return;
     const n = Number(document.getElementById('cards-to-win')?.value || view.cardsToWin);
     const theme = document.getElementById('theme-select')?.value || view.theme || 'mixed';
-    const r = await send('room:settings', { cardsToWin: n, theme });
-    if (!r.ok) toast(r.error || 'Could not update game settings.', true);
-    else if (r.view) updateView(r.view);
-    if (document.activeElement?.id === 'theme-select') document.activeElement.blur();
-    render();
+    // Input updates the number immediately. One request saves on release;
+    // a newer change supersedes any queued setting, so dragging feels stable.
+    sliderEditing = true;
+    queuedSettings = { cardsToWin: n, theme };
+    void flushGameSettings();
   });
   document.addEventListener('focusout', e => {
     if (e.target.id === 'theme-select' && view?.role === 'teacher' && view.status === 'lobby') {
