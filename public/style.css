@@ -297,7 +297,7 @@ h1 { letter-spacing:-1.8px; }
 .celebration-count b:nth-child(2) { animation: count-two 3s steps(1,end) both; }
 .celebration-count b:nth-child(3) { animation: count-one 3s steps(1,end) both; }
 .celebration-progress { width: min(320px,75%); height: 9px; background: #ffffff31; border-radius: 30px; overflow: hidden; }
-.celebration-progress::after { content:''; display:block; height:100%; width:100%; transform-origin:left; background: linear-gradient(90deg,#68f4dc,#ffe17a,#ff81bd); animation: celebration-shrink 2s linear both; }
+.celebration-progress::after { content:''; display:block; height:100%; width:100%; transform-origin:left; background: linear-gradient(90deg,#68f4dc,#ffe17a,#ff81bd); animation: celebration-shrink 1.5s linear both; }
 @keyframes celebration-enter { from { opacity:0; transform:scale(.97); } to { opacity:1; transform:scale(1); } }
 @keyframes celebration-pulse { from { transform:scale(.96) rotate(-1deg); } to { transform:scale(1.06) rotate(1deg); } }
 @keyframes celebration-twinkle { from { opacity:.3; } to { opacity:1; } }
@@ -701,7 +701,7 @@ html.fullscreen-mode .cards-range-ticks {font-size:9px;}
 .student-score-next {font-size:clamp(14px,2.3vw,21px);color:#f2e4ff;font-weight:750;}
 .student-score-next b {color:var(--zest);}
 .student-score-timer {margin-top:9px;width:min(400px,75vw);height:9px;border-radius:50px;background:#ffffff52;overflow:hidden;}
-.student-score-timer span {display:block;height:100%;background:linear-gradient(90deg,var(--zest),var(--tangerine));animation:student-score-shrink 2s linear forwards;}
+.student-score-timer span {display:block;height:100%;background:linear-gradient(90deg,var(--zest),var(--tangerine));animation:student-score-shrink 1.5s linear forwards;}
 @keyframes student-score-overlay-in { from {opacity:0;} to {opacity:1;} }
 @keyframes student-score-name-pop {from{opacity:0;transform:translateY(10px) scale(.82) rotate(-2deg);} to{opacity:1;transform:translateY(0) scale(1) rotate(0deg);} }
 @keyframes student-burst {from {opacity:.7;transform:scale(.95) rotate(-3deg);}to {opacity:1;transform:scale(1.05) rotate(3deg);} }
@@ -1864,4 +1864,74 @@ html.fullscreen-mode .student-stage .card-stack {
 @media (max-width:760px) {
   body { background-attachment:scroll !important; }
   html.fullscreen-mode .student-stage .card-stack { width:min(86vw, 430px); }
+}
+
+/* v18: compact top-row room controls, full-size card, single music button */
+html.teacher-active .teacher-header-info { flex:1 1 auto; gap:7px; min-width:0; }
+html.teacher-active .header-join-site {
+  flex:0 1 clamp(180px,16vw,255px) !important;
+  width:auto; min-width:0; padding:6px 8px;
+  height:64px; gap:6px;
+}
+html.teacher-active .header-join-site strong {
+  font-size:clamp(12px,1.03vw,16px) !important;
+  line-height:1.13; letter-spacing:-.3px; overflow-wrap:anywhere;
+}
+html.teacher-active .header-join-site small {font-size:10px;}
+html.teacher-active .join-globe {font-size:19px;}
+html.teacher-active .header-room-code {
+  flex:0 0 clamp(169px,13.4vw,215px) !important;
+  height:64px; min-width:0; padding:7px 8px !important; gap:6px;
+}
+html.teacher-active .header-room-code strong {
+  font-size:clamp(38px,3.25vw,56px) !important;
+  line-height:1.05; letter-spacing:.4px; white-space:nowrap;
+}
+.header-game-settings { display:flex; flex:1 1 320px; min-width:240px; height:65px; align-items:stretch; gap:7px; }
+.header-game-settings .cards-range-panel,
+.header-game-settings .theme-panel {
+  min-width:0; flex:1 1 0; padding:6px 9px !important;
+  border:1px solid rgba(92,136,216,.4) !important;
+  border-radius:13px; background:rgba(11,22,63,.78) !important;
+  display:flex; flex-direction:column; justify-content:center;
+  box-shadow:none !important;
+}
+.header-game-settings .cards-range-heading {margin:0 0 3px !important; font-size:10px; display:flex; justify-content:space-between; align-items:center; white-space:nowrap;}
+.header-game-settings .cards-range-heading span {font-size:clamp(9px,.8vw,12px);}
+.header-game-settings .cards-range-heading strong {font-size:19px !important; color:#dbff7f; line-height:1; padding:0 4px;}
+.header-game-settings .cards-range {width:100%; margin:8px 0 0; display:block; cursor:pointer;}
+.header-game-settings .theme-select-wrap {position:relative; z-index:20; overflow:visible;}
+.header-game-settings .theme-select {position:relative; z-index:2; width:100%; min-width:0; font-size:clamp(12px,.9vw,14px) !important; padding:7px 25px 7px 7px !important; cursor:pointer; color:#fff;}
+.header-game-settings .theme-chevron {pointer-events:none; right:8px; z-index:3;}
+.header-game-settings .game-status-settings {display:flex; flex:1; align-items:center; justify-content:space-around; min-width:0; padding:6px; border-radius:12px; background:rgba(11,22,63,.75); font-size:12px;}
+.header-game-settings .game-status-settings b {font-size:13px; white-space:nowrap;}
+html.teacher-active .header-right {gap:6px;}
+.music-btn { min-width:42px; width:42px; height:42px; padding:0 !important; display:grid;place-items:center; font-size:23px; line-height:1; border-radius:14px !important;}
+.music-btn[aria-pressed="false"] { opacity:.55; filter:grayscale(.6); }
+.classroom-left-column {gap:0;}
+.classroom-card-stage .picture-card {width:min(calc(100dvh - 145px),94%,780px) !important;}
+html.fullscreen-mode .classroom-card-stage .picture-card {width:min(calc(100dvh - 140px),94%,780px) !important;}
+.classroom-card-status:empty {display:none !important;}
+.student-remain-badge {display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:110px; padding:8px 12px !important;}
+.student-remain-badge .remaining-track {width:84px; max-width:100%; height:8px; background:rgba(15,11,52,.35); border-radius:20px; overflow:hidden; border:1px solid rgba(255,255,255,.18);}
+.student-remain-badge .remaining-fill {display:block; height:100%; background:linear-gradient(90deg,#b0fa82,#ffe55d,#ff9a6a); border-radius:inherit; transition:width .35s ease;}
+@media(min-width:1021px) and (max-width:1270px){
+  html.teacher-active .brand-complete-logo {max-width:clamp(105px,9.5vw,140px);}
+  html.teacher-active .header-join-site {flex-basis:172px !important;}
+  html.teacher-active .header-room-code {flex-basis:164px !important;}
+  html.teacher-active .header-room-code strong {font-size:38px !important;}
+  .header-game-settings {min-width:230px;}
+  html.teacher-active .header-right .soft-btn {padding:7px;}
+}
+@media(max-width:1020px) {
+  .header-game-settings {order:3; flex:1 1 100%; min-width:250px;}
+  html.teacher-active .header-room-code {flex-basis:188px !important;}
+  .classroom-card-stage .picture-card {width:min(78vw,580px) !important;}
+}
+@media(max-width:640px){
+  html.teacher-active .teacher-header-info {flex-wrap:wrap; height:auto;}
+  html.teacher-active .header-join-site {flex:1 1 50% !important;}
+  html.teacher-active .header-room-code {flex:0 0 158px !important;}
+  html.teacher-active .header-room-code strong {font-size:36px !important;}
+  .header-game-settings {flex-basis:100%; height:65px;}
 }

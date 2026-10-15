@@ -9,7 +9,7 @@ const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./dec
 
 const rooms = new Map();
 const MAX_PLAYERS = 40;
-const CELEBRATION_MS = 2000;
+const CELEBRATION_MS = 1500;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
@@ -74,7 +74,7 @@ function broadcast(room) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
 }
-// Only the server can advance the shared card, 2 seconds after a correct match.
+// Only the server can advance the shared card, 1.5 seconds after a correct match.
 // A single pending match per room prevents overlapping celebrations or stale guesses.
 function finalizeMatch(room, eventId) {
   if (!room.pendingMatch || room.pendingMatch.eventId !== eventId || rooms.get(room.code) !== room) return false;

@@ -64,10 +64,10 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(next.cardTurn,current.cardTurn);
   assert.ok(next.pendingMatch);
   assert.equal(next.pendingMatch.playerName,'Alex');
-  assert.ok(next.pendingMatch.endsAt > Date.now()+1700);
+  assert.ok(next.pendingMatch.endsAt > Date.now()+1200);
   const blocked=await post('game:match',{symbol:firstMatching,cardTurn:next.cardTurn,cardId:next.myCard.id},sAuth);
   assert.equal(blocked.ok,false,'no guesses can be accepted during the delay');
-  await new Promise(resolve=>setTimeout(resolve,2150));
+  await new Promise(resolve=>setTimeout(resolve,1650));
   const afterWait=(await post('room:resume',sAuth)).view;
   assert.equal(afterWait.pendingMatch,null);
   assert.notEqual(afterWait.teacherCard.id,current.teacherCard.id);
@@ -85,7 +85,7 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
     }
   }
   const finished=(await post('room:resume',sAuth)).view;
-  assert.equal(finished.status,'playing', 'winner animation gets full 2 seconds too');
+  assert.equal(finished.status,'playing', 'winner animation gets full 1.5 seconds too');
   assert.ok(finished.pendingMatch);
   await new Promise(resolve=>setTimeout(resolve,2150));
   const final=(await post('room:resume',sAuth)).view;

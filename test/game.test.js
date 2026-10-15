@@ -52,7 +52,7 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
       assert.notEqual(r.teacherCard.id,before);
     }
   }
-  assert.equal(CELEBRATION_MS, 2000);
+  assert.equal(CELEBRATION_MS, 1500);
   assert.equal(r.status,'finished');
   assert.equal(r.winnerId,s.token);
   assert.equal(call('room:start',{},tAuth).ok,true);
@@ -139,7 +139,7 @@ test('one wrong guess locks a player until the shared card flips', () => {
 });
 
 
-test('every student receives the matching player celebration for 2 seconds', () => {
+test('every student receives the matching player celebration for 1.5 seconds', () => {
  const teacher=call('room:create',{});
  const alpha=call('room:join',{code:teacher.code,name:'Alex'});
  const beta=call('room:join',{code:teacher.code,name:'Jordan'});
@@ -156,7 +156,7 @@ test('every student receives the matching player celebration for 2 seconds', () 
  const other=call('room:resume',bAuth).view;
  assert.equal(other.pendingMatch.playerName,'Alex');
  assert.equal(other.cardTurn,room.cardTurn);
- assert.equal(other.pendingMatch.endsAt> Date.now()+1750,true);
+ assert.equal(other.pendingMatch.endsAt> Date.now()+1200,true);
  assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
  call('room:reset',{},tAuth);
  rooms.delete(teacher.code);
