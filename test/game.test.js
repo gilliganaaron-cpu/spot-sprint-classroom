@@ -210,7 +210,10 @@ test('theme selection propagates identical symbols to teacher and student and pe
   const teacherAuth = { role:'teacher', code:teacher.code, token:teacher.token };
   const studentAuth = { role:'student', code:teacher.code, token:student.token };
   for (const theme of ['sports','animals','emojis','scifi','mixed']) {
-    assert.equal(call('room:settings',{cardsToWin:5,theme},teacherAuth).ok,true);
+    const settingReply = call('room:settings',{cardsToWin:5,theme},teacherAuth);
+    assert.equal(settingReply.ok,true);
+    assert.equal(settingReply.view.theme,theme);
+    assert.equal(settingReply.view.cardsToWin,5);
     assert.equal(room.theme,theme);
     assert.equal(call('room:start',{},teacherAuth).ok,true);
     assert.equal(room.status,'countdown');

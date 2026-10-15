@@ -119,7 +119,7 @@
     return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
   }
   function unlockAudio() {
-    if (localMuted) return;
+    if (localMuted && !musicEnabled) return;
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
@@ -128,7 +128,7 @@
     } catch { /* Browser has no Web Audio support. The game still works. */ }
   }
   function tone(frequency, delay, duration, volume = .07, type = 'sine', destination = null) {
-    if (!audio || localMuted) return;
+    if (!audio || (localMuted && !destination)) return;
     const at = audio.currentTime + delay;
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
@@ -228,7 +228,7 @@
     musicMode = null;
   }
   function syncMusic() {
-    const mode = view?.role === 'teacher' && ['lobby','playing','countdown'].includes(view.status) && musicEnabled && !localMuted && audio && audio.state === 'running' ? (view.status === 'countdown' ? 'playing' : view.status) : null;
+    const mode = view?.role === 'teacher' && ['lobby','playing','countdown'].includes(view.status) && musicEnabled && audio && audio.state === 'running' ? (view.status === 'countdown' ? 'playing' : view.status) : null;
     if (!mode) { stopMusic(); return; }
     if (musicMode !== mode) stopMusic();
     if (!musicTimer) {
@@ -251,7 +251,7 @@
     soundBtn.innerHTML = localMuted ? '🔇 <span>Sound off</span>' : '🔊 <span>Sound on</span>';
     soundBtn.setAttribute('aria-pressed', String(!localMuted));
     musicBtn.hidden = view?.role !== 'teacher';
-    fullscreenBtn.hidden = view?.role !== 'teacher';
+    fullscreenBtn.hidden = !view || !['teacher','student'].includes(view.role);
     const name = view?.status === 'lobby' ? 'Lobby music' : 'Game music';
     musicBtn.innerHTML = musicEnabled ? `🎵 <span>${name} on</span>` : `🎶 <span>${name} off</span>`;
     musicBtn.setAttribute('aria-pressed', String(musicEnabled));
@@ -426,7 +426,7 @@
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
     const chooseCards = view.status === 'lobby'
-      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>▧ &nbsp; Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
+      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>▧ &nbsp; Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
       : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
     screen.innerHTML = `<div class="classroom-dashboard">
       ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
@@ -506,6 +506,14 @@
     const old = view;
     if (old?.code === next.code && typeof next.revision === 'number' && typeof old.revision === 'number' && next.revision < old.revision) return;
     view = next;
+    if (next.role === 'student' && ['countdown','playing'].includes(next.status) &&
+        (!old || !['countdown','playing'].includes(old.status)) &&
+        !document.fullscreenElement && !document.webkitFullscreenElement) {
+      try {
+        const enter = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+        if (enter) Promise.resolve(enter.call(document.documentElement)).catch(() => {});
+      } catch { /* Browser may require a tap; Full screen control is available. */ }
+    }
     if (old && next.cardTurn !== old.cardTurn) penaltyTurn = null;
     if (next.me?.lockedOut) penaltyTurn = next.cardTurn;
     if (!initial && next.lastEvent?.id && next.lastEvent.id !== lastEventId) {
@@ -519,8 +527,12 @@
     if (next.status !== 'finished') winningEventShown = null;
     const ranksChanged = Boolean(old && ['playing','paused','finished'].includes(next.status) && old.players && next.players && old.players.some((p,i) => next.players[i]?.id !== p.id));
     const beforeRanks = ranksChanged ? captureLeaderboardPositions() : null;
-    render();
-    if (beforeRanks) animateLeaderboardRows(beforeRanks);
+    const editingTheme = next.role === 'teacher' && next.status === 'lobby' &&
+      document.activeElement?.id === 'theme-select';
+    if (!editingTheme) {
+      render();
+      if (beforeRanks) animateLeaderboardRows(beforeRanks);
+    }
     syncMusic();
   }
   async function syncIfLiveUpdatesMissed() {
@@ -732,6 +744,16 @@
     e.preventDefault();
     unlockAudio();
     if (joining) return;
+    // Enter the immersive view on the user's Join tap, before any await.
+    // Browsers prohibit unprompted fullscreen on later live game events.
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      try {
+        const enter = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+        if (enter) Promise.resolve(enter.call(document.documentElement)).catch(() => {
+          // The student can use the top-right Full screen button instead.
+        });
+      } catch { /* Fullscreen unavailable on this device. */ }
+    }
     const formData = new FormData(e.target);
     const code = String(formData.get('code') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
     const name = String(formData.get('name') || '').trim().slice(0, 22);
@@ -760,7 +782,16 @@
     const n = Number(document.getElementById('cards-to-win')?.value || view.cardsToWin);
     const theme = document.getElementById('theme-select')?.value || view.theme || 'mixed';
     const r = await send('room:settings', { cardsToWin: n, theme });
-    if (!r.ok) { toast(r.error || 'Could not update game settings.', true); render(); }
+    if (!r.ok) toast(r.error || 'Could not update game settings.', true);
+    else if (r.view) updateView(r.view);
+    if (document.activeElement?.id === 'theme-select') document.activeElement.blur();
+    render();
+  });
+  document.addEventListener('focusout', e => {
+    if (e.target.id === 'theme-select' && view?.role === 'teacher' && view.status === 'lobby') {
+      // defer so that a simultaneous change event can submit the final choice
+      setTimeout(() => { if (document.activeElement?.id !== 'theme-select') render(); }, 50);
+    }
   });
   document.addEventListener('fullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
   document.addEventListener('webkitfullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
