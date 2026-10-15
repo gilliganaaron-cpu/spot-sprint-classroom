@@ -20,6 +20,9 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
   r.players.get(s.token).stream = { write() {}, writableEnded:false, destroyed:false };
   assert.equal(call('room:start', {}, tAuth).ok, true);
   assert.equal(r.status, 'playing');
+  const blockedDuringStart = call('game:match', { symbol:DECK[r.players.get(s.token).hand[0].id][0], cardTurn:r.cardTurn, cardId:r.players.get(s.token).hand[0].id }, sAuth);
+  assert.equal(blockedDuringStart.ok, false, 'countdown blocks early guesses');
+  r.startedAt -= 3100; // Fast-forward the opening countdown in this logic test.
   for (let i=0; i<5; i++) {
     const p = r.players.get(s.token);
     const before = r.teacherCard.id;
@@ -85,6 +88,7 @@ test('reset during celebration cancels pending card change, and pause is blocked
   const sAuth={role:'student',code:teacher.code,token:student.token};
   room.players.get(student.token).stream={write(){},writableEnded:false,destroyed:false};
   call('room:start',{},tAuth);
+  room.startedAt -= 3100;
   const card=room.players.get(student.token).hand[0].id;
   const symbol=getSharedSymbol(room.teacherCard.id,card);
   assert.equal(call('game:match',{symbol,cardTurn:room.cardTurn,cardId:card},sAuth).correct,true);
@@ -107,6 +111,7 @@ test('one wrong guess locks a player until the shared card flips', () => {
   const room=rooms.get(teacher.code);
   for (const player of room.players.values()) player.stream={write(){},writableEnded:false,destroyed:false};
   assert.equal(call('room:start',{},tAuth).ok,true);
+  room.startedAt -= 3100;
   const p=room.players.get(student.token);
   const card=p.hand[0].id;
   const center=room.teacherCard.id;
@@ -142,6 +147,7 @@ test('every student receives the matching player celebration for 2 seconds', () 
  const bAuth={role:'student',code:teacher.code,token:beta.token};
  for(const p of room.players.values())p.stream={write(){}, writableEnded:false,destroyed:false};
  call('room:start',{},tAuth);
+ room.startedAt -= 3100;
  const own=room.players.get(alpha.token).hand[0].id;
  const matching=getSharedSymbol(room.teacherCard.id,own);
  assert.equal(call('game:match',{symbol:matching,cardTurn:room.cardTurn,cardId:own},aAuth).correct,true);

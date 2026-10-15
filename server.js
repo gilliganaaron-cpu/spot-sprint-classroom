@@ -218,6 +218,7 @@ function action(body) {
   }
   if (command === 'game:match') {
     if (room.status !== 'playing' || !p.inRound || !p.hand.length) return failure('The race is not active.');
+    if (room.cardTurn === 1 && room.startedAt && Date.now() - room.startedAt < 3000) return failure('Wait for the starting countdown.', { cooldown:true });
     if (room.pendingMatch) return failure('Get ready for the next picture!', { cooldown:true });
     if ((p.blockedTurn && p.blockedTurn === room.cardTurn) || Date.now() < p.lockUntil) return failure('Wait for the next card.',{ cooldown:true, locked:true });
     const own = topCard(p);

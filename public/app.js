@@ -59,6 +59,7 @@
   let joining = false;
   let penaltyTurn = null;
   let wrongFlashTimeout = null;
+  let countdownRerender = null;
 
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(ENTRY_KEY) || 'null'); } catch { return null; }
@@ -75,6 +76,7 @@
     view = null;
     penaltyTurn = null;
     if (wrongFlashTimeout) clearTimeout(wrongFlashTimeout);
+    if (countdownRerender) clearTimeout(countdownRerender);
     stopMusic();
   }
   function escape(s) {
@@ -255,6 +257,49 @@
       }).join('')}
     </div>`;
   }
+
+  function stackedCard(cardHtml, remaining, small = false) {
+    const depth = Math.max(0, Math.min(4, Number(remaining || 1) - 1));
+    return `<div class="card-stack ${small ? 'card-stack-small' : ''}" data-depth="${depth}">${Array.from({ length: depth }, (_, i) => `<span class="stack-layer stack-layer-${i + 1}" aria-hidden="true"></span>`).join('')}<div class="stack-top">${cardHtml}</div></div>`;
+  }
+  function startCountdownMs() {
+    if (!view || view.status !== 'playing' || !view.startedAt || view.pendingMatch) return 0;
+    return Math.max(0, 3000 - (Date.now() - view.startedAt));
+  }
+  function startCountdownNumber() {
+    const ms = startCountdownMs();
+    return ms ? Math.ceil(ms / 1000) : 0;
+  }
+  function startCountdownOverlay(kind = 'teacher') {
+    const n = startCountdownNumber();
+    if (!n) return '';
+    return `<div class="start-countdown-overlay ${kind === 'student' ? 'student-countdown' : ''}" role="status" aria-live="assertive"><div class="countdown-kicker">${kind === 'student' ? 'Get ready!' : 'Race begins in'}</div><strong class="countdown-number">${n}</strong><div class="countdown-caption">${kind === 'student' ? 'Tap only when the first card goes live.' : 'The first card appears after the countdown.'}</div></div>`;
+  }
+  function captureLeaderboardPositions() {
+    const map = new Map();
+    document.querySelectorAll('.player-row[data-player-id]').forEach(el => map.set(el.dataset.playerId, el.getBoundingClientRect().top));
+    return map;
+  }
+  function animateLeaderboardRows(before) {
+    document.querySelectorAll('.player-row[data-player-id]').forEach(el => {
+      const oldTop = before.get(el.dataset.playerId);
+      const rect = el.getBoundingClientRect();
+      if (oldTop == null) {
+        el.animate([{ opacity: .3, transform: 'translateY(10px) scale(.98)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }], { duration: 280, easing: 'ease-out' });
+        return;
+      }
+      const dy = oldTop - rect.top;
+      if (Math.abs(dy) > 1) {
+        el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration: 380, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }
+    });
+  }
+  function queueCountdownRefresh() {
+    if (countdownRerender) clearTimeout(countdownRerender);
+    const ms = startCountdownMs();
+    if (ms > 0) countdownRerender = setTimeout(() => render(), Math.min(300, ms + 5));
+  }
+
   function playerList(showProgress = true) {
     // In projector fullscreen, fit a useful leaderboard preview without
     // overflowing the screen, even for a 40-student classroom.
@@ -264,7 +309,7 @@
     const listed = view.players.slice(0, maxVisible);
     const more = view.players.length - listed.length;
     if (!view.players.length) return `<div class="empty-players"><span>👀</span><strong>No players yet</strong><small>Students enter the room code to join.</small></div>`;
-    return `<div class="player-list">${listed.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}">
+    return `<div class="player-list">${listed.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}" data-player-id="${p.id}" data-rank="${i+1}">
       <span class="rank">${view.status === 'lobby' ? '●' : (i + 1)}</span>
       <div class="player-details"><div class="player-name">${escape(p.name)} ${p.id === view.winnerId ? '👑' : ''}${!p.online ? '<span class="offline-label">offline</span>' : ''}${!p.inRound && ['playing','paused'].includes(view.status) ? '<span class="offline-label">next round</span>' : ''}</div>
       ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / view.cardsToWin) * 100}%"></span></div>` : ''}</div>
@@ -274,10 +319,10 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-accent full" data-action="start">▶ Start the race <span>→</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-hero full" data-action="start"><span class="start-burst">✦</span><span class="start-main">START GAME</span><small>Launch the 3·2·1 countdown</small><span class="start-arrow">→</span></button>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
-    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-accent full" data-action="start">↻ Race again (same settings)</button>');
+    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-hero full" data-action="start"><span class="start-burst">↻</span><span class="start-main">PLAY AGAIN</span><small>Same settings, fresh countdown</small><span class="start-arrow">→</span></button>');
     if (view.status !== 'lobby') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby / change cards</button>');
     return buttons.join('');
   }
@@ -293,14 +338,7 @@
           <div class="landing-address home-address"><small>STUDENTS OPEN THIS WEBSITE</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div>
         </div>
         <div class="home-grid">
-          <div class="home-card host-card">
-            <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
-            <h2>Host a new game</h2>
-            <p>Create a room, project the teacher screen and start the race.</p>
-            <button class="btn btn-accent full" type="button" data-action="create" ${creating ? 'disabled' : ''}>${creating ? 'Creating room…' : 'Create game'} <span>→</span></button>
-            <div class="mini-note">Students join from the same website using your 6-character room code.</div>
-          </div>
-          <div class="home-card join-card">
+          <div class="home-card join-card join-card-hero">
             <div class="option-tag">🎒 FOR STUDENTS</div>
             <h2>Join a game</h2>
             <p>Type the room code from your teacher's screen and enter your name.</p>
@@ -311,6 +349,14 @@
               <input id="player-name" name="name" class="name-input" maxlength="22" placeholder="e.g. Alex" autocomplete="off" required value="${escape(joinDraft.name)}" />
               <button class="btn btn-white full" type="submit" ${joining ? 'disabled' : ''}>${joining ? 'Joining…' : 'Join game'} <span>→</span></button>
             </form>
+            <div class="mini-note">Enter the 6-character room code from your teacher and you are in.</div>
+          </div>
+          <div class="home-card host-card">
+            <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
+            <h2>Host a new game</h2>
+            <p>Create a room, project the teacher screen and start the race.</p>
+            <button class="btn btn-accent full" type="button" data-action="create" ${creating ? 'disabled' : ''}>${creating ? 'Creating room…' : 'Create game'} <span>→</span></button>
+            <div class="mini-note">Students join from the same website using your 6-character room code.</div>
           </div>
           <div class="home-card preview-card">
             <div class="option-tag">⚡ QUICK PREVIEW</div>
@@ -328,33 +374,33 @@
     const done = view.status === 'finished';
     const winner = view.players.find(p => p.id === view.winnerId);
     const celebrating = Boolean(view.pendingMatch);
-    screen.innerHTML = `<div class="room-header">
-      <div><div class="eyebrow">TEACHER DASHBOARD <span class="eyebrow-dot">●</span> ${view.status.toUpperCase()}</div>
-      <h1>${done ? 'We have a winner!' : playing ? 'Find the matching picture!' : 'Your classroom is ready.'}</h1>
-      <p>${done ? 'The race is complete. Give your champion a round of applause!' : playing ? 'Each correct tap changes this card for everybody. Watch the race unfold.' : 'Students join from the website and code shown here.'}</p></div>
-      <div class="join-steps" aria-label="How to join the game">
-        <div class="join-website-box"><div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
-          <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
-          <button type="button" data-action="copy-link">🔗 Copy student link</button>
+    const countdownActive = startCountdownMs() > 0;
+    screen.innerHTML = `<div class="teacher-top-row" aria-label="Classroom game setup">
+      <section class="join-website-box">
+        <div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
+        <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
+      </section>
+      <section class="room-code-box">
+        <div class="join-instruction"><b>2</b> ENTER GAME CODE</div>
+        <strong>${escape(view.code)}</strong>
+      </section>
+      <section class="top-game-controls">
+        <div class="top-controls-title"><span>GAME CONTROLS</span><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
+        <div class="top-controls-main">
+          ${view.status === 'lobby' ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Cards to win</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div>` : `<div class="top-target">FIRST TO <strong>${view.cardsToWin}</strong> CARDS</div>`}
+          <div class="control-buttons">${teacherControls()}</div>
         </div>
-        <div class="room-code-box"><div class="join-instruction"><b>2</b> THEN ENTER CODE</div><strong>${escape(view.code)}</strong></div>
-      </div>
+      </section>
     </div>
     ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
     <div class="game-grid teacher-grid">
       <section class="board-panel ${playing ? 'active-board' : ''}">
-        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${celebrating ? '✨ NEW CARD IN 2s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
-        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${countdownActive ? '⏳ STARTING NOW' : celebrating ? '✨ NEW CARD IN 2s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
+        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
         <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
       </section>
-      <aside class="sidebar">
-        <section class="sidebar-section lobby-setup">
-          <div class="sidebar-title"><h2>⚙ Game controls</h2><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
-          ${view.status === 'lobby' ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Cards to win</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5 · Quick</span><span>15 · Classic</span><span>25 · Long</span></div></div>` : `<p class="hint">First student to <strong>${view.cardsToWin}</strong> correct matches wins the race.</p>`}
-          <div class="control-buttons">${teacherControls()}</div>
-        </section>
-        <section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} joined</span></div>${playerList()}</section>
-        <section class="sidebar-section tip-panel"><strong>💡 Teacher tip</strong><p>${view.status === 'lobby' ? 'Project this page and keep the website address and room code visible while students join.' : 'Every correct answer changes the shared card for everyone, so keep the class focused on the big screen.'}</p></section>
+      <aside class="sidebar teacher-sidebar">
+        <section class="sidebar-section leaderboard-panel"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} joined</span></div>${playerList()}</section>
       </aside>
     </div>`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -391,12 +437,13 @@
     }
     const myPoints = view.me?.points || 0;
     const celebrating = Boolean(view.pendingMatch);
+    const countdownActive = startCountdownMs() > 0;
     const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
     screen.innerHTML = `<div class="student-header"><div><div class="eyebrow">ROOM ${escape(view.code)} <span class="eyebrow-dot">●</span> ${done ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><h1>${done ? (view.winnerId === view.me.id ? 'You won the race! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me.name)}!`}</h1><p>${done ? (view.winnerId === view.me.id ? 'Incredible spotting! You cleared every card first.' : `${escape(winner?.name || 'A classmate')} cleared their cards first. Great effort!`) : 'Tap the picture on YOUR card that also appears on the shared card.'}</p></div>
       <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
-      ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge">⚡ ${view.cardsToWin - myPoints} LEFT</span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive })}${penaltyActive ? '<div class="wrong-lock-overlay"><div class="wrong-lock-badge">✖ Bad luck!</div><div class="wrong-lock-text">No more guesses until the next card appears.</div></div>' : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span id="guess-feedback">${penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 2 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 2 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
+      ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge">⚡ ${cardsLeft} LEFT</span></div>
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive }), cardsLeft)}${startCountdownOverlay('student')}${penaltyActive ? '<div class="wrong-lock-overlay"><div class="wrong-lock-badge">✖ Bad luck!</div><div class="wrong-lock-text">No more guesses until the next card appears.</div></div>' : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+       <div class="board-bottom"><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 2 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 2 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}${studentCelebration()}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -405,10 +452,13 @@
     }
   }
   function render() {
+    const before = captureLeaderboardPositions();
     if (!view) renderLanding();
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
     setSoundUI();
+    animateLeaderboardRows(before);
+    queueCountdownRefresh();
   }
   function updateView(next, initial = false) {
     if (!next) return;
@@ -530,18 +580,6 @@
       if (!r.ok) { toast(r.error, true); render(); return; }
       saveSession('teacher', r.code, r.token);
       updateView(r.view, true);
-      return;
-    }
-    if (action === 'copy-link' && view) {
-      const url = `${location.origin}/?room=${encodeURIComponent(view.code)}`;
-      try {
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-          toast('For student devices, first open this page using your computer’s Wi-Fi IP address.', true);
-          return;
-        }
-        await navigator.clipboard.writeText(url); toast('Student join link copied!');
-      }
-      catch { toast(`Share this website and code ${view.code}`); }
       return;
     }
     if (action === 'leave') { clearSession(); history.replaceState(null, '', '/'); render(); return; }
