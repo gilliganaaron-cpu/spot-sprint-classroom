@@ -37,13 +37,15 @@
     animals: { label: 'Animals', icon: '🐾' },
     emojis: { label: 'Emojis', icon: '😄' },
     'sci-fi': { label: 'Sci-Fi', icon: '🚀' },
-    scifi: { label: 'Sci-Fi', icon: '🚀' }
+    scifi: { label: 'Sci-Fi', icon: '🚀' },
+    festive: { label: 'Festive (All Holidays)', icon: '🎄' }
   };
   const THEME_SPRITES = {
     mixed: '/symbols.webp?v=20261015-14',
     sports: '/symbols-sports.webp?v=20261015-14',
     animals: '/symbols-animals.webp?v=20261015-14',
     emojis: '/symbols-emojis.webp?v=20261015-14',
+    festive: '/symbols-festive.webp?v=20261015-22',
     scifi: '/symbols-scifi.webp?v=20261015-14',
     'sci-fi': '/symbols-scifi.webp?v=20261015-14'
   };
@@ -480,7 +482,7 @@
     document.documentElement.classList.toggle('teacher-active', isTeacher);
     if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
     const topSettings = view.status === 'lobby'
-      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
+      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi','festive']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
       : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
     teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><small>Student website</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
     teacherHeaderActions.innerHTML = teacherControls();

@@ -198,6 +198,236 @@ const THEME_SYMBOLS = {
     ["💀", "skull"],
     ["😈", "smiling devil"]
   ],
+  festive: [
+    [
+        "🎄",
+        "Christmas tree"
+    ],
+    [
+        "🎅",
+        "Santa Claus"
+    ],
+    [
+        "🤶",
+        "Mrs Claus"
+    ],
+    [
+        "🎁",
+        "wrapped present"
+    ],
+    [
+        "🦌",
+        "reindeer"
+    ],
+    [
+        "🔔",
+        "Christmas bell"
+    ],
+    [
+        "⭐",
+        "gold star"
+    ],
+    [
+        "⛄",
+        "snowman"
+    ],
+    [
+        "❄",
+        "snowflake"
+    ],
+    [
+        "🧣",
+        "winter scarf"
+    ],
+    [
+        "🧤",
+        "winter gloves"
+    ],
+    [
+        "🧦",
+        "Christmas stocking"
+    ],
+    [
+        "🕯",
+        "candle"
+    ],
+    [
+        "🍪",
+        "cookie"
+    ],
+    [
+        "🥛",
+        "glass of milk"
+    ],
+    [
+        "🛷",
+        "sleigh"
+    ],
+    [
+        "🎀",
+        "gift ribbon"
+    ],
+    [
+        "🪄",
+        "magic wand"
+    ],
+    [
+        "🍬",
+        "candy"
+    ],
+    [
+        "🐰",
+        "Easter bunny"
+    ],
+    [
+        "🐇",
+        "rabbit"
+    ],
+    [
+        "🥚",
+        "Easter egg"
+    ],
+    [
+        "🐣",
+        "hatching chick"
+    ],
+    [
+        "🐤",
+        "baby chick"
+    ],
+    [
+        "🌷",
+        "tulip"
+    ],
+    [
+        "🌼",
+        "daisy"
+    ],
+    [
+        "🌸",
+        "pink blossom"
+    ],
+    [
+        "🪺",
+        "nest with eggs"
+    ],
+    [
+        "🧺",
+        "Easter basket"
+    ],
+    [
+        "🍫",
+        "chocolate"
+    ],
+    [
+        "🍭",
+        "lollipop"
+    ],
+    [
+        "🦋",
+        "butterfly"
+    ],
+    [
+        "🐝",
+        "bee"
+    ],
+    [
+        "🌱",
+        "spring seedling"
+    ],
+    [
+        "🥕",
+        "carrot"
+    ],
+    [
+        "🌈",
+        "rainbow"
+    ],
+    [
+        "🐑",
+        "spring lamb"
+    ],
+    [
+        "🐦",
+        "blue bird"
+    ],
+    [
+        "🎃",
+        "jack-o-lantern"
+    ],
+    [
+        "👻",
+        "ghost"
+    ],
+    [
+        "🧙",
+        "witch"
+    ],
+    [
+        "🦇",
+        "bat"
+    ],
+    [
+        "🕷",
+        "spider"
+    ],
+    [
+        "🕸",
+        "spider web"
+    ],
+    [
+        "🧛",
+        "vampire"
+    ],
+    [
+        "🧟",
+        "zombie"
+    ],
+    [
+        "💀",
+        "skull"
+    ],
+    [
+        "☠",
+        "skull and crossbones"
+    ],
+    [
+        "🪦",
+        "grave stone"
+    ],
+    [
+        "🐈",
+        "cat"
+    ],
+    [
+        "🧹",
+        "witch broom"
+    ],
+    [
+        "🔮",
+        "crystal ball"
+    ],
+    [
+        "⚰",
+        "coffin"
+    ],
+    [
+        "🌙",
+        "crescent moon"
+    ],
+    [
+        "🧪",
+        "potion bottle"
+    ],
+    [
+        "🦂",
+        "scorpion"
+    ],
+    [
+        "🪲",
+        "beetle"
+    ]
+],
   scifi: [
     ["🚀", "rocket"],
     ["🛸", "flying saucer"],

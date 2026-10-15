@@ -24,6 +24,10 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(sky.headers.get('content-type'),'image/jpeg');
   assert.ok((await sky.arrayBuffer()).byteLength > 10000);
   assert.equal((await fetch(base+'/health')).status,200, 'server survives image request');
+  const festiveAtlas=await fetch(base+'/symbols-festive.webp');
+  assert.equal(festiveAtlas.status,200,'festive artwork must load on student and teacher screens');
+  assert.equal(festiveAtlas.headers.get('content-type'),'image/webp');
+  assert.ok((await festiveAtlas.arrayBuffer()).byteLength > 10000);
   const atlas=await fetch(base+'/symbols.webp');
   assert.equal(atlas.status,200, 'same source image must be served to all screens');
   assert.equal(atlas.headers.get('content-type'),'image/webp');

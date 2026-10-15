@@ -204,12 +204,14 @@ test('new round preserves joined students, code and their existing tokens throug
 
 test('theme selection propagates identical symbols to teacher and student and persists across rounds', () => {
   const { THEME_SYMBOLS, getSharedSymbol } = require('../deck');
+  assert.equal(THEME_SYMBOLS.festive.length,57, 'festive atlas provides all 57 symbols');
+  assert.equal(new Set(THEME_SYMBOLS.festive.map(([picture]) => picture)).size,57,'no duplicate festive pictures');
   const teacher = call('room:create', {});
   const student = call('room:join', { code:teacher.code, name:'Theme Tester' });
   const room = rooms.get(teacher.code);
   const teacherAuth = { role:'teacher', code:teacher.code, token:teacher.token };
   const studentAuth = { role:'student', code:teacher.code, token:student.token };
-  for (const theme of ['sports','animals','emojis','scifi','mixed']) {
+  for (const theme of ['sports','animals','emojis','scifi','festive','mixed']) {
     const settingReply = call('room:settings',{cardsToWin:5,theme},teacherAuth);
     assert.equal(settingReply.ok,true);
     assert.equal(settingReply.view.theme,theme);
