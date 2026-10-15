@@ -88,7 +88,7 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(final.winnerId,sRoom.token);
   const html=await fetch(base+'/');
   assert.equal(html.status,200);
-  assert.match(await html.text(), /class="brand-pop">SPRINT/);
+  assert.match(await html.text(), /spot-sprint-wordmark\.webp/);
   const js=await fetch(base+'/realtime.js');
   assert.equal(js.status,200);
 });

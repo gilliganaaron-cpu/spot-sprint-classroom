@@ -1448,3 +1448,208 @@ body {
   .teacher-hero-top .join-website-address { white-space: normal; }
   .teacher-hero-top .room-code-box strong { font-size: clamp(42px, 10vw, 62px); }
 }
+
+/* Spot Sprint — projector-first arcade dashboard v13.
+   Layout uses the full available height; all teacher options stay across the top. */
+html, body { background:#070d28; }
+body {
+  background-image: linear-gradient(180deg, rgba(3,11,37,.18), rgba(7,12,40,.07)), url('/arcade-mountains.webp?v=20261015-13') !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+.bg-orb { display:none; }
+.app-shell { max-width:1920px; padding:0 clamp(12px,1.5vw,26px); }
+.topbar {
+  min-height:79px !important;
+  height:79px;
+  padding:5px 0 3px;
+  display:flex;
+  gap:clamp(8px,1vw,18px);
+  border-bottom:1px solid rgba(75,128,247,.32) !important;
+  background:linear-gradient(90deg, rgba(2,12,45,.35),rgba(3,12,46,.04));
+}
+.brand { flex:0 0 auto; gap:0; }
+.brand-complete-logo { width:clamp(130px,13vw,225px); height:auto; max-height:77px; object-fit:contain; display:block; }
+.teacher-header-info { display:flex;flex:1;min-width:0;gap:9px;align-items:center; }
+.teacher-header-info[hidden],.teacher-header-actions[hidden] { display:none !important; }
+.header-join-site,.header-room-code {
+  display:flex;gap:12px;align-items:center;justify-content:center;min-width:0;
+  border:1px solid #2a74e58e;border-radius:16px;
+  padding:9px 11px;
+  height:65px;
+  background:linear-gradient(140deg,rgba(5,16,55,.96),rgba(10,22,66,.92));
+  box-shadow:inset 0 1px rgba(255,255,255,.08),0 8px 22px rgba(2,7,27,.22);
+}
+.header-join-site { flex:1; }
+.header-room-code { flex:0 0 clamp(135px,13vw,210px); }
+.header-join-site>div,.header-room-code>div { min-width:0; }
+.header-join-site small,.header-room-code small {
+  display:block; color:#7fd1ff; font-size:clamp(10px,.85vw,13px);
+  line-height:1.15;font-weight:800;margin-bottom:4px;
+}
+.header-join-site strong {
+  color:#fff;font-size:clamp(12px,1.2vw,19px);font-weight:950;
+  line-height:1.15;white-space:nowrap;letter-spacing:-.25px;
+}
+.header-room-code strong { color:#ffe071;font-size:clamp(29px,3vw,49px);letter-spacing:1px;line-height:1.0;font-weight:1000; }
+.join-globe,.join-gamepad { font-size:clamp(25px,2.35vw,42px);line-height:1;filter:drop-shadow(0 2px 6px rgba(69,158,255,.3)); }
+.header-right { gap:7px;flex-shrink:0; }
+.header-right .connection { font-size:10px; }
+.header-right .soft-btn {
+  height:40px;min-width:40px;padding:6px 9px;
+  border-radius:50% !important;display:flex;justify-content:center;align-items:center;
+  color:#57d6ff;font-size:19px;background:rgba(4,15,57,.85) !important;
+  border:1px solid rgba(42,131,253,.55) !important;
+}
+html.teacher-active .header-right .soft-btn span { display:none; }
+html.teacher-active .header-right .connection { display:none; }
+.teacher-header-actions { display:flex;align-items:center;gap:6px; }
+.header-start-game {
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  border:2px solid #bdff9c;border-radius:24px;
+  background:linear-gradient(160deg,#82f646 0%,#27cb30 50%,#088e2c 100%);
+  box-shadow:0 0 0 4px rgba(81,241,79,.13),0 0 18px rgba(55,221,74,.36),inset 0 2px rgba(255,255,255,.62),0 6px 0 rgba(4,65,21,.3);
+  color:#fff;text-shadow:0 2px 3px #005b24;letter-spacing:.3px;
+  padding:9px 15px;min-width:clamp(113px,11vw,170px);height:52px;
+  font-size:clamp(12px,1vw,18px);font-weight:950;white-space:nowrap;cursor:pointer;
+  transition:transform .16s ease, filter .16s ease;
+}
+.header-start-game:hover { filter:brightness(1.12);transform:translateY(-2px); }
+.header-start-game:active { transform:translateY(1px); }
+.play-triangle { font-size:22px;line-height:1; }
+.header-round-control {
+  border:1px solid #5c83ce9c;border-radius:12px;
+  background:#142b61dc;color:#e7ecff;padding:9px 10px;font-weight:800;
+  font-size:12px;white-space:nowrap;
+}
+.header-countdown { color:#ffdd69;font-size:19px;font-weight:1000;letter-spacing:1px; }
+/* Teacher room remains a separate destination; visiting the site alone opens host/join screen. */
+.home-panel { background:rgba(5,14,50,.92);border:1px solid #337de87d;box-shadow:0 20px 70px #05091ccf; }
+.home-card { background:linear-gradient(155deg,rgba(27,40,99,.95),rgba(19,29,75,.95)); }
+html.teacher-active .site-footer { display:none; }
+html.teacher-active .app-shell { height:100dvh;min-height:0; }
+html.teacher-active .screen { display:flex;flex-direction:column;flex:1;min-height:0; }
+.classroom-dashboard { display:flex;flex-direction:column;flex:1;min-height:0;padding:10px 0 10px; }
+.classroom-game-grid { display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.6fr);gap:13px;flex:1;min-height:0; }
+.classroom-left-column { display:flex;flex-direction:column;gap:7px;min-width:0;min-height:0; }
+.classroom-settings {
+  flex:0 0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:13px;
+  padding:10px 14px;min-height:100px;
+  background:linear-gradient(145deg,rgba(5,17,60,.96),rgba(13,22,72,.93));
+  border:1px solid #3a6bcb99;border-radius:19px;
+  box-shadow:inset 0 1px rgba(255,255,255,.08),0 15px 36px rgba(1,4,25,.3);
+}
+.classroom-settings .cards-range-panel,.classroom-settings .theme-panel {
+  padding:6px 8px !important;background:none !important;border:0 !important;
+  box-shadow:none !important;min-width:0;
+}
+.classroom-settings .cards-range-heading { color:#fff;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px; }
+.classroom-settings .cards-range-heading span { font-size:clamp(11px,1.15vw,17px); }
+.classroom-settings .cards-range-heading strong {
+  font-size:clamp(17px,1.9vw,28px) !important;
+  background:#2c4075;border:1px solid #7694ed77;
+  border-radius:12px;color:white;padding:4px 10px;
+}
+.classroom-settings .cards-range { accent-color:#ffb02b; }
+.classroom-settings .cards-range-ticks { color:#efeeff; }
+.classroom-settings .theme-select { font-size:clamp(13px,1.5vw,19px) !important;padding:10px 40px 10px 14px !important; }
+.classroom-settings .theme-select-wrap { border-radius:12px; }
+.game-status-settings { display:flex;align-items:center;justify-content:space-around;gap:20px;grid-column:1/-1;font-size:20px;font-weight:800;color:white; }
+.game-status-settings b { color:#ffe080; }
+.classroom-card-area {
+  min-height:0;flex:1;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+  background:linear-gradient(180deg,rgba(6,15,60,.2),rgba(4,9,37,.23));
+  border-radius:24px;border:1px solid rgba(69,110,212,.3);
+}
+.classroom-card-stage { flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4px; }
+.classroom-card-stage .picture-card {
+  /* Width determines height through the enforced 1:1 aspect ratio. Never squash. */
+  width:min(calc(100dvh - 248px), 94%, 700px) !important;
+  height:auto !important;max-height:100%;aspect-ratio:1 !important;
+  box-shadow:0 0 0 5px #549cff2d,0 0 38px #598eff9f,0 25px 65px #0707216b !important;
+  background:#fff !important;border:9px solid #fff !important;
+}
+.classroom-card-status { flex:0 0 auto;text-align:center;color:#d4d7ef;font-size:11px;font-weight:700;padding:5px 12px 8px; }
+.classroom-card-stage .start-countdown-overlay { z-index:6; }
+.classroom-card-stage .picture-card::before,.classroom-card-stage .picture-card::after { display:none !important; }
+/* Visual source sheets now contain transparent pictures; CSS never draws rings. */
+.symbol,.symbol-button,.picture-card-small .symbol { width:16.5% !important;height:16.5% !important; }
+.symbol-button { background:transparent !important;box-shadow:none !important;border-radius:0 !important; }
+.symbol-button:focus-visible { border-radius:12px !important;outline:3px solid #298df3 !important; }
+.symbol-button:hover { background:transparent !important;box-shadow:0 0 0 2px #2687f66b !important; }
+.symbol-art,.symbol-button .symbol-art { filter:drop-shadow(0 4px 4px rgba(28,35,78,.16)); }
+/* The leaderboard is a polished dark panel with medal-colored rows, not a giant yellow wall. */
+.arcade-leaderboard {
+  min-height:0;display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid #2773ceba;border-radius:20px;padding:15px;
+  background:linear-gradient(180deg,rgba(7,19,64,.96),rgba(9,23,64,.92));
+  box-shadow:inset 0 1px rgba(255,255,255,.07),0 20px 40px #03071f73;
+}
+.arcade-leaderboard .sidebar-title { flex:0 0 auto;margin:0 0 12px; }
+.arcade-leaderboard .sidebar-title h2 {font-size:clamp(18px,2vw,27px);margin:0;color:white;text-shadow:0 3px 8px #010521;}
+.arcade-leaderboard .player-count {background:#323e7b99;color:#eef0ff;border-radius:30px;font-size:11px;white-space:nowrap;padding:5px 9px;}
+.arcade-leaderboard .player-list { overflow-y:auto;min-height:0;max-height:none !important;display:flex;flex-direction:column;gap:8px;padding-right:2px; }
+.arcade-leaderboard .player-row { min-height:48px;flex:0 0 auto;padding:10px 12px !important;margin:0;border-radius:13px !important;gap:12px;box-shadow:0 5px 14px #03122c4c; }
+.arcade-leaderboard .player-row,.arcade-leaderboard .player-row:nth-child(odd) { background:linear-gradient(135deg,rgba(10,56,119,.96),rgba(6,34,85,.96)) !important;border:1px solid #377edb99 !important; }
+.arcade-leaderboard .player-row[data-rank="1"] { background:linear-gradient(110deg,#ffe352,#ffc72e) !important;border:1px solid #ffe778 !important; }
+.arcade-leaderboard .player-row[data-rank="2"] { background:linear-gradient(110deg,#e9f1ff,#9eb6d7) !important;border:1px solid #e9f1ff !important; }
+.arcade-leaderboard .player-row[data-rank="3"] { background:linear-gradient(110deg,#ffb478,#e78046) !important;border:1px solid #ffd1a6 !important; }
+.arcade-leaderboard .rank { min-width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#00000020;color:#fff;font-size:15px;font-weight:950; }
+.arcade-leaderboard .player-row[data-rank="1"] .rank,.arcade-leaderboard .player-row[data-rank="2"] .rank,.arcade-leaderboard .player-row[data-rank="3"] .rank {color:#1a2750;}
+.arcade-leaderboard .player-name {color:#fff !important;font-size:clamp(13px,1.3vw,19px);font-weight:950;}
+.arcade-leaderboard .score {color:#fff !important;font-size:22px;}
+.arcade-leaderboard .player-row[data-rank="1"] .player-name,.arcade-leaderboard .player-row[data-rank="1"] .score,.arcade-leaderboard .player-row[data-rank="2"] .player-name,.arcade-leaderboard .player-row[data-rank="2"] .score,.arcade-leaderboard .player-row[data-rank="3"] .player-name,.arcade-leaderboard .player-row[data-rank="3"] .score {color:#182147 !important;}
+.arcade-leaderboard .player-row[data-rank="1"] .rank::after { content:'👑';margin-left:5px; }
+.arcade-leaderboard .player-row[data-rank="2"] .rank::after { content:'🥈';margin-left:5px; }
+.arcade-leaderboard .player-row[data-rank="3"] .rank::after { content:'🥉';margin-left:5px; }
+.arcade-leaderboard .player-row .tiny-progress {margin-top:4px;background:#ffffff45;}
+.arcade-leaderboard .player-row .tiny-progress span {background:linear-gradient(90deg,#fffeaf,#ffe07a);}
+.arcade-leaderboard .empty-players {color:#e9edff;}
+/* Host dashboard is a single screen on projector/desktop. */
+html.fullscreen-mode .app-shell {height:100dvh;min-height:0;max-width:1920px;padding:0 clamp(10px,1.5vw,28px);}
+html.fullscreen-mode .topbar {height:72px !important;min-height:72px !important;flex:0 0 auto;}
+html.fullscreen-mode .brand-complete-logo {max-height:66px;max-width:clamp(128px,12vw,220px);}
+html.fullscreen-mode .classroom-dashboard {padding:7px 0;}
+html.fullscreen-mode .classroom-settings {min-height:91px;padding:6px 11px;}
+html.fullscreen-mode .classroom-card-stage .picture-card {width:min(calc(100dvh - 223px),94%,760px) !important;}
+html.fullscreen-mode .arcade-leaderboard {padding:12px;}
+@media(max-width:1200px) {
+  .header-join-site strong {font-size:12px;}
+  .header-room-code {flex-basis:126px;}
+  .header-join-site {padding:8px;gap:6px;}
+  .join-globe,.join-gamepad {font-size:23px;}
+  .teacher-header-actions .header-start-game {min-width:110px;max-width:135px;padding:7px 9px;font-size:11px;}
+  .classroom-game-grid {grid-template-columns:minmax(0,1.28fr) minmax(250px,.62fr);}
+}
+@media(max-width:1020px) {
+  html.teacher-active,html.teacher-active body {height:auto;overflow-y:auto;}
+  html.teacher-active .app-shell {height:auto;min-height:100dvh;}
+  .topbar {height:auto;min-height:78px;flex-wrap:wrap;}
+  .teacher-header-info {order:3;width:100%;flex-basis:100%;}
+  .classroom-game-grid {grid-template-columns:1fr;}
+  .classroom-card-stage .picture-card {width:min(78vw,580px) !important;}
+  .classroom-card-stage {min-height:420px;}
+  .arcade-leaderboard {max-height:350px;}
+}
+@media(max-width:640px) {
+  .header-join-site strong {font-size:10px;white-space:normal;}
+  .header-room-code {flex-basis:95px;}
+  .header-room-code strong {font-size:26px;}
+  .classroom-settings {grid-template-columns:1fr;}
+  .classroom-card-stage {min-height:315px;}
+  .classroom-card-stage .picture-card {width:min(85vw,400px) !important;}
+  .header-right {margin-left:auto;}
+}
+/* Enforce identical width and height; keep the entire round card inside projector height. */
+.classroom-card-stage .picture-card { width:min(calc(100dvh - 246px),92%,720px) !important;max-height:none !important;height:auto !important;aspect-ratio:1/1 !important; }
+html.fullscreen-mode .classroom-card-stage .picture-card { width:min(calc(100dvh - 235px),92%,720px) !important;max-height:none !important;height:auto !important;aspect-ratio:1/1 !important; }
+.arcade-leaderboard .player-row .rank {position:relative;flex:0 0 32px;}
+.arcade-leaderboard .player-row[data-rank="1"] .rank::after,
+.arcade-leaderboard .player-row[data-rank="2"] .rank::after,
+.arcade-leaderboard .player-row[data-rank="3"] .rank::after {
+  position:absolute;top:50%;left:42px;right:auto;transform:translateY(-50%);font-size:20px;margin:0;
+}
+.arcade-leaderboard .player-details {padding-left:27px;}

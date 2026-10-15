@@ -7,6 +7,8 @@
   const soundBtn = document.getElementById('sound-btn');
   const musicBtn = document.getElementById('music-btn');
   const fullscreenBtn = document.getElementById('fullscreen-btn');
+  const teacherHeaderInfo = document.getElementById('teacher-header-info');
+  const teacherHeaderActions = document.getElementById('teacher-header-actions');
   const ENTRY_KEY = 'spotsprint:session';
   const HOST_KEY = 'spotsprint:teacherSession';
   const SOUND_KEY = 'spotsprint:muted';
@@ -38,12 +40,12 @@
     scifi: { label: 'Sci-Fi', icon: '🚀' }
   };
   const THEME_SPRITES = {
-    mixed: '/symbols.webp?v=20261015-12',
-    sports: '/symbols-sports.webp?v=20261015-12',
-    animals: '/symbols-animals.webp?v=20261015-12',
-    emojis: '/symbols-emojis.webp?v=20261015-12',
-    scifi: '/symbols-scifi.webp?v=20261015-12',
-    'sci-fi': '/symbols-scifi.webp?v=20261015-12'
+    mixed: '/symbols.webp?v=20261015-13',
+    sports: '/symbols-sports.webp?v=20261015-13',
+    animals: '/symbols-animals.webp?v=20261015-13',
+    emojis: '/symbols-emojis.webp?v=20261015-13',
+    scifi: '/symbols-scifi.webp?v=20261015-13',
+    'sci-fi': '/symbols-scifi.webp?v=20261015-13'
   };
   function cardVariation(cardId, symbolId, index, salt) {
     // Stable across rerenders; varies from card to card even for the same symbol.
@@ -82,7 +84,13 @@
   let countdownRerender = null;
 
   function readSession() {
-    try { return JSON.parse(sessionStorage.getItem(ENTRY_KEY) || localStorage.getItem(HOST_KEY) || 'null'); } catch { return null; }
+    try {
+      const stored = JSON.parse(sessionStorage.getItem(ENTRY_KEY) || 'null');
+      if (stored?.role === 'student') return stored; // Students may refresh without losing their place.
+      // Only an explicitly requested host resume bypasses the entry screen.
+      if (stored?.role === 'teacher' && query.get('host') === 'resume') return stored;
+    } catch { /* no saved session */ }
+    return null;
   }
   function saveSession(role, code, token) {
     session = { role, code, token };
@@ -190,10 +198,15 @@
         }
         tone(72, delay, .09, musicMode === 'lobby' ? .018 : .025, 'sine', musicBus);
       }
-      if (stepInBar === 4) tone(210, delay, .08, .0055, 'triangle', musicBus);
+      if (stepInBar === 4) tone(190, delay, .10, musicMode === 'playing' ? .009 : .006, 'triangle', musicBus);
+      if (stepInBar === 0 || stepInBar === 4) tone(58, delay, .16, .012, 'sine', musicBus);
+      if (musicMode === 'playing' && stepInBar === 6) tone(track.bass[Math.floor(n / 4) % track.bass.length] * 2, delay + .025, .14, .008, 'triangle', musicBus);
+      if (musicMode === 'lobby' && [2,6].includes(stepInBar)) tone(392, delay, .12, .009, 'triangle', musicBus);
       if (stepInBar % 2 === 0) tone(musicMode === 'lobby' ? 1280 : 1450, delay + .01, .03, musicMode === 'lobby' ? .0032 : .0042, 'square', musicBus);
       if (musicMode === 'lobby' && stepInBar === 6) tone(1568, delay, .12, .0075, 'sine', musicBus);
-      if (musicMode === 'playing' && [1,3,5,7].includes(stepInBar)) tone(1760, delay + .015, .02, .0048, 'square', musicBus);
+      if (musicMode === 'lobby' && stepInBar === 2) tone(1047, delay + .045, .15, .007, 'sine', musicBus);
+      if (musicMode === 'playing' && [1,3,5,7].includes(stepInBar)) tone(1760, delay + .015, .025, .0034, 'square', musicBus);
+      if (musicMode === 'playing' && stepInBar === 7) tone(880, delay, .18, .010, 'sine', musicBus);
       musicStep++;
       nextMusicTime += 30 / track.bpm;
     }
@@ -341,14 +354,23 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-12" alt="" aria-hidden="true"><span>START</span></button>');
-    if (view.status === 'countdown') buttons.push('<span class="countdown-status-label">GET READY!</span>');
-    if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
-    if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
-    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-12" alt="" aria-hidden="true"><span>AGAIN</span></button>');
-    if (view.status !== 'lobby' && view.status !== 'countdown' && view.status !== 'finished') buttons.push('<button type="button" class="btn btn-quiet full" data-action="restart">↻ New round · keep students</button>');
-    if (view.status !== 'lobby' && view.status !== 'countdown') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby</button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="header-start-game" data-action="start" aria-label="Start game"><span class="play-triangle">▶</span><span>START GAME</span></button>');
+    if (view.status === 'countdown') buttons.push('<span class="header-countdown">3 · 2 · 1</span>');
+    if (view.status === 'playing') buttons.push(`<button type="button" class="header-round-control" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause</button>`);
+    if (view.status === 'paused') buttons.push('<button type="button" class="header-start-game" data-action="pause">▶ Resume</button>');
+    if (view.status === 'finished') buttons.push('<button type="button" class="header-start-game" data-action="start">↻ PLAY AGAIN</button>');
+    if (['playing','paused'].includes(view.status)) buttons.push('<button type="button" class="header-round-control" data-action="restart">↻ New round</button>');
+    if (!['lobby','countdown'].includes(view.status)) buttons.push('<button type="button" class="header-round-control" data-action="reset">↩ Lobby</button>');
     return buttons.join('');
+  }
+  function updateTeacherHeader() {
+    const isTeacher = view?.role === 'teacher';
+    teacherHeaderInfo.hidden = !isTeacher;
+    teacherHeaderActions.hidden = !isTeacher;
+    document.documentElement.classList.toggle('teacher-active', isTeacher);
+    if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
+    teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><small>Student website</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div>`;
+    teacherHeaderActions.innerHTML = teacherControls();
   }
   function renderLanding() {
     screen.innerHTML = `<div class="home-hub">
@@ -399,43 +421,23 @@
     const winner = view.players.find(p => p.id === view.winnerId);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
-    const controlsMarkup = view.status === 'lobby'
-      ? `<div class="controls-stack controls-stack-prominent"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>`
-      : `<div class="top-target top-target-panel"><em>${escape(THEME_META[view.theme]?.icon || '✨')}</em><strong>${escape(THEME_META[view.theme]?.label || 'Mixed')}</strong><span>First to ${view.cardsToWin} cards</span></div>`;
-    screen.innerHTML = `<div class="teacher-view-v2">
-      <div class="teacher-hero-top" aria-label="Classroom game setup">
-        <section class="join-website-box">
-          <div class="join-instruction"><b>1</b> STUDENT WEBSITE</div>
-          <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
-        </section>
-        <section class="room-code-box room-code-box-hero">
-          <div class="join-instruction"><b>2</b> GAME CODE</div>
-          <strong>${escape(view.code)}</strong>
-        </section>
-      </div>
+    const chooseCards = view.status === 'lobby'
+      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>▧ &nbsp; Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
+      : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
+    screen.innerHTML = `<div class="classroom-dashboard">
       ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
-      <div class="teacher-hero-main">
-        <section class="hero-controls-panel">
-          <div class="hero-panel-title"><h2>⚙️ Game Controls</h2></div>
-          ${controlsMarkup}
-        </section>
-        <section class="hero-start-panel">
-          <div class="hero-start-glow"></div>
-          <div class="hero-start-inner">
-            <div class="hero-start-button-wrap">${teacherControls()}</div>
-          </div>
-        </section>
-        <aside class="sidebar-section leaderboard-panel hero-leaderboard-panel">
+      <div class="classroom-game-grid">
+        <div class="classroom-left-column">
+          <section class="classroom-settings" aria-label="Game options">${chooseCards}</section>
+          <section class="classroom-card-area ${playing ? 'active-board' : ''}" aria-label="Shared matching card">
+            <div class="classroom-card-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+            <div class="classroom-card-status">${playing && view.lastEvent ? `✨ ${escape(view.lastEvent.playerName)} spotted the match!` : 'Every pair of cards shares exactly one picture.'}</div>
+          </section>
+        </div>
+        <aside class="arcade-leaderboard" aria-label="Leaderboard">
           <div class="sidebar-title"><h2>🏆 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} players</span></div>
           ${playerList()}
         </aside>
-      </div>
-      <div class="game-grid teacher-grid teacher-grid-single">
-        <section class="board-panel board-panel-showcase ${playing ? 'active-board' : ''}">
-          <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${countdownActive ? '⏳ STARTING NOW' : celebrating ? '✨ NEW CARD IN 2s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
-          <div class="stage stage-showcase ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
-          <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
-        </section>
       </div>
     </div>`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -487,6 +489,7 @@
     }
   }
   function render() {
+    updateTeacherHeader();
     if (!view) renderLanding();
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
@@ -599,7 +602,7 @@
     }
     if (action === 'create') {
       if (creating) return;
-      if (session?.role === 'teacher') { await resume(); if (view?.role === 'teacher') return; }
+
       // Fullscreen must be requested directly in the user click, before the
       // asynchronous network request (otherwise browsers refuse it).
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -612,6 +615,20 @@
       }
       creating = true;
       render();
+      // Only create a fresh room if there is no valid active teacher room.
+      // Returning from the landing page should not disconnect enrolled students.
+      let previous = null;
+      try { previous = JSON.parse(localStorage.getItem(HOST_KEY) || 'null'); } catch { /* bad storage */ }
+      if (previous?.role === 'teacher') {
+        const reconnect = await send('room:resume', previous);
+        if (reconnect?.ok) {
+          creating = false;
+          saveSession('teacher', previous.code, previous.token);
+          updateView(reconnect.view, true);
+          return;
+        }
+        localStorage.removeItem(HOST_KEY);
+      }
       const r = await send('room:create');
       creating = false;
       if (!r.ok) { toast(r.error, true); render(); return; }
