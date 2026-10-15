@@ -494,7 +494,6 @@
           <div>
             <div class="eyebrow">READY TO PLAY <span class="eyebrow-dot">●</span> HOST OR JOIN</div>
             <h1>Start a game or join one.</h1>
-            <p class="home-subtitle">Everything you need is right here — no intro page, no extra clicks.</p>
           </div>
         </div>
         <div class="home-grid">
