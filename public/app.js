@@ -38,12 +38,12 @@
     scifi: { label: 'Sci-Fi', icon: '🚀' }
   };
   const THEME_SPRITES = {
-    mixed: '/symbols.webp?v=20261015-11',
-    sports: '/symbols-sports.webp?v=20261015-11',
-    animals: '/symbols-animals.webp?v=20261015-11',
-    emojis: '/symbols-emojis.webp?v=20261015-11',
-    scifi: '/symbols-scifi.webp?v=20261015-11',
-    'sci-fi': '/symbols-scifi.webp?v=20261015-11'
+    mixed: '/symbols.webp?v=20261015-12',
+    sports: '/symbols-sports.webp?v=20261015-12',
+    animals: '/symbols-animals.webp?v=20261015-12',
+    emojis: '/symbols-emojis.webp?v=20261015-12',
+    scifi: '/symbols-scifi.webp?v=20261015-12',
+    'sci-fi': '/symbols-scifi.webp?v=20261015-12'
   };
   function cardVariation(cardId, symbolId, index, salt) {
     // Stable across rerenders; varies from card to card even for the same symbol.
@@ -341,11 +341,11 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-11" alt="" aria-hidden="true"><span>START</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-12" alt="" aria-hidden="true"><span>START</span></button>');
     if (view.status === 'countdown') buttons.push('<span class="countdown-status-label">GET READY!</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
-    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-11" alt="" aria-hidden="true"><span>AGAIN</span></button>');
+    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-12" alt="" aria-hidden="true"><span>AGAIN</span></button>');
     if (view.status !== 'lobby' && view.status !== 'countdown' && view.status !== 'finished') buttons.push('<button type="button" class="btn btn-quiet full" data-action="restart">↻ New round · keep students</button>');
     if (view.status !== 'lobby' && view.status !== 'countdown') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby</button>');
     return buttons.join('');
@@ -399,33 +399,44 @@
     const winner = view.players.find(p => p.id === view.winnerId);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
-    screen.innerHTML = `<div class="teacher-top-row" aria-label="Classroom game setup">
-      <section class="join-website-box">
-        <div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
-        <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
-      </section>
-      <section class="room-code-box">
-        <div class="join-instruction"><b>2</b> ENTER GAME CODE</div>
-        <strong>${escape(view.code)}</strong>
-      </section>
-      <section class="top-game-controls">
-        <div class="top-controls-title"><span>GAME CONTROLS</span><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
-        <div class="top-controls-main">
-          ${view.status === 'lobby' ? `<div class="controls-stack"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>` : `<div class="top-target"><em>${escape(THEME_META[view.theme]?.icon || '✨')}</em><strong>${escape(THEME_META[view.theme]?.label || 'Mixed')}</strong><span>First to ${view.cardsToWin} cards</span></div>`}
-          <div class="control-buttons">${teacherControls()}</div>
-        </div>
-      </section>
-    </div>
-    ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
-    <div class="game-grid teacher-grid">
-      <section class="board-panel ${playing ? 'active-board' : ''}">
-        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${countdownActive ? '⏳ STARTING NOW' : celebrating ? '✨ NEW CARD IN 2s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
-        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
-        <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
-      </section>
-      <aside class="sidebar teacher-sidebar">
-        <section class="sidebar-section leaderboard-panel"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} joined</span></div>${playerList()}</section>
-      </aside>
+    const controlsMarkup = view.status === 'lobby'
+      ? `<div class="controls-stack controls-stack-prominent"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>`
+      : `<div class="top-target top-target-panel"><em>${escape(THEME_META[view.theme]?.icon || '✨')}</em><strong>${escape(THEME_META[view.theme]?.label || 'Mixed')}</strong><span>First to ${view.cardsToWin} cards</span></div>`;
+    screen.innerHTML = `<div class="teacher-view-v2">
+      <div class="teacher-hero-top" aria-label="Classroom game setup">
+        <section class="join-website-box">
+          <div class="join-instruction"><b>1</b> STUDENT WEBSITE</div>
+          <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
+        </section>
+        <section class="room-code-box room-code-box-hero">
+          <div class="join-instruction"><b>2</b> GAME CODE</div>
+          <strong>${escape(view.code)}</strong>
+        </section>
+      </div>
+      ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
+      <div class="teacher-hero-main">
+        <section class="hero-controls-panel">
+          <div class="hero-panel-title"><h2>⚙️ Game Controls</h2></div>
+          ${controlsMarkup}
+        </section>
+        <section class="hero-start-panel">
+          <div class="hero-start-glow"></div>
+          <div class="hero-start-inner">
+            <div class="hero-start-button-wrap">${teacherControls()}</div>
+          </div>
+        </section>
+        <aside class="sidebar-section leaderboard-panel hero-leaderboard-panel">
+          <div class="sidebar-title"><h2>🏆 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} players</span></div>
+          ${playerList()}
+        </aside>
+      </div>
+      <div class="game-grid teacher-grid teacher-grid-single">
+        <section class="board-panel board-panel-showcase ${playing ? 'active-board' : ''}">
+          <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${countdownActive ? '⏳ STARTING NOW' : celebrating ? '✨ NEW CARD IN 2s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
+          <div class="stage stage-showcase ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+          <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
+        </section>
+      </div>
     </div>`;
     if (done && view.lastEvent?.id !== winningEventShown) {
       winningEventShown = view.lastEvent?.id;
