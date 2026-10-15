@@ -31,8 +31,9 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
     const incorrect = call('game:match', { symbol:wrong,cardTurn:r.cardTurn,cardId:own }, sAuth);
     assert.equal(incorrect.correct, false);
     assert.equal(p.points, i);
-    // Wait off the brief wrong-answer cooldown without delaying the test.
+    // Clear local penalty state for the logic test so the correct-match path can still be exercised.
     p.lockUntil = 0;
+    p.blockedTurn = 0;
     const oldTurn=r.cardTurn;
     const result=call('game:match', { symbol:matching,cardTurn:oldTurn,cardId:own }, sAuth);
     assert.equal(result.correct, true);
@@ -90,5 +91,39 @@ test('reset during celebration cancels pending card change, and pause is blocked
   assert.equal(room.pendingMatch,null);
   assert.equal(finalizeMatch(room,eventId),false,'reset cancels delayed flip');
   assert.equal(room.status,'lobby');
+  rooms.delete(teacher.code);
+});
+
+test('one wrong guess locks a player until the shared card flips', () => {
+  const teacher = call('room:create',{});
+  const student = call('room:join',{code:teacher.code,name:'Alex'});
+  const helper = call('room:join',{code:teacher.code,name:'Taylor'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const sAuth={role:'student',code:teacher.code,token:student.token};
+  const hAuth={role:'student',code:teacher.code,token:helper.token};
+  const room=rooms.get(teacher.code);
+  for (const player of room.players.values()) player.stream={write(){},writableEnded:false,destroyed:false};
+  assert.equal(call('room:start',{},tAuth).ok,true);
+  const p=room.players.get(student.token);
+  const card=p.hand[0].id;
+  const center=room.teacherCard.id;
+  const shared=getSharedSymbol(center,card);
+  const wrong=DECK[card].find(symbol=>symbol!==shared);
+  const turn=room.cardTurn;
+  const missed=call('game:match',{symbol:wrong,cardTurn:turn,cardId:card},sAuth);
+  assert.equal(missed.correct,false);
+  assert.equal(missed.lockedUntilNextCard,true);
+  assert.equal(call('room:resume',sAuth).view.me.lockedOut,true);
+  const retry=call('game:match',{symbol:shared,cardTurn:turn,cardId:card},sAuth);
+  assert.equal(retry.ok,false);
+  assert.equal(retry.locked,true);
+  const h=room.players.get(helper.token);
+  const helperCard=h.hand[0].id;
+  const helperShared=getSharedSymbol(center,helperCard);
+  assert.equal(call('game:match',{symbol:helperShared,cardTurn:turn,cardId:helperCard},hAuth).correct,true);
+  assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+  assert.equal(room.cardTurn,turn+1);
+  assert.equal(call('room:resume',sAuth).view.me.lockedOut,false);
+  call('room:reset',{},tAuth);
   rooms.delete(teacher.code);
 });

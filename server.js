@@ -52,7 +52,7 @@ function view(room, role, playerId) {
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.teacherCard, cardTurn:room.cardTurn,
     myCard:p?.inRound ? topCard(p) : null,
-    me:p ? { id:p.id, name:p.name, points:p.points, inRound:p.inRound } : null,
+    me:p ? { id:p.id, name:p.name, points:p.points, inRound:p.inRound, lockedOut:Boolean(p.blockedTurn && p.blockedTurn === room.cardTurn) } : null,
     winnerId:room.winnerId, lastEvent:room.lastEvent,
     pendingMatch:room.pendingMatch ? { eventId:room.pendingMatch.eventId, playerName:room.pendingMatch.playerName, symbol:room.pendingMatch.symbol, endsAt:room.pendingMatch.endsAt } : null,
     startedAt:room.startedAt, endedAt:room.endedAt
@@ -119,7 +119,7 @@ function action(body) {
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
       status:'lobby', cardsToWin:7, teacherCard:null, cardTurn:0,
-      winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null,
+      winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
@@ -135,7 +135,7 @@ function action(body) {
     if ([...room.players.values()].some(x => x.name.toLowerCase() === name.toLowerCase())) {
       return failure('That name is taken. Add an initial to your name.');
     }
-    p = { id:token(), name, stream:null, points:0, hand:[], inRound:false, joinedAt:Date.now(), lockUntil:0 };
+    p = { id:token(), name, stream:null, points:0, hand:[], inRound:false, joinedAt:Date.now(), lockUntil:0, blockedTurn:0 };
     room.players.set(p.id,p);
     broadcast(room);
     return success({ code, token:p.id, view:view(room, 'student', p.id) });
@@ -166,7 +166,9 @@ function action(body) {
     const connected = [...room.players.values()].filter(x => x.stream);
     if (!connected.length) return failure('Wait for at least one student to join.');
     clearTimeout(room.pendingTimer);
+    clearTimeout(room.wrongTurnTimer);
     room.pendingTimer = null;
+    room.wrongTurnTimer = null;
     room.pendingMatch = null;
     room.status = 'playing';
     room.winnerId = null;
@@ -180,6 +182,7 @@ function action(body) {
       student.inRound = Boolean(student.stream);
       student.points = 0;
       student.lockUntil = 0;
+      student.blockedTurn = 0;
       student.hand = student.inRound
         ? shuffle(DECK.map((_,i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(cardView)
         : [];
@@ -196,7 +199,9 @@ function action(body) {
   }
   if (command === 'room:reset') {
     clearTimeout(room.pendingTimer);
+    clearTimeout(room.wrongTurnTimer);
     room.pendingTimer = null;
+    room.wrongTurnTimer = null;
     room.pendingMatch = null;
     room.status = 'lobby';
     room.teacherCard = null;
@@ -206,7 +211,7 @@ function action(body) {
     room.endedAt = null;
     room.cardTurn = 0;
     for (const student of room.players.values()) {
-      student.points=0; student.inRound=false; student.hand=[];
+      student.points=0; student.inRound=false; student.hand=[]; student.blockedTurn=0;
     }
     broadcast(room);
     return success();
@@ -214,13 +219,27 @@ function action(body) {
   if (command === 'game:match') {
     if (room.status !== 'playing' || !p.inRound || !p.hand.length) return failure('The race is not active.');
     if (room.pendingMatch) return failure('Get ready for the next picture!', { cooldown:true });
-    if (Date.now() < p.lockUntil) return failure('Try again in a moment.',{ cooldown:true });
+    if ((p.blockedTurn && p.blockedTurn === room.cardTurn) || Date.now() < p.lockUntil) return failure('Wait for the next card.',{ cooldown:true, locked:true });
     const own = topCard(p);
     if (data.cardTurn !== room.cardTurn || data.cardId !== own.id) return failure('The card has changed.',{ stale:true });
     const correct = getSharedSymbol(room.teacherCard.id, own.id);
     if (Number(data.symbol) !== correct) {
       p.lockUntil = Date.now() + 500;
-      return { ok:true, correct:false };
+      p.blockedTurn = room.cardTurn;
+      // If everyone makes a mistake, advance the shared card automatically.
+      // Otherwise a whole class (or a solo test player) could get stuck forever.
+      const active = [...room.players.values()].filter(x => x.inRound && x.hand.length);
+      if (active.length && active.every(x => x.blockedTurn === room.cardTurn) && !room.wrongTurnTimer) {
+        const missedTurn = room.cardTurn;
+        room.wrongTurnTimer = setTimeout(() => {
+          room.wrongTurnTimer = null;
+          if (rooms.get(room.code) !== room || room.status !== 'playing' || room.cardTurn !== missedTurn || room.pendingMatch) return;
+          room.teacherCard = chooseCenter(room, room.teacherCard.id);
+          room.cardTurn++;
+          broadcast(room);
+        }, CELEBRATION_MS);
+      }
+      return { ok:true, correct:false, lockedUntilNextCard:true, cardTurn: room.cardTurn };
     }
     // Award the point immediately, but HOLD the shared card for the full celebration.
     // Leave all player cards in place until the flip so everybody stays in sync.
@@ -290,9 +309,9 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp'
+  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/logo-mark.svg':'logo-mark.svg'
 };
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml' };
 const server = http.createServer((req,res) => {
   const url=new URL(req.url,'http://localhost');
   if (req.method==='GET' && url.pathname==='/health') return sendJson(res,200,{ok:true,service:'spot-sprint'});

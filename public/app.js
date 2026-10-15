@@ -57,6 +57,8 @@
   let joinDraft = { code: suggestedCode || '', name: '' };
   let creating = false;
   let joining = false;
+  let penaltyTurn = null;
+  let wrongFlashTimeout = null;
 
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(ENTRY_KEY) || 'null'); } catch { return null; }
@@ -71,6 +73,8 @@
     sessionStorage.removeItem(ENTRY_KEY);
     socket.clearRoom();
     view = null;
+    penaltyTurn = null;
+    if (wrongFlashTimeout) clearTimeout(wrongFlashTimeout);
     stopMusic();
   }
   function escape(s) {
@@ -118,24 +122,32 @@
   // Played on the teacher projector only, never on every student device.
   const TRACKS = {
     lobby: {
-      bpm: 116,
+      bpm: 122,
       melody: [
-        659, null, 784, 988, 880, 784, 659, null,
-        587, 659, 784, null, 659, 523, 587, null,
-        659, 784, 988, 1047, 988, 880, 784, null,
-        698, 880, 784, 659, 587, 659, 523, null
+        659, 784, 988, null, 880, 784, 659, null,
+        587, 659, 784, 880, 784, 659, 587, null,
+        659, 784, 1047, 988, 880, 784, 659, null,
+        698, 784, 880, 784, 659, 587, 523, null
       ],
-      bass: [131, 131, 175, 175, 147, 147, 196, 196]
+      bass: [131, 147, 165, 147, 131, 147, 175, 196],
+      chords: [
+        [523, 659, 784], [587, 698, 880], [659, 784, 988], [587, 740, 880],
+        [523, 659, 784], [494, 659, 784], [587, 698, 880], [440, 659, 784]
+      ]
     },
     playing: {
-      bpm: 120,
+      bpm: 134,
       melody: [
-        659, 784, 988, null, 784, 659, 587, 659,
-        523, 659, 784, 880, 988, null, 784, 659,
-        698, 880, 1047, null, 880, 698, 659, 587,
-        659, 784, 988, 1175, 1047, 988, 784, null
+        784, 988, 1175, 988, 880, 784, 698, null,
+        784, 988, 1175, 1319, 1175, 988, 880, null,
+        880, 988, 1175, 988, 1319, 1175, 988, 880,
+        784, 880, 988, 1175, 1047, 988, 880, null
       ],
-      bass: [131, 131, 175, 175, 110, 110, 196, 196]
+      bass: [110, 110, 131, 131, 147, 147, 165, 165],
+      chords: [
+        [392, 523, 659], [440, 554, 698], [494, 659, 784], [523, 659, 784],
+        [440, 554, 698], [494, 659, 784], [523, 659, 784], [587, 740, 880]
+      ]
     }
   };
   function scheduleMusic() {
@@ -143,16 +155,22 @@
     const track = TRACKS[musicMode];
     while (nextMusicTime < audio.currentTime + .24) {
       const n = musicStep % track.melody.length;
+      const stepInBar = n % 8;
       const delay = Math.max(0, nextMusicTime - audio.currentTime);
-      // Short notes, warm bass, bass drum, clap and gentle high-hat.
-      if (track.melody[n]) tone(track.melody[n], delay, musicMode === 'lobby' ? .18 : .19, .024, 'triangle', musicBus);
-      if (n % 4 === 0) tone(track.bass[Math.floor(n / 4) % track.bass.length], delay, .34, .032, 'sine', musicBus);
-      if (n % 4 === 0) tone(70, delay, .09, .025, 'sine', musicBus);
-      if (n % 8 === 4) tone(230, delay, .075, .005, 'triangle', musicBus);
-      if (n % 2 === 0) tone(1200, delay + .012, .024, .0035, 'square', musicBus);
-      if (musicMode === 'lobby' && n % 8 === 6) tone(1568, delay, .11, .011, 'sine', musicBus);
+      if (track.melody[n]) tone(track.melody[n], delay, musicMode === 'lobby' ? .18 : .16, musicMode === 'lobby' ? .02 : .024, stepInBar % 4 === 0 ? 'triangle' : 'square', musicBus);
+      if (stepInBar % 4 === 0) {
+        tone(track.bass[Math.floor(n / 4) % track.bass.length], delay, .33, .028, 'sine', musicBus);
+        for (const [i, f] of track.chords[Math.floor(n / 4) % track.chords.length].entries()) {
+          tone(f, delay, musicMode === 'lobby' ? .34 : .28, Math.max(.004, .012 - i * .002), i === 0 ? 'triangle' : 'sine', musicBus);
+        }
+        tone(72, delay, .09, musicMode === 'lobby' ? .018 : .025, 'sine', musicBus);
+      }
+      if (stepInBar === 4) tone(210, delay, .08, .0055, 'triangle', musicBus);
+      if (stepInBar % 2 === 0) tone(musicMode === 'lobby' ? 1280 : 1450, delay + .01, .03, musicMode === 'lobby' ? .0032 : .0042, 'square', musicBus);
+      if (musicMode === 'lobby' && stepInBar === 6) tone(1568, delay, .12, .0075, 'sine', musicBus);
+      if (musicMode === 'playing' && [1,3,5,7].includes(stepInBar)) tone(1760, delay + .015, .02, .0048, 'square', musicBus);
       musicStep++;
-      nextMusicTime += 30 / track.bpm; // One eighth note.
+      nextMusicTime += 30 / track.bpm;
     }
   }
   function stopMusic() {
@@ -264,36 +282,43 @@
     return buttons.join('');
   }
   function renderLanding() {
-    screen.innerHTML = `<div class="landing">
-      <section class="landing-hero">
-        <div class="eyebrow"><span class="spark">✦</span> A QUICK-FIRE CLASSROOM GAME</div>
-        <h1>Find the match.<br><em>Beat the class.</em></h1>
-        <p class="landing-description">One card on the big screen. One card on every student's device. Spot the matching picture, click it and race to clear your deck first!</p>
-        <div class="landing-card-wrap">${symbolCard(preview)}<span class="orbit-label orbit-label-top">8 pictures</span><span class="orbit-label orbit-label-bottom">1 perfect match</span></div>
-        <div class="hero-highlights"><span>✓ Live multiplayer</span><span>✓ No student accounts</span><span>✓ Real-time leaderboard</span></div>
-        <div class="landing-update-banner"><span class="update-pill">NEW FEATURES</span><div><strong>Lobby music + fullscreen teacher display</strong><p>Create a game to hear the new waiting-room music and see the big joining address and room code on your projector.</p></div></div>
-      </section>
-      <section class="start-panel">
-        <div class="start-panel-heading"><span class="start-icon">✳</span><div><span class="new-feature-line">★ NEW: Lobby music &amp; fullscreen</span><h2>Ready, set, SPOT!</h2><p>Choose how you want to play.</p></div></div>
-        <div class="landing-address"><small>STUDENTS OPEN THIS WEBSITE TO JOIN</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div>
-        <div class="start-option teacher-option">
-          <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
-          <h3>Host a game</h3>
-          <p>Create a room and project the big card onto your class screen.</p>
-          <button class="btn btn-accent full" type="button" data-action="create" ${creating ? 'disabled' : ''}>${creating ? 'Creating room…' : 'Create game'} <span>→</span></button>
+    screen.innerHTML = `<div class="home-hub">
+      <section class="home-panel">
+        <div class="home-panel-head">
+          <div>
+            <div class="eyebrow">READY TO PLAY <span class="eyebrow-dot">●</span> HOST OR JOIN</div>
+            <h1>Start a game or join one.</h1>
+            <p class="home-subtitle">Everything you need is right here — no intro page, no extra clicks.</p>
+          </div>
+          <div class="landing-address home-address"><small>STUDENTS OPEN THIS WEBSITE</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div>
         </div>
-        <div class="option-divider"><span>OR</span></div>
-        <div class="start-option student-option">
-          <div class="option-tag">🎒 FOR STUDENTS</div>
-          <h3>Join a game</h3>
-          <p>Enter the 6-character code from your teacher's screen.</p>
-          <form id="join-form" class="join-form">
-            <label for="room-code">Game code</label>
-            <input id="room-code" name="code" class="code-input" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" required value="${escape(joinDraft.code)}" />
-            <label for="player-name">Your name</label>
-            <input id="player-name" name="name" class="name-input" maxlength="22" placeholder="e.g. Alex" autocomplete="off" required value="${escape(joinDraft.name)}" />
-            <button class="btn btn-white full" type="submit" ${joining ? 'disabled' : ''}>${joining ? 'Joining…' : 'Join game'} <span>→</span></button>
-          </form>
+        <div class="home-grid">
+          <div class="home-card host-card">
+            <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
+            <h2>Host a new game</h2>
+            <p>Create a room, project the teacher screen and start the race.</p>
+            <button class="btn btn-accent full" type="button" data-action="create" ${creating ? 'disabled' : ''}>${creating ? 'Creating room…' : 'Create game'} <span>→</span></button>
+            <div class="mini-note">Students join from the same website using your 6-character room code.</div>
+          </div>
+          <div class="home-card join-card">
+            <div class="option-tag">🎒 FOR STUDENTS</div>
+            <h2>Join a game</h2>
+            <p>Type the room code from your teacher's screen and enter your name.</p>
+            <form id="join-form" class="join-form">
+              <label for="room-code">Game code</label>
+              <input id="room-code" name="code" class="code-input" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" required value="${escape(joinDraft.code)}" />
+              <label for="player-name">Your name</label>
+              <input id="player-name" name="name" class="name-input" maxlength="22" placeholder="e.g. Alex" autocomplete="off" required value="${escape(joinDraft.name)}" />
+              <button class="btn btn-white full" type="submit" ${joining ? 'disabled' : ''}>${joining ? 'Joining…' : 'Join game'} <span>→</span></button>
+            </form>
+          </div>
+          <div class="home-card preview-card">
+            <div class="option-tag">⚡ QUICK PREVIEW</div>
+            <h2>How it works</h2>
+            <p>Every two cards share exactly one picture. Find it first and clear your deck.</p>
+            <div class="home-preview-wrap">${symbolCard(preview, { small: true })}</div>
+            <div class="preview-pills"><span>8 pictures</span><span>1 perfect match</span></div>
+          </div>
         </div>
       </section>
     </div>`;
@@ -306,7 +331,7 @@
     screen.innerHTML = `<div class="room-header">
       <div><div class="eyebrow">TEACHER DASHBOARD <span class="eyebrow-dot">●</span> ${view.status.toUpperCase()}</div>
       <h1>${done ? 'We have a winner!' : playing ? 'Find the matching picture!' : 'Your classroom is ready.'}</h1>
-      <p>${done ? 'The race is complete. Give your champion a round of applause!' : playing ? 'Each correct tap changes this card for everybody. Watch the race unfold.' : 'Get students to join, choose how many matches they need, then start.'}</p></div>
+      <p>${done ? 'The race is complete. Give your champion a round of applause!' : playing ? 'Each correct tap changes this card for everybody. Watch the race unfold.' : 'Students join from the website and code shown here.'}</p></div>
       <div class="join-steps" aria-label="How to join the game">
         <div class="join-website-box"><div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
           <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
@@ -318,8 +343,8 @@
     ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
     <div class="game-grid teacher-grid">
       <section class="board-panel ${playing ? 'active-board' : ''}">
-        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'The shared card goes here'}</h2></div><span class="board-badge">${celebrating ? '✨ NEW CARD IN 2.5s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
-        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-count"><b>3</b><b>2</b><b>1</b></span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'Shared card preview'}</h2></div><span class="board-badge">${celebrating ? '✨ NEW CARD IN 2.5s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
+        <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">2.5s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
         <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
       </section>
       <aside class="sidebar">
@@ -330,7 +355,7 @@
           <div class="control-buttons">${teacherControls()}</div>
         </section>
         <section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} joined</span></div>${playerList()}</section>
-        <section class="sidebar-section tip-panel"><strong>💡 Teacher tip</strong><p>${view.status === 'lobby' ? 'Display this page on the projector. Students visit the same website on their own devices and enter the code.' : 'Every correct answer gives that student a point AND changes the shared card. Keep your eyes on the screen!'}</p></section>
+        <section class="sidebar-section tip-panel"><strong>💡 Teacher tip</strong><p>${view.status === 'lobby' ? 'Project this page and keep the website address and room code visible while students join.' : 'Every correct answer changes the shared card for everyone, so keep the class focused on the big screen.'}</p></section>
       </aside>
     </div>`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -354,11 +379,12 @@
     }
     const myPoints = view.me?.points || 0;
     const celebrating = Boolean(view.pendingMatch);
+    const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
     screen.innerHTML = `<div class="student-header"><div><div class="eyebrow">ROOM ${escape(view.code)} <span class="eyebrow-dot">●</span> ${done ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><h1>${done ? (view.winnerId === view.me.id ? 'You won the race! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me.name)}!`}</h1><p>${done ? (view.winnerId === view.me.id ? 'Incredible spotting! You cleared every card first.' : `${escape(winner?.name || 'A classmate')} cleared their cards first. Great effort!`) : 'Tap the picture on YOUR card that also appears on the shared card.'}</p></div>
       <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
       ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge">⚡ ${view.cardsToWin - myPoints} LEFT</span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating })}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span id="guess-feedback">${celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 2.5 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 2.5 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">👆 Tap the picture!</span></div>
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive })}${penaltyActive ? '<div class="wrong-lock-overlay"><div class="wrong-lock-badge">✖ Bad luck!</div><div class="wrong-lock-text">No more guesses until the next card appears.</div></div>' : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+       <div class="board-bottom"><span id="guess-feedback">${penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 2.5 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 2.5 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -376,6 +402,8 @@
     if (!next) return;
     const old = view;
     view = next;
+    if (old && next.cardTurn !== old.cardTurn) penaltyTurn = null;
+    if (next.me?.lockedOut) penaltyTurn = next.cardTurn;
     if (!initial && next.lastEvent?.id && next.lastEvent.id !== lastEventId) {
       if (next.role === 'teacher') playSound('celebrate');
       else if (next.lastEvent.playerId === next.me?.id) playSound('correct');
@@ -546,10 +574,14 @@
       }
       if (!r.correct) {
         playSound('wrong');
+        penaltyTurn = r.cardTurn || view.cardTurn;
         button.classList.remove('guess-pending');
         button.classList.add('guess-wrong');
         const feedback = document.getElementById('guess-feedback');
-        if (feedback) feedback.textContent = 'Not this one — try another picture!';
+        if (feedback) feedback.textContent = '✖ Bad luck — you are locked until the next card appears.';
+        if (wrongFlashTimeout) clearTimeout(wrongFlashTimeout);
+        wrongFlashTimeout = setTimeout(() => { if (view && penaltyTurn === view.cardTurn) render(); }, 560);
+        render();
         await new Promise(resolve => setTimeout(resolve, 510));
         button.classList.remove('guess-wrong');
       }
