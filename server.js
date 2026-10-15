@@ -9,7 +9,7 @@ const { SYMBOLS, DECK, getSharedSymbol } = require('./deck');
 
 const rooms = new Map();
 const MAX_PLAYERS = 40;
-const CELEBRATION_MS = 2500;
+const CELEBRATION_MS = 2000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
@@ -69,7 +69,7 @@ function broadcast(room) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
 }
-// Only the server can advance the shared card, 2.5 seconds after a correct match.
+// Only the server can advance the shared card, 2 seconds after a correct match.
 // A single pending match per room prevents overlapping celebrations or stale guesses.
 function finalizeMatch(room, eventId) {
   if (!room.pendingMatch || room.pendingMatch.eventId !== eventId || rooms.get(room.code) !== room) return false;
@@ -118,7 +118,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', cardsToWin:7, teacherCard:null, cardTurn:0,
+      status:'lobby', cardsToWin:10, teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, createdAt:Date.now(), updatedAt:Date.now()
     };
@@ -156,7 +156,7 @@ function action(body) {
   if (command === 'room:settings') {
     if (room.status !== 'lobby') return failure('Change this before starting a race.');
     const n = Number(data.cardsToWin);
-    if (!Number.isInteger(n) || n < 1 || n > 30) return failure('Choose between 1 and 30 cards.');
+    if (!Number.isInteger(n) || n < 5 || n > 25) return failure('Choose between 5 and 25 cards.');
     room.cardsToWin = n;
     broadcast(room);
     return success();

@@ -269,7 +269,7 @@ h1 { letter-spacing:-1.8px; }
  *,*::before,*::after { animation-duration:.01ms!important;transition-duration:.01ms!important; }
 }
 
-/* Teacher's 2.5-second winning-match announcement */
+/* Teacher's 2-second winning-match announcement */
 .soft-btn[hidden] { display: none !important; }
 .music-btn { border-color: rgba(255,222,123,.5); background: rgba(255,206,112,.11); }
 .celebration-overlay {
@@ -297,7 +297,7 @@ h1 { letter-spacing:-1.8px; }
 .celebration-count b:nth-child(2) { animation: count-two 3s steps(1,end) both; }
 .celebration-count b:nth-child(3) { animation: count-one 3s steps(1,end) both; }
 .celebration-progress { width: min(320px,75%); height: 9px; background: #ffffff31; border-radius: 30px; overflow: hidden; }
-.celebration-progress::after { content:''; display:block; height:100%; width:100%; transform-origin:left; background: linear-gradient(90deg,#68f4dc,#ffe17a,#ff81bd); animation: celebration-shrink 2.5s linear both; }
+.celebration-progress::after { content:''; display:block; height:100%; width:100%; transform-origin:left; background: linear-gradient(90deg,#68f4dc,#ffe17a,#ff81bd); animation: celebration-shrink 2s linear both; }
 @keyframes celebration-enter { from { opacity:0; transform:scale(.97); } to { opacity:1; transform:scale(1); } }
 @keyframes celebration-pulse { from { transform:scale(.96) rotate(-1deg); } to { transform:scale(1.06) rotate(1deg); } }
 @keyframes celebration-twinkle { from { opacity:.3; } to { opacity:1; } }
@@ -469,7 +469,7 @@ h1,h2,h3,.brand strong { letter-spacing:-.5px; font-weight:800; }
 }
 .symbol-art,.symbol-button .symbol-art,.picture-card-small .symbol-art {
   display:block;width:100%;height:100%;min-width:0;min-height:0;
-  background-image:url('/symbols.webp?v=20261015-5');
+  background-image:url('/symbols.webp?v=20261015-6');
   background-repeat:no-repeat;
   background-size:800% 800%;
   pointer-events:none;
@@ -631,3 +631,79 @@ html.fullscreen-mode .teacher-grid .stage .picture-card { width:min(67dvh,96%,64
 @media (prefers-reduced-motion: reduce) {
   .wrong-lock-badge { animation:none; }
 }
+
+
+/* Round 6: warmer, playful plum + coral + vivid chartreuse alongside aqua. */
+:root { --zest:#cbed72; --orchid:#d09af3; --tangerine:#ffab71; }
+body {
+  background:
+    radial-gradient(ellipse at 6% 7%, rgba(154,77,138,.36) 0, transparent 43%),
+    radial-gradient(ellipse at 91% 14%, rgba(254,155,100,.17) 0, transparent 34%),
+    radial-gradient(ellipse at 88% 95%, rgba(104,64,157,.31) 0, transparent 52%),
+    #21162f;
+}
+.orb-a { background:linear-gradient(48deg,#ee765b,#aa5ca2); }
+.orb-b { background:linear-gradient(35deg,#6b529b,#b16c97); }
+.orb-c { background:linear-gradient(38deg,#cbed72,#f1a575); opacity:.19; }
+.board-panel { background:linear-gradient(155deg,#352344,#2e2449);border-color:#da83a83e; }
+.sidebar-section { background:linear-gradient(150deg,rgba(64,39,79,.98),rgba(44,34,68,.97));border-color:#de96b43e; }
+.home-panel { background:linear-gradient(150deg,rgba(49,31,72,.96),rgba(37,32,64,.96)); }
+.home-card { background:linear-gradient(150deg,rgba(80,43,86,.85),rgba(48,35,75,.94)); }
+.join-website-box,.room-code-box { background:linear-gradient(135deg,#60406e,#3a2c5e);border-color:#fab57e91; }
+.board-badge { background:#714967;color:#fff2f2; }
+.active-board .board-badge { background:#6d4271;color:#ffeac9; }
+.fullscreen-btn { border-color:var(--zest);background:#48534b88; }
+.btn-accent { background:linear-gradient(110deg,var(--zest),#b3edac,var(--aqua));color:#292343; }
+.tiny-progress span { background:linear-gradient(90deg,var(--zest),var(--tangerine)); }
+.score { color:var(--zest); }
+.room-code-box strong { color:var(--zest); }
+.player-row:nth-child(odd) { background:#512f5d71; }
+.player-row.self,.player-row.winner-row { background:#6a585e91; }
+.home-card.host-card { border-color:#cbed7266; }
+.home-card.join-card { border-color:#ffab7166; }
+.home-card.preview-card { border-color:#d09af366; }
+
+/* One compact slider controls the target, without a second music button. */
+.cards-range-panel {
+  border:1px solid rgba(255,174,123,.28);border-radius:15px;padding:13px 14px 11px;
+  margin:9px 0 13px;background:rgba(22,15,38,.32);
+}
+.cards-range-heading { display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#eee2f7;font-weight:750; }
+.cards-range-heading strong { display:grid;place-items:center;min-width:43px;height:38px;border-radius:10px;background:var(--zest);color:#30243f;font-size:24px;font-weight:900;font-variant-numeric:tabular-nums; }
+.cards-range { appearance:none;-webkit-appearance:none;width:100%;height:12px;border-radius:50px;cursor:pointer;margin:18px 0 10px;border:1px solid #ffffff24;
+  background:linear-gradient(to right,var(--zest) 0,var(--tangerine) var(--range-fill),#554267 var(--range-fill),#554267 100%);
+}
+.cards-range::-webkit-slider-thumb { appearance:none;-webkit-appearance:none;width:26px;height:26px;border-radius:50%;border:4px solid #fff9e9;background:#ee9065;box-shadow:0 3px 12px #0006; }
+.cards-range::-moz-range-thumb {width:20px;height:20px;border-radius:50%;border:4px solid #fff9e9;background:#ee9065;box-shadow:0 3px 12px #0006; }
+.cards-range-ticks { display:flex;justify-content:space-between;gap:10px;color:#ccb6d8;font-size:10px;font-weight:700; }
+html.fullscreen-mode .cards-range-panel {margin:4px 0 7px;padding:6px 9px;}
+html.fullscreen-mode .cards-range-heading {font-size:11px;}
+html.fullscreen-mode .cards-range-heading strong {height:29px;min-width:32px;font-size:18px;}
+html.fullscreen-mode .cards-range {height:9px;margin:10px 0 6px;}
+html.fullscreen-mode .cards-range::-webkit-slider-thumb {width:23px;height:23px;}
+html.fullscreen-mode .cards-range-ticks {font-size:9px;}
+
+/* Congratulations broadcast on every participating and waiting student device. */
+.student-score-celebration { position:fixed;inset:0;z-index:90;pointer-events:none;
+ display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;padding:20px;
+ text-align:center;background:rgba(41,22,55,.32);backdrop-filter:blur(3px);animation:student-score-overlay-in .17s ease-out both;
+}
+.student-score-celebration::before {content:'';position:absolute;inset:0;z-index:-1;opacity:.16;pointer-events:none;background:radial-gradient(circle,#ffcf6f 1px,transparent 3px) center/39px 43px;}
+.student-score-burst { color:var(--zest);font-size:clamp(32px,6vw,70px);letter-spacing:12px;animation:student-burst .55s ease-in-out infinite alternate;filter:drop-shadow(0 4px 15px #e2ed8975); }
+.student-score-kicker { font-size:clamp(14px,2.3vw,21px);font-weight:950;letter-spacing:.11em;color:#ffe3a9; }
+.student-score-name { display:block;width:min(700px,98%);padding:14px 26px;border-radius:22px;
+ color:white;font-size:clamp(41px,8vw,84px);line-height:1.02;overflow-wrap:anywhere;
+ text-shadow:0 3px 0 #49284c,0 0 24px #eab0d688;border:3px solid #ffcb8988;
+ background:linear-gradient(135deg,rgba(159,57,124,.97),rgba(111,65,151,.96),rgba(229,104,103,.96));
+ box-shadow:0 15px 60px #1c112e99;animation:student-score-name-pop .28s ease-out both;
+}
+.student-score-caption {font-size:clamp(17px,3.2vw,26px);color:#fff9d7;font-weight:850;margin-top:8px;}
+.student-score-next {font-size:clamp(14px,2.3vw,21px);color:#f2e4ff;font-weight:750;}
+.student-score-next b {color:var(--zest);}
+.student-score-timer {margin-top:9px;width:min(400px,75vw);height:9px;border-radius:50px;background:#ffffff52;overflow:hidden;}
+.student-score-timer span {display:block;height:100%;background:linear-gradient(90deg,var(--zest),var(--tangerine));animation:student-score-shrink 2s linear forwards;}
+@keyframes student-score-overlay-in { from {opacity:0;} to {opacity:1;} }
+@keyframes student-score-name-pop {from{opacity:0;transform:translateY(10px) scale(.82) rotate(-2deg);} to{opacity:1;transform:translateY(0) scale(1) rotate(0deg);} }
+@keyframes student-burst {from {opacity:.7;transform:scale(.95) rotate(-3deg);}to {opacity:1;transform:scale(1.05) rotate(3deg);} }
+@keyframes student-score-shrink { to{transform:scaleX(0);transform-origin:left;} }
+@media(prefers-reduced-motion:reduce) {.student-score-celebration,.student-score-name,.student-score-burst,.student-score-timer span{animation:none;}}

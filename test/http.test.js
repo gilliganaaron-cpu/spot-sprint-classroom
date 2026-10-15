@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { server } = require('../server');
+const { server, rooms, finalizeMatch } = require('../server');
 const { getSharedSymbol } = require('../deck');
 
 test('real HTTP join, live stream, game progress, and win condition', async t => {
@@ -38,7 +38,7 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(studentEvents.headers.get('content-type').startsWith('text/event-stream'),true);
   const initialStudentEvent=await studentEvents.body.getReader().read();
   assert.equal(new TextDecoder().decode(initialStudentEvent.value).includes('event: message'),true);
-  assert.equal((await post('room:settings',{cardsToWin:2},tAuth)).ok,true);
+  assert.equal((await post('room:settings',{cardsToWin:5},tAuth)).ok,true);
   assert.equal((await post('room:start',{},tAuth)).ok,true);
   const current=(await post('room:resume',sAuth)).view;
   assert.equal(current.status,'playing');
@@ -53,20 +53,30 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(next.cardTurn,current.cardTurn);
   assert.ok(next.pendingMatch);
   assert.equal(next.pendingMatch.playerName,'Alex');
-  assert.ok(next.pendingMatch.endsAt > Date.now()+2200);
+  assert.ok(next.pendingMatch.endsAt > Date.now()+1700);
   const blocked=await post('game:match',{symbol:firstMatching,cardTurn:next.cardTurn,cardId:next.myCard.id},sAuth);
   assert.equal(blocked.ok,false,'no guesses can be accepted during the delay');
-  await new Promise(resolve=>setTimeout(resolve,2700));
+  await new Promise(resolve=>setTimeout(resolve,2150));
   const afterWait=(await post('room:resume',sAuth)).view;
   assert.equal(afterWait.pendingMatch,null);
   assert.notEqual(afterWait.teacherCard.id,current.teacherCard.id);
-  const secondMatching=getSharedSymbol(afterWait.teacherCard.id,afterWait.myCard.id);
-  const second=await post('game:match',{symbol:secondMatching,cardTurn:afterWait.cardTurn,cardId:afterWait.myCard.id},sAuth);
-  assert.equal(second.won,true);
+  // Fast-forward intermediate server timers so the HTTP suite stays quick.
+  let currentTurn=afterWait;
+  for(let i=0;i<4;i++) {
+    const matching=getSharedSymbol(currentTurn.teacherCard.id,currentTurn.myCard.id);
+    const answer=await post('game:match',{symbol:matching,cardTurn:currentTurn.cardTurn,cardId:currentTurn.myCard.id},sAuth);
+    assert.equal(answer.correct,true);
+    assert.equal(answer.won,i===3);
+    if(i<3) {
+      const room=rooms.get(tRoom.code);
+      assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+      currentTurn=(await post('room:resume',sAuth)).view;
+    }
+  }
   const finished=(await post('room:resume',sAuth)).view;
-  assert.equal(finished.status,'playing', 'winner animation gets full 2.5 seconds too');
+  assert.equal(finished.status,'playing', 'winner animation gets full 2 seconds too');
   assert.ok(finished.pendingMatch);
-  await new Promise(resolve=>setTimeout(resolve,2700));
+  await new Promise(resolve=>setTimeout(resolve,2150));
   const final=(await post('room:resume',sAuth)).view;
   assert.equal(final.status,'finished');
   assert.equal(final.winnerId,sRoom.token);

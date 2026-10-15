@@ -13,14 +13,14 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
   assert.equal(s.ok, true);
   const tAuth = { role:'teacher', code:teacher.code, token:teacher.token };
   const sAuth = { role:'student', code:s.code, token:s.token };
-  assert.equal(call('room:settings', { cardsToWin:3 }, tAuth).ok, true);
+  assert.equal(call('room:settings', { cardsToWin:5 }, tAuth).ok, true);
   const r = rooms.get(teacher.code);
   // A stream is an online connection; keep it harmless for this game-logic test.
   r.hostStream = { write() {}, writableEnded:false, destroyed:false };
   r.players.get(s.token).stream = { write() {}, writableEnded:false, destroyed:false };
   assert.equal(call('room:start', {}, tAuth).ok, true);
   assert.equal(r.status, 'playing');
-  for (let i=0; i<3; i++) {
+  for (let i=0; i<5; i++) {
     const p = r.players.get(s.token);
     const before = r.teacherCard.id;
     const own = p.hand[0].id;
@@ -43,12 +43,12 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
     assert.ok(r.pendingMatch);
     assert.equal(call('game:match', {symbol:matching, cardTurn:oldTurn,cardId:own},sAuth).ok,false, 'a second guess cannot interrupt the celebration');
     assert.equal(finalizeMatch(r, r.pendingMatch.eventId), true);
-    if (i<2) {
+    if (i<4) {
       assert.equal(r.cardTurn,oldTurn+1);
       assert.notEqual(r.teacherCard.id,before);
     }
   }
-  assert.equal(CELEBRATION_MS, 2500);
+  assert.equal(CELEBRATION_MS, 2000);
   assert.equal(r.status,'finished');
   assert.equal(r.winnerId,s.token);
   assert.equal(call('room:start',{},tAuth).ok,true);
@@ -68,7 +68,10 @@ test('settings are restricted, and duplicate student names are rejected', () => 
   const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
   const sAuth={role:'student',code:s.code,token:s.token};
   assert.equal(call('room:join',{code:teacher.code,name:'sAm'}).ok,false);
-  assert.equal(call('room:settings',{cardsToWin:100},tAuth).ok,false);
+  assert.equal(call('room:settings',{cardsToWin:4},tAuth).ok,false);
+  assert.equal(call('room:settings',{cardsToWin:26},tAuth).ok,false);
+  assert.equal(call('room:settings',{cardsToWin:5},tAuth).ok,true);
+  assert.equal(call('room:settings',{cardsToWin:25},tAuth).ok,true);
   assert.equal(call('room:settings',{cardsToWin:8},sAuth).ok,false);
   assert.equal(call('room:resume', tAuth).ok,true);
   rooms.delete(teacher.code);
@@ -126,4 +129,27 @@ test('one wrong guess locks a player until the shared card flips', () => {
   assert.equal(call('room:resume',sAuth).view.me.lockedOut,false);
   call('room:reset',{},tAuth);
   rooms.delete(teacher.code);
+});
+
+
+test('every student receives the matching player celebration for 2 seconds', () => {
+ const teacher=call('room:create',{});
+ const alpha=call('room:join',{code:teacher.code,name:'Alex'});
+ const beta=call('room:join',{code:teacher.code,name:'Jordan'});
+ const room=rooms.get(teacher.code);
+ const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+ const aAuth={role:'student',code:teacher.code,token:alpha.token};
+ const bAuth={role:'student',code:teacher.code,token:beta.token};
+ for(const p of room.players.values())p.stream={write(){}, writableEnded:false,destroyed:false};
+ call('room:start',{},tAuth);
+ const own=room.players.get(alpha.token).hand[0].id;
+ const matching=getSharedSymbol(room.teacherCard.id,own);
+ assert.equal(call('game:match',{symbol:matching,cardTurn:room.cardTurn,cardId:own},aAuth).correct,true);
+ const other=call('room:resume',bAuth).view;
+ assert.equal(other.pendingMatch.playerName,'Alex');
+ assert.equal(other.cardTurn,room.cardTurn);
+ assert.equal(other.pendingMatch.endsAt> Date.now()+1750,true);
+ assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+ call('room:reset',{},tAuth);
+ rooms.delete(teacher.code);
 });
