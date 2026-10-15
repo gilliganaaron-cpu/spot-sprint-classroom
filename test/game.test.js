@@ -9,7 +9,7 @@ function skipCountdown(room) { clearTimeout(room.startTimer); room.startTimer = 
 test('teacher creates room, student joins, correct taps clear cards and declare a winner', () => {
   const teacher = call('room:create', {});
   assert.equal(teacher.ok, true);
-  assert.match(teacher.code, /^[A-HJ-NP-Z2-9]{6}$/);
+  assert.match(teacher.code, /^[A-HJ-NP-Z]{4}$/);
   const s = call('room:join', { code:teacher.code, name:'Sam' });
   assert.equal(s.ok, true);
   const tAuth = { role:'teacher', code:teacher.code, token:teacher.token };

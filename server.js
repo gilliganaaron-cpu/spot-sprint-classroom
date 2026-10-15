@@ -10,13 +10,13 @@ const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./dec
 const rooms = new Map();
 const MAX_PLAYERS = 40;
 const CELEBRATION_MS = 2000;
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
 
 function randomCode() {
   let code;
-  do { code = Array.from({ length: 6 }, () => CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join(''); }
+  do { code = Array.from({ length: 4 }, () => CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join(''); }
   while (rooms.has(code));
   return code;
 }

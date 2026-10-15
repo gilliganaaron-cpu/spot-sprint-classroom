@@ -12,7 +12,7 @@
   const SOUND_KEY = 'spotsprint:muted';
   const MUSIC_KEY = 'spotsprint:musicEnabled';
   const query = new URLSearchParams(location.search);
-  const suggestedCode = (query.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  const suggestedCode = (query.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
   const format = n => String(n).padStart(2, '0');
   // The source illustration for each symbol is ALWAYS the same sprite image,
   // regardless of device / browser emoji fonts. Only its scale and placement
@@ -38,12 +38,12 @@
     scifi: { label: 'Sci-Fi', icon: '🚀' }
   };
   const THEME_SPRITES = {
-    mixed: '/symbols.webp?v=20261015-10',
-    sports: '/symbols-sports.webp?v=20261015-10',
-    animals: '/symbols-animals.webp?v=20261015-10',
-    emojis: '/symbols-emojis.webp?v=20261015-10',
-    scifi: '/symbols-scifi.webp?v=20261015-10',
-    'sci-fi': '/symbols-scifi.webp?v=20261015-10'
+    mixed: '/symbols.webp?v=20261015-11',
+    sports: '/symbols-sports.webp?v=20261015-11',
+    animals: '/symbols-animals.webp?v=20261015-11',
+    emojis: '/symbols-emojis.webp?v=20261015-11',
+    scifi: '/symbols-scifi.webp?v=20261015-11',
+    'sci-fi': '/symbols-scifi.webp?v=20261015-11'
   };
   function cardVariation(cardId, symbolId, index, salt) {
     // Stable across rerenders; varies from card to card even for the same symbol.
@@ -264,7 +264,6 @@
     const cardId = Number(card?.id ?? 1);
     const baseClasses = `picture-card ${small ? 'picture-card-small' : ''} ${interactive ? 'picture-card-clickable' : ''} ${faded ? 'picture-card-faded' : ''}`;
     return `<div class="${baseClasses}" role="group" aria-label="${interactive ? 'Your card. Select the matching picture.' : 'Picture matching card'}">
-      <div class="card-inner-ring" aria-hidden="true"></div>
       ${symbols.map((item, index) => {
         const [x, y] = positions[index];
         // Changing sizes and small rotations create the Spot It challenge without
@@ -342,11 +341,11 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>START GAME</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-11" alt="" aria-hidden="true"><span>START</span></button>');
     if (view.status === 'countdown') buttons.push('<span class="countdown-status-label">GET READY!</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
-    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>AGAIN</span></button>');
+    if (view.status === 'finished') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Play another round with the same students"><img src="/start-rocket.webp?v=20261015-11" alt="" aria-hidden="true"><span>AGAIN</span></button>');
     if (view.status !== 'lobby' && view.status !== 'countdown' && view.status !== 'finished') buttons.push('<button type="button" class="btn btn-quiet full" data-action="restart">↻ New round · keep students</button>');
     if (view.status !== 'lobby' && view.status !== 'countdown') buttons.push('<button type="button" class="btn btn-quiet full" data-action="reset">↩ Return to lobby</button>');
     return buttons.join('');
@@ -369,7 +368,7 @@
             <p>Type the room code from your teacher's screen and enter your name.</p>
             <form id="join-form" class="join-form">
               <label for="room-code">Game code</label>
-              <input id="room-code" name="code" class="code-input" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" required value="${escape(joinDraft.code)}" />
+              <input id="room-code" name="code" class="code-input" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" required value="${escape(joinDraft.code)}" />
               <label for="player-name">Your name</label>
               <input id="player-name" name="name" class="name-input" maxlength="22" placeholder="e.g. Alex" autocomplete="off" required value="${escape(joinDraft.name)}" />
               <button class="btn btn-white full" type="submit" ${joining ? 'disabled' : ''}>${joining ? 'Joining…' : 'Join game'} <span>→</span></button>
@@ -412,7 +411,7 @@
       <section class="top-game-controls">
         <div class="top-controls-title"><span>GAME CONTROLS</span><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
         <div class="top-controls-main">
-          ${view.status === 'lobby' ? `<div class="controls-stack"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span><strong>${escape(THEME_META[view.theme]?.label || 'General (Mixed)')}</strong></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>` : `<div class="top-target">${escape(THEME_META[view.theme]?.icon || '✨')}<strong>${escape(THEME_META[view.theme]?.label || 'General (Mixed)')}</strong><span>First to ${view.cardsToWin} cards</span></div>`}
+          ${view.status === 'lobby' ? `<div class="controls-stack"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>` : `<div class="top-target"><em>${escape(THEME_META[view.theme]?.icon || '✨')}</em><strong>${escape(THEME_META[view.theme]?.label || 'Mixed')}</strong><span>First to ${view.cardsToWin} cards</span></div>`}
           <div class="control-buttons">${teacherControls()}</div>
         </div>
       </section>
@@ -671,7 +670,7 @@
     unlockAudio();
     if (joining) return;
     const formData = new FormData(e.target);
-    const code = String(formData.get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    const code = String(formData.get('code') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
     const name = String(formData.get('name') || '').trim().slice(0, 22);
     joinDraft = { code, name };
     joining = true;
@@ -689,7 +688,7 @@
       document.getElementById('cards-range-value').textContent = String(n);
       e.target.style.setProperty('--range-fill', `${(n-5)*5}%`);
     }
-    if (e.target.id === 'room-code') joinDraft.code = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (e.target.id === 'room-code') joinDraft.code = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0,4);
     if (e.target.id === 'player-name') joinDraft.name = e.target.value;
   });
   document.addEventListener('change', async e => {
