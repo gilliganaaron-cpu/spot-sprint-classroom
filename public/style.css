@@ -2131,3 +2131,82 @@ html.teacher-active .header-game-settings .theme-panel .theme-select {
  html.student-active .student-live-score {flex-basis:78px;min-width:78px;}
  html.student-active .student-header-info {gap:5px;}
 }
+
+/* v23 — top-row spacing and clearly muted chiptune control */
+html.teacher-active .header-game-settings .cards-range-panel .cards-range-heading strong {
+  /* Bring the cards-to-win value comfortably below its top border. */
+  transform:translateY(4px);
+  position:relative !important;
+  line-height:1.1 !important;
+  align-self:center;
+}
+html.teacher-active .header-room-code {
+  /* Reclaim horizontal room to the left of the large four-letter code. */
+  flex:0 0 clamp(184px,14.4vw,237px) !important;
+  padding:7px 5px 7px 4px !important;
+  gap:4px !important;
+  justify-content:flex-start !important;
+  box-sizing:border-box;
+  min-width:0;
+}
+html.teacher-active .header-room-code .join-gamepad {
+  flex:0 0 auto;
+  font-size:clamp(19px,1.55vw,26px) !important;
+}
+html.teacher-active .header-room-code > div {flex:1 1 auto;min-width:0;}
+html.teacher-active .header-room-code strong {
+  display:block;
+  text-align:left;
+  font-size:clamp(35px,2.87vw,52px) !important;
+  letter-spacing:-1.5px !important;
+  line-height:1 !important;
+  white-space:nowrap;
+  max-width:100%;
+}
+html.teacher-active .header-join-site strong {
+  /* Larger address in the exact same website box, with wrapping when needed. */
+  font-size:clamp(16px,1.38vw,21px) !important;
+  line-height:1.03 !important;
+  letter-spacing:-.5px;
+  overflow-wrap:anywhere;
+}
+html.teacher-active .header-join-site { min-width:0; }
+.music-btn[aria-pressed="false"] {
+  opacity:1 !important;
+  filter:none !important;
+  position:relative;
+}
+.music-btn[aria-pressed="false"]::after {
+  content:"✕";
+  position:absolute;
+  right:-5px;
+  top:-6px;
+  display:grid;
+  place-items:center;
+  width:21px;
+  height:21px;
+  border-radius:50%;
+  background:#ec345d;
+  border:2px solid #ffe4ed;
+  box-shadow:0 2px 8px rgba(0,0,0,.38);
+  color:#fff;
+  font-family:Arial,sans-serif;
+  font-weight:900;
+  font-size:14px;
+  line-height:1;
+  pointer-events:none;
+}
+.music-btn[aria-pressed="true"]::after {content:none;}
+@media (min-width:1021px) and (max-width:1250px) {
+  html.teacher-active .header-room-code { flex-basis:179px !important; }
+  html.teacher-active .header-room-code strong {font-size:37px !important;letter-spacing:-1.6px !important;}
+  html.teacher-active .header-join-site strong {font-size:15px !important;}
+}
+@media (max-width:1020px) {
+  html.teacher-active .header-room-code {flex-basis:188px !important;}
+  html.teacher-active .header-room-code strong {font-size:40px !important;}
+}
+@media (max-width:640px) {
+  html.teacher-active .header-room-code {flex-basis:158px !important;}
+  html.teacher-active .header-room-code strong {font-size:34px !important;}
+}
