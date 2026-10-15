@@ -40,12 +40,12 @@
     scifi: { label: 'Sci-Fi', icon: '🚀' }
   };
   const THEME_SPRITES = {
-    mixed: '/symbols.webp?v=20261015-13',
-    sports: '/symbols-sports.webp?v=20261015-13',
-    animals: '/symbols-animals.webp?v=20261015-13',
-    emojis: '/symbols-emojis.webp?v=20261015-13',
-    scifi: '/symbols-scifi.webp?v=20261015-13',
-    'sci-fi': '/symbols-scifi.webp?v=20261015-13'
+    mixed: '/symbols.webp?v=20261015-14',
+    sports: '/symbols-sports.webp?v=20261015-14',
+    animals: '/symbols-animals.webp?v=20261015-14',
+    emojis: '/symbols-emojis.webp?v=20261015-14',
+    scifi: '/symbols-scifi.webp?v=20261015-14',
+    'sci-fi': '/symbols-scifi.webp?v=20261015-14'
   };
   function cardVariation(cardId, symbolId, index, salt) {
     // Stable across rerenders; varies from card to card even for the same symbol.
@@ -82,6 +82,9 @@
   let penaltyTurn = null;
   let wrongFlashTimeout = null;
   let countdownRerender = null;
+  let lastServerPushAt = 0;
+  let syncBusy = false;
+  let syncTimer = null;
 
   function readSession() {
     try {
@@ -96,6 +99,7 @@
     session = { role, code, token };
     sessionStorage.setItem(ENTRY_KEY, JSON.stringify(session));
     if (role === 'teacher') localStorage.setItem(HOST_KEY, JSON.stringify(session));
+    lastServerPushAt = 0;
     socket.setRoom(session);
   }
   function clearSession() {
@@ -104,6 +108,7 @@
     sessionStorage.removeItem(ENTRY_KEY);
     if (previousSession?.role === 'teacher') localStorage.removeItem(HOST_KEY);
     socket.clearRoom();
+    lastServerPushAt = 0;
     view = null;
     penaltyTurn = null;
     if (wrongFlashTimeout) clearTimeout(wrongFlashTimeout);
@@ -266,7 +271,6 @@
   }
   function send(event, data = {}) {
     return new Promise(resolve => {
-      if (!socket.connected) return resolve({ ok: false, error: 'Not connected. Check your internet and try again.' });
       socket.timeout(8000).emit(event, data, (err, answer) => {
         resolve(err ? { ok: false, error: 'No reply from the game server. Please try again.' } : answer);
       });
@@ -395,14 +399,14 @@
               <input id="player-name" name="name" class="name-input" maxlength="22" placeholder="e.g. Alex" autocomplete="off" required value="${escape(joinDraft.name)}" />
               <button class="btn btn-white full" type="submit" ${joining ? 'disabled' : ''}>${joining ? 'Joining…' : 'Join game'} <span>→</span></button>
             </form>
-            <div class="mini-note">Enter the 6-character room code from your teacher and you are in.</div>
+            <div class="mini-note">Enter the 4-letter room code from your teacher and you are in.</div>
           </div>
           <div class="home-card host-card">
             <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
             <h2>Host a new game</h2>
             <p>Create a room, project the teacher screen and start the race.</p>
             <button class="btn btn-accent full" type="button" data-action="create" ${creating ? 'disabled' : ''}>${creating ? 'Creating room…' : 'Create game'} <span>→</span></button>
-            <div class="mini-note">Students join from the same website using your 6-character room code.</div>
+            <div class="mini-note">Students join from the same website using your 4-letter room code.</div>
           </div>
           <div class="home-card preview-card">
             <div class="option-tag">⚡ QUICK PREVIEW</div>
@@ -473,6 +477,7 @@
       return;
     }
     const myPoints = view.me?.points || 0;
+    const cardsLeft = Math.max(0, view.cardsToWin - myPoints);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
     const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
@@ -499,6 +504,7 @@
   function updateView(next, initial = false) {
     if (!next) return;
     const old = view;
+    if (old?.code === next.code && typeof next.revision === 'number' && typeof old.revision === 'number' && next.revision < old.revision) return;
     view = next;
     if (old && next.cardTurn !== old.cardTurn) penaltyTurn = null;
     if (next.me?.lockedOut) penaltyTurn = next.cardTurn;
@@ -517,6 +523,33 @@
     if (beforeRanks) animateLeaderboardRows(beforeRanks);
     syncMusic();
   }
+  async function syncIfLiveUpdatesMissed() {
+    if (!session || !view || syncBusy || !['lobby','countdown','playing','paused','finished'].includes(view.status)) return;
+    // SSE is primary. Poll only when no game event has arrived recently.
+    if (lastServerPushAt && Date.now() - lastServerPushAt < (view.status === 'countdown' ? 1300 : 2200)) return;
+    const current = session;
+    syncBusy = true;
+    try {
+      const response = await fetch('/api/action', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'room:resume',data:current,session:current}),
+        cache:'no-store'
+      });
+      if (!response.ok) return;
+      const result = await response.json();
+      // A room change or stale request must not overwrite a newer session.
+      if (result.ok && session?.token === current.token && session?.code === current.code) {
+        updateView(result.view);
+      }
+    } catch { /* SSE will reconnect, and the next poll can retry. */ }
+    finally { syncBusy = false; }
+  }
+  syncTimer = setInterval(syncIfLiveUpdatesMissed, 1350);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncIfLiveUpdatesMissed();
+  });
+  window.addEventListener('focus', syncIfLiveUpdatesMissed);
+
   function launchConfetti() {
     const container = document.createElement('div');
     container.className = 'confetti-layer';
@@ -556,7 +589,7 @@
     connection.innerHTML = '<span class="live-dot"></span>Reconnecting…';
     connection.classList.add('not-connected');
   });
-  socket.on('room:update', data => updateView(data));
+  socket.on('room:update', data => { lastServerPushAt = Date.now(); updateView(data); });
   socket.on('session:replaced', () => {
     clearSession();
     render();
@@ -639,8 +672,10 @@
     if (action === 'leave') { clearSession(); history.replaceState(null, '', '/'); render(); return; }
     if (!view) return;
     if (action === 'start') {
+      button.disabled = true;
       const r = await send('room:start');
-      if (!r.ok) toast(r.error || 'Could not start the race.', true);
+      if (!r.ok) { button.disabled = false; toast(r.error || 'Could not start the race.', true); }
+      else if (r.view) updateView(r.view);
       return;
     }
     if (action === 'restart') {

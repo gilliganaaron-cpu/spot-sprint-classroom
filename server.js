@@ -51,7 +51,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    code:room.code, role, status:room.status, cardsToWin:room.cardsToWin, theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
+    code:room.code, role, status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -67,6 +67,7 @@ function writeEvent(stream, payload, event = 'message') {
   try { stream.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`); } catch { /* closed */ }
 }
 function broadcast(room) {
+  room.revision = (room.revision || 0) + 1;
   room.updatedAt = Date.now();
   if (room.hostStream) writeEvent(room.hostStream, view(room, 'teacher'));
   for (const p of room.players.values()) {
@@ -130,7 +131,7 @@ function startRound(room) {
     room.countdownEndsAt = null;
     broadcast(room);
   }, 3000);
-  return success({ status:'countdown', code:room.code, countdownEndsAt:end });
+  return success({ status:'countdown', code:room.code, countdownEndsAt:end, view:view(room,'teacher') });
 }
 
 function resolveAuth(body, role) {
@@ -160,7 +161,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
+      status:'lobby', revision:0, cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };

@@ -1653,3 +1653,71 @@ html.fullscreen-mode .classroom-card-stage .picture-card { width:min(calc(100dvh
   position:absolute;top:50%;left:42px;right:auto;transform:translateY(-50%);font-size:20px;margin:0;
 }
 .arcade-leaderboard .player-details {padding-left:27px;}
+
+
+/* V14: Rebalance top strip for readable codes and narrower game settings. */
+@media (min-width:1021px) {
+  .teacher-header-info {gap:8px;min-width:0;}
+  .header-join-site {
+    flex:1 1 auto;
+    min-width:0;
+    gap:8px;
+    padding:7px 10px;
+  }
+  .header-join-site strong {
+    display:block;
+    font-size:clamp(15px,1.42vw,22px) !important;
+    letter-spacing:-.5px;
+    overflow-wrap:anywhere;
+    white-space:normal;
+    line-height:1.1;
+  }
+  .header-join-site small {font-size:clamp(10px,.95vw,13px);}
+  .header-room-code {
+    flex:0 0 clamp(196px,15.5vw,238px) !important;
+    padding:7px 8px !important;
+    gap:7px;
+    justify-content:center;
+  }
+  .header-room-code strong {
+    font-size:clamp(37px,3.45vw,56px) !important;
+    letter-spacing:.45px;
+    line-height:1;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .header-room-code .join-gamepad {font-size:clamp(24px,2vw,32px);}
+  .classroom-settings {
+    grid-template-columns:minmax(0,.95fr) minmax(0,.8fr);
+    width:min(93%,790px);
+    min-height:86px;
+    gap:8px;
+    padding:6px 10px;
+    align-self:start;
+  }
+  .classroom-settings .cards-range-panel, .classroom-settings .theme-panel {
+    padding:4px 7px !important;
+  }
+  .classroom-settings .cards-range-heading {margin-bottom:2px;}
+  .classroom-settings .cards-range-heading span {font-size:clamp(11px,1vw,14px);}
+  .classroom-settings .cards-range-heading strong {font-size:clamp(16px,1.55vw,21px) !important;padding:3px 7px;}
+  .classroom-settings .cards-range {margin:9px 0 5px;}
+  .classroom-settings .theme-select {font-size:clamp(12px,1.2vw,16px) !important;padding:8px 34px 8px 10px !important;}
+  html.fullscreen-mode .classroom-settings {min-height:80px;padding:4px 10px;}
+  html.fullscreen-mode .classroom-card-stage .picture-card {
+    width:min(calc(100dvh - 211px),92%,720px) !important;
+  }
+}
+@media (min-width:1021px) and (max-width:1280px) {
+ .brand-complete-logo {max-width:clamp(122px,11vw,154px);}
+ .header-right {gap:4px;}
+ .header-join-site strong {font-size:clamp(13px,1.15vw,17px) !important;}
+ .header-room-code {flex-basis:188px !important;}
+ .header-room-code strong {font-size:38px !important;}
+}
+@media (max-width:1020px) {
+  .header-join-site strong {font-size:clamp(15px,2.6vw,21px) !important;}
+  .header-room-code {flex-basis:188px !important;}
+  .header-room-code strong {font-size:39px !important;letter-spacing:0;}
+  .classroom-settings {max-width:94%;}
+}
