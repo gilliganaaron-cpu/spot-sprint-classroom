@@ -310,3 +310,110 @@ h1 { letter-spacing:-1.8px; }
   .celebration-name, .celebration-overlay::before, .celebration-overlay::after { animation:none; }
   .celebration-overlay { animation:none; }
 }
+
+/* Classroom join directions — large and high contrast on a projector. */
+.join-steps { display:flex;align-items:stretch;gap:11px;flex-shrink:0;max-width:68%; }
+.join-website-box,.room-code-box { border:2px solid #ffd978aa;border-radius:16px;padding:11px 16px;text-align:center;background:linear-gradient(145deg,#44327b,#292153);box-shadow:0 8px 24px #06021c3e; }
+.join-website-box { min-width:365px;display:flex;flex-direction:column;justify-content:center;align-items:center; }
+.join-instruction { display:flex;align-items:center;justify-content:center;gap:8px;color:#fff2c7;font-size:11px;font-weight:950;letter-spacing:.7px; }
+.join-instruction b { display:inline-grid;place-items:center;background:#ffdb75;border-radius:50%;height:22px;width:22px;color:#281d51;font-size:14px; }
+.join-website-address { font-size:clamp(16px,1.95vw,28px);color:#fff;font-weight:1000;letter-spacing:-.7px;line-height:1.25;overflow-wrap:anywhere;text-shadow:0 0 24px #b0ffe877; }
+.join-website-box button { border:0;background:none;color:#a5ffe2;text-decoration:underline;font-size:11px;padding:3px; }
+.join-steps .room-code-box { min-width:174px;display:flex;flex-direction:column;justify-content:center; }
+.join-steps .room-code-box strong { font-size:clamp(30px,3vw,48px); }
+.lobby-music-toggle { display:block;width:100%;padding:11px 12px;margin:11px 0 4px;border-radius:12px;border:1px solid #ebd37f;background:#4d4072;color:#ffeda6;font-weight:850;text-align:center; }
+.lobby-music-toggle:hover { background:#6f5898; }
+.fullscreen-btn { border-color:#a7efe0a8;background:#265c61bd;white-space:nowrap; }
+.fullscreen-btn:hover { background:#387681; }
+.more-players { grid-column:1/-1;color:#f8d992;text-align:center;padding:5px;font-weight:800;font-size:11px; }
+@media (max-width:1200px) {
+  .room-header { flex-wrap:wrap; }
+  .join-steps { width:100%;max-width:none; }
+  .join-website-box { flex:1; }
+  .join-website-address { font-size:clamp(16px,2.3vw,25px); }
+}
+@media (max-width:780px) {
+  .join-steps { width:100%;max-width:none; }
+  .join-website-box { min-width:0;flex:1; }
+  .join-steps .room-code-box { min-width:155px; }
+  .fullscreen-btn span { display:none; }
+  .fullscreen-btn { padding:10px 12px; }
+}
+@media (max-width:460px) {
+  .join-steps { flex-direction:column; }
+  .join-website-address { font-size:21px; }
+  .join-steps .room-code-box { width:100%; }
+}
+/* True fullscreen teacher projection: essential game content fits the viewport,
+   and player list automatically condenses instead of adding a page scrollbar. */
+html.fullscreen-mode,html.fullscreen-mode body { width:100%;height:100%;overflow:hidden; }
+html.fullscreen-mode .app-shell { height:100dvh;min-height:0;max-width:none;padding:0 clamp(12px,2vw,30px); }
+html.fullscreen-mode .topbar { min-height:56px;height:56px;flex-shrink:0; }
+html.fullscreen-mode .brand-mark { width:34px;height:34px;font-size:25px;border-radius:11px; }
+html.fullscreen-mode .brand strong { font-size:20px; }
+html.fullscreen-mode .brand small { font-size:7px;margin-top:2px; }
+html.fullscreen-mode .soft-btn { padding:7px 10px; }
+html.fullscreen-mode .site-footer { display:none; }
+html.fullscreen-mode .screen { display:flex;flex-direction:column;flex:1;min-height:0; }
+html.fullscreen-mode .room-header { padding:9px 0;gap:12px;flex-shrink:0;flex-wrap:nowrap; }
+html.fullscreen-mode .room-header>div:first-child { min-width:0;flex:1; }
+html.fullscreen-mode .room-header h1 { font-size:clamp(20px,2vw,31px);margin:3px 0 3px; }
+html.fullscreen-mode .room-header p { display:none; }
+html.fullscreen-mode .eyebrow { font-size:9px; }
+html.fullscreen-mode .join-steps { max-width:70%;width:auto;gap:8px; }
+html.fullscreen-mode .join-website-box { min-width:270px;padding:7px 11px; }
+html.fullscreen-mode .join-website-address { font-size:clamp(17px,1.9vw,27px); }
+html.fullscreen-mode .join-instruction { font-size:9px; }
+html.fullscreen-mode .join-instruction b { width:17px;height:17px;font-size:11px; }
+html.fullscreen-mode .room-code-box { min-width:150px;padding:6px 10px; }
+html.fullscreen-mode .join-steps .room-code-box strong { font-size:clamp(30px,3vw,42px);line-height:1; }
+html.fullscreen-mode .game-grid.teacher-grid { min-height:0;flex:1;align-items:stretch;grid-template-columns:minmax(0,1.35fr) minmax(305px,.75fr);gap:12px;padding-bottom:10px; }
+html.fullscreen-mode .teacher-grid .board-panel { height:100%;min-height:0;display:flex;flex-direction:column; }
+html.fullscreen-mode .teacher-grid .panel-heading { padding:8px 17px 3px;flex:0 0 auto; }
+html.fullscreen-mode .teacher-grid .panel-heading h2 { font-size:17px; }
+html.fullscreen-mode .teacher-grid .panel-kicker { font-size:8px;margin-bottom:2px; }
+html.fullscreen-mode .teacher-grid .stage { min-height:0;flex:1;padding:0;overflow:hidden; }
+html.fullscreen-mode .teacher-grid .stage .picture-card { width:min(52dvh,84%,500px);max-height:100%; }
+html.fullscreen-mode .teacher-grid .stage .symbol { --size:clamp(28px,4.1dvh,60px); }
+html.fullscreen-mode .teacher-grid .board-bottom { min-height:37px;padding:6px 13px;font-size:10px; }
+html.fullscreen-mode .teacher-grid .sidebar { height:100%;min-height:0;gap:8px; }
+html.fullscreen-mode .teacher-grid .sidebar-section { padding:9px 11px;border-radius:12px; }
+html.fullscreen-mode .teacher-grid .sidebar-section:nth-child(2) { flex:1;min-height:0;overflow:hidden; }
+html.fullscreen-mode .teacher-grid .sidebar-title { margin-bottom:5px; }
+html.fullscreen-mode .teacher-grid .sidebar-title h2 { font-size:15px; }
+html.fullscreen-mode .teacher-grid .tip-panel { display:none; }
+html.fullscreen-mode .teacher-grid .hint { font-size:11px;margin-bottom:6px; }
+html.fullscreen-mode .teacher-grid .stepper { margin:5px 0; }
+html.fullscreen-mode .teacher-grid .stepper strong { font-size:25px; }
+html.fullscreen-mode .teacher-grid .stepper button { height:34px;width:35px; }
+html.fullscreen-mode .teacher-grid .presets { gap:5px;margin:5px 0; }
+html.fullscreen-mode .teacher-grid .presets button { padding:5px;font-size:10px; }
+html.fullscreen-mode .teacher-grid .control-buttons .btn { min-height:34px;padding:6px 9px;font-size:12px; }
+html.fullscreen-mode .teacher-grid .lobby-music-toggle { padding:6px;margin:5px 0; font-size:11px; }
+html.fullscreen-mode .teacher-grid .player-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 8px;align-items:start;max-height:none;overflow:hidden; }
+html.fullscreen-mode .teacher-grid .player-row { min-height:29px;padding:3px 5px;gap:4px; }
+html.fullscreen-mode .teacher-grid .player-name { font-size:11px; }
+html.fullscreen-mode .teacher-grid .rank { font-size:10px;width:17px; }
+html.fullscreen-mode .teacher-grid .score { font-size:12px; }
+html.fullscreen-mode .teacher-grid .tiny-progress { margin-top:2px;height:3px; }
+html.fullscreen-mode .winner-banner { padding:5px 15px;margin-bottom:5px;flex-shrink:0; }
+html.fullscreen-mode .winner-banner .trophy { font-size:24px; }
+html.fullscreen-mode .winner-banner strong { font-size:18px; }
+html.fullscreen-mode .winner-banner .banner-star { font-size:20px; }
+html.fullscreen-mode .winner-banner div>span { display:none; }
+/* On phones the fullscreen teacher view favours a prominent card and code. */
+@media (max-width:800px) {
+  html.fullscreen-mode .room-header { flex-wrap:wrap;gap:4px; }
+  html.fullscreen-mode .room-header>div:first-child { display:none; }
+  html.fullscreen-mode .join-steps { width:100%;max-width:none; }
+  html.fullscreen-mode .join-website-box { min-width:0;flex:1; }
+  html.fullscreen-mode .join-website-address { font-size:clamp(13px,3vw,20px); }
+  html.fullscreen-mode .game-grid.teacher-grid { grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:5px; }
+  html.fullscreen-mode .teacher-grid .sidebar { display:block;height:auto; }
+  html.fullscreen-mode .teacher-grid .sidebar-section:nth-child(2) { display:none; }
+  html.fullscreen-mode .teacher-grid .stage .picture-card { width:min(42dvh,82vw,350px); }
+}
+@media(max-height:620px) and (min-width:801px) {
+  html.fullscreen-mode .teacher-grid .sidebar-section:nth-child(2) { display:none; }
+  html.fullscreen-mode .teacher-grid .stage .picture-card { width:min(45dvh,90%,350px); }
+}

@@ -6,6 +6,7 @@
   const connection = document.getElementById('connection');
   const soundBtn = document.getElementById('sound-btn');
   const musicBtn = document.getElementById('music-btn');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
   const ENTRY_KEY = 'spotsprint:session';
   const SOUND_KEY = 'spotsprint:muted';
   const MUSIC_KEY = 'spotsprint:musicEnabled';
@@ -32,6 +33,7 @@
   let musicStep = 0;
   let nextMusicTime = 0;
   let musicDucked = false;
+  let musicMode = null;
   let audio = null;
   let lastEventId = null;
   let winningEventShown = null;
@@ -65,7 +67,7 @@
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       if (!audio) audio = new AudioContext();
-      if (audio.state === 'suspended') audio.resume().catch(() => {});
+      if (audio.state === 'suspended') audio.resume().then(() => syncMusic()).catch(() => {});
     } catch { /* Browser has no Web Audio support. The game still works. */ }
   }
   function tone(frequency, delay, duration, volume = .07, type = 'sine', destination = null) {
@@ -96,27 +98,46 @@
       }
     } catch { /* Never block game play for unavailable audio. */ }
   }
-  // Original, copyright-free 120 BPM synth loop, generated in the browser.
-  // It plays on the teacher's projector only and stops outside active gameplay.
-  const MELODY = [
-    659, 784, 988, null, 784, 659, 587, 659,
-    523, 659, 784, 880, 988, null, 784, 659,
-    698, 880, 1047, null, 880, 698, 659, 587,
-    659, 784, 988, 1175, 1047, 988, 784, null
-  ];
-  const BASS = [131, 131, 175, 175, 110, 110, 196, 196];
-  const BEAT_SECONDS = .25; // Eighth-note steps at 120 BPM.
+  // Two original, browser-synthesised instrumental tracks: a playful lobby
+  // theme and a faster race theme. No downloads, third-party audio or royalties.
+  // Played on the teacher projector only, never on every student device.
+  const TRACKS = {
+    lobby: {
+      bpm: 116,
+      melody: [
+        659, null, 784, 988, 880, 784, 659, null,
+        587, 659, 784, null, 659, 523, 587, null,
+        659, 784, 988, 1047, 988, 880, 784, null,
+        698, 880, 784, 659, 587, 659, 523, null
+      ],
+      bass: [131, 131, 175, 175, 147, 147, 196, 196]
+    },
+    playing: {
+      bpm: 120,
+      melody: [
+        659, 784, 988, null, 784, 659, 587, 659,
+        523, 659, 784, 880, 988, null, 784, 659,
+        698, 880, 1047, null, 880, 698, 659, 587,
+        659, 784, 988, 1175, 1047, 988, 784, null
+      ],
+      bass: [131, 131, 175, 175, 110, 110, 196, 196]
+    }
+  };
   function scheduleMusic() {
-    if (!audio || !musicBus) return;
+    if (!audio || !musicBus || !musicMode) return;
+    const track = TRACKS[musicMode];
     while (nextMusicTime < audio.currentTime + .24) {
-      const n = musicStep % MELODY.length;
+      const n = musicStep % track.melody.length;
       const delay = Math.max(0, nextMusicTime - audio.currentTime);
-      if (MELODY[n]) tone(MELODY[n], delay, .19, .026, 'triangle', musicBus);
-      if (n % 4 === 0) tone(BASS[Math.floor(n / 4) % BASS.length], delay, .34, .035, 'sine', musicBus);
-      if (n % 2 === 0) tone(880, delay + .008, .035, .006, 'square', musicBus);
-      if (n % 4 === 2) tone(250, delay, .09, .009, 'triangle', musicBus);
+      // Short notes, warm bass, bass drum, clap and gentle high-hat.
+      if (track.melody[n]) tone(track.melody[n], delay, musicMode === 'lobby' ? .18 : .19, .024, 'triangle', musicBus);
+      if (n % 4 === 0) tone(track.bass[Math.floor(n / 4) % track.bass.length], delay, .34, .032, 'sine', musicBus);
+      if (n % 4 === 0) tone(70, delay, .09, .025, 'sine', musicBus);
+      if (n % 8 === 4) tone(230, delay, .075, .005, 'triangle', musicBus);
+      if (n % 2 === 0) tone(1200, delay + .012, .024, .0035, 'square', musicBus);
+      if (musicMode === 'lobby' && n % 8 === 6) tone(1568, delay, .11, .011, 'sine', musicBus);
       musicStep++;
-      nextMusicTime += BEAT_SECONDS;
+      nextMusicTime += 30 / track.bpm; // One eighth note.
     }
   }
   function stopMusic() {
@@ -124,15 +145,18 @@
     musicTimer = null;
     if (musicBus && audio) {
       musicBus.gain.setTargetAtTime(.0001, audio.currentTime, .035);
-      // Old scheduled oscillators fade through their own bus when stopped.
+      // Notes already scheduled fade through the old bus.
     }
     musicBus = null;
     musicDucked = false;
+    musicMode = null;
   }
   function syncMusic() {
-    const shouldPlay = view?.role === 'teacher' && view.status === 'playing' && musicEnabled && !localMuted && Boolean(audio);
-    if (!shouldPlay) { stopMusic(); return; }
+    const mode = view?.role === 'teacher' && ['lobby','playing'].includes(view.status) && musicEnabled && !localMuted && audio && audio.state === 'running' ? view.status : null;
+    if (!mode) { stopMusic(); return; }
+    if (musicMode !== mode) stopMusic();
     if (!musicTimer) {
+      musicMode = mode;
       musicBus = audio.createGain();
       musicBus.gain.value = .0001;
       musicBus.connect(audio.destination);
@@ -143,7 +167,7 @@
     }
     const duck = Boolean(view.pendingMatch);
     if (musicDucked !== duck || musicBus.gain.value < .05) {
-      musicBus.gain.setTargetAtTime(duck ? .22 : .85, audio.currentTime, .12);
+      musicBus.gain.setTargetAtTime(duck ? .13 : (mode === 'lobby' ? .75 : .85), audio.currentTime, .12);
       musicDucked = duck;
     }
   }
@@ -151,8 +175,17 @@
     soundBtn.innerHTML = localMuted ? '🔇 <span>Sound off</span>' : '🔊 <span>Sound on</span>';
     soundBtn.setAttribute('aria-pressed', String(!localMuted));
     musicBtn.hidden = view?.role !== 'teacher';
-    musicBtn.innerHTML = musicEnabled ? '🎵 <span>Music on</span>' : '🎶 <span>Music off</span>';
+    fullscreenBtn.hidden = view?.role !== 'teacher';
+    const name = view?.status === 'lobby' ? 'Lobby music' : 'Game music';
+    musicBtn.innerHTML = musicEnabled ? `🎵 <span>${name} on</span>` : `🎶 <span>${name} off</span>`;
     musicBtn.setAttribute('aria-pressed', String(musicEnabled));
+  }
+  function updateFullscreenUI() {
+    const on = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    document.documentElement.classList.toggle('fullscreen-mode', on);
+    fullscreenBtn.innerHTML = on ? '⤢ <span>Exit full screen</span>' : '⛶ <span>Full screen</span>';
+    fullscreenBtn.setAttribute('aria-pressed', String(on));
+    fullscreenBtn.setAttribute('title', on ? 'Exit full screen' : 'Show the game without scrolling');
   }
   function toast(message, error = false) {
     clearTimeout(toastTimeout);
@@ -183,13 +216,20 @@
     </div>`;
   }
   function playerList(showProgress = true) {
+    // In projector fullscreen, fit a useful leaderboard preview without
+    // overflowing the screen, even for a 40-student classroom.
+    const compact = document.documentElement.classList.contains('fullscreen-mode') && view.role === 'teacher';
+    const cols = window.innerWidth >= 1100 ? 2 : 1;
+    const maxVisible = compact ? Math.max(5, Math.min(40, Math.floor((window.innerHeight - 450) / 35) * cols)) : view.players.length;
+    const listed = view.players.slice(0, maxVisible);
+    const more = view.players.length - listed.length;
     if (!view.players.length) return `<div class="empty-players"><span>👀</span><strong>No players yet</strong><small>Students enter the room code to join.</small></div>`;
-    return `<div class="player-list">${view.players.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}">
+    return `<div class="player-list">${listed.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}">
       <span class="rank">${view.status === 'lobby' ? '●' : (i + 1)}</span>
       <div class="player-details"><div class="player-name">${escape(p.name)} ${p.id === view.winnerId ? '👑' : ''}${!p.online ? '<span class="offline-label">offline</span>' : ''}${!p.inRound && ['playing','paused'].includes(view.status) ? '<span class="offline-label">next round</span>' : ''}</div>
       ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / view.cardsToWin) * 100}%"></span></div>` : ''}</div>
       ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}<small>/${view.cardsToWin}</small></b>` : ''}
-      </div>`).join('')}</div>`;
+      </div>`).join('')}${more ? `<div class="more-players">+ ${more} more players · showing leaders</div>` : ''}</div>`;
   }
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
@@ -243,7 +283,13 @@
       <div><div class="eyebrow">TEACHER DASHBOARD <span class="eyebrow-dot">●</span> ${view.status.toUpperCase()}</div>
       <h1>${done ? 'We have a winner!' : playing ? 'Find the matching picture!' : 'Your classroom is ready.'}</h1>
       <p>${done ? 'The race is complete. Give your champion a round of applause!' : playing ? 'Each correct tap changes this card for everybody. Watch the race unfold.' : 'Get students to join, choose how many matches they need, then start.'}</p></div>
-      <div class="room-code-box"><span>JOIN AT THIS WEBSITE · CODE</span><strong>${escape(view.code)}</strong><button type="button" data-action="copy-link">🔗 Copy join link</button></div>
+      <div class="join-steps" aria-label="How to join the game">
+        <div class="join-website-box"><div class="join-instruction"><b>1</b> STUDENTS: OPEN THIS WEBSITE</div>
+          <strong class="join-website-address">${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong>
+          <button type="button" data-action="copy-link">🔗 Copy student link</button>
+        </div>
+        <div class="room-code-box"><div class="join-instruction"><b>2</b> THEN ENTER CODE</div><strong>${escape(view.code)}</strong></div>
+      </div>
     </div>
     ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
     <div class="game-grid teacher-grid">
@@ -256,6 +302,7 @@
         <section class="sidebar-section lobby-setup">
           <div class="sidebar-title"><h2>⚙ Game controls</h2><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
           ${view.status === 'lobby' ? `<p class="hint">How many cards must a student clear to win?</p><div class="stepper"><button type="button" data-action="decrease" aria-label="Decrease cards" ${view.cardsToWin <= 1 ? 'disabled' : ''}>−</button><div><strong>${view.cardsToWin}</strong><span>cards to win</span></div><button type="button" data-action="increase" aria-label="Increase cards" ${view.cardsToWin >= 30 ? 'disabled' : ''}>+</button></div><div class="presets"><button type="button" data-action="preset" data-value="5" class="${view.cardsToWin === 5 ? 'selected' : ''}">Quick · 5</button><button type="button" data-action="preset" data-value="10" class="${view.cardsToWin === 10 ? 'selected' : ''}">Classic · 10</button><button type="button" data-action="preset" data-value="20" class="${view.cardsToWin === 20 ? 'selected' : ''}">Long · 20</button></div>` : `<p class="hint">First student to <strong>${view.cardsToWin}</strong> correct matches wins the race.</p>`}
+          ${view.status === 'lobby' ? `<button class="lobby-music-toggle" type="button" data-action="lobby-music" aria-label="Toggle waiting room music">${!musicEnabled || localMuted ? '▶ Play lobby music' : '♫ Lobby music playing · Pause'}</button>` : ''}
           <div class="control-buttons">${teacherControls()}</div>
         </section>
         <section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} joined</span></div>${playerList()}</section>
@@ -366,12 +413,43 @@
   async function handleAction(button) {
     const action = button.dataset.action;
     unlockAudio();
+    if (action === 'fullscreen') {
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          await exit?.call(document);
+        } else {
+          const enter = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+          if (!enter) throw new Error('Unsupported browser');
+          await enter.call(document.documentElement);
+        }
+      } catch {
+        toast('Full screen is unavailable here. Press F11 in Chrome instead.', true);
+      }
+      updateFullscreenUI();
+      return;
+    }
     if (action === 'sound') {
       localMuted = !localMuted;
       localStorage.setItem(SOUND_KEY, String(localMuted));
       unlockAudio();
       setSoundUI();
       syncMusic();
+      if (view?.role === 'teacher') render();
+      return;
+    }
+    if (action === 'lobby-music') {
+      const wasAudible = musicEnabled && !localMuted;
+      if (localMuted) {
+        localMuted = false;
+        localStorage.setItem(SOUND_KEY, 'false');
+      }
+      musicEnabled = !wasAudible;
+      localStorage.setItem(MUSIC_KEY, String(musicEnabled));
+      unlockAudio();
+      setSoundUI();
+      syncMusic();
+      render();
       return;
     }
     if (action === 'music') {
@@ -380,6 +458,7 @@
       unlockAudio();
       setSoundUI();
       syncMusic();
+      if (view?.role === 'teacher') render();
       return;
     }
     if (action === 'create') {
@@ -479,6 +558,10 @@
     if (e.target.id === 'room-code') joinDraft.code = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (e.target.id === 'player-name') joinDraft.name = e.target.value;
   });
+  document.addEventListener('fullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
+  document.addEventListener('webkitfullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
+  window.addEventListener('resize', () => { if (document.fullscreenElement && view?.role === 'teacher') render(); });
+  updateFullscreenUI();
   setSoundUI();
   render();
 })();
