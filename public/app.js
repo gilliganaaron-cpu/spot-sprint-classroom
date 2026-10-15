@@ -372,7 +372,7 @@
       });
     });
   }
-  function symbolCard(card, { small = false, interactive = false, faded = false } = {}) {
+  function symbolCard(card, { small = false, interactive = false, faded = false, highlightSymbolId = null } = {}) {
     const symbols = card?.symbols || preview.symbols;
     const cardId = Number(card?.id ?? 1);
     const baseClasses = `picture-card ${small ? 'picture-card-small' : ''} ${interactive ? 'picture-card-clickable' : ''} ${faded ? 'picture-card-faded' : ''}`;
@@ -384,11 +384,13 @@
         const scale = (0.72 + cardVariation(cardId, item.id, index, 6129) * .67).toFixed(2);
         const rotate = Math.round((cardVariation(cardId, item.id, index, 19031) - .5) * 34);
         const style = `--x:${x}%;--y:${y}%;--s:${scale};--rotate:${rotate}deg`;
+        const glowing = highlightSymbolId !== null && item.id === highlightSymbolId;
+        const matchClass = glowing ? ' spot-match-reveal' : '';
         const label = escape(item.label);
         const art = artwork(item.id);
         return interactive
-          ? `<button class="symbol symbol-button" style="${style}" type="button" data-action="guess" data-symbol="${item.id}" aria-label="Picture: ${label}" title="${label}">${art}</button>`
-          : `<span class="symbol" style="${style}" role="img" aria-label="Picture: ${label}">${art}</span>`;
+          ? `<button class="symbol symbol-button${matchClass}" style="${style}" type="button" data-action="guess" data-symbol="${item.id}" aria-label="Picture: ${label}" title="${label}">${art}</button>`
+          : `<span class="symbol${matchClass}" style="${style}" role="img" aria-label="Picture: ${label}">${art}</span>`;
       }).join('')}
     </div>`;
   }
@@ -582,7 +584,7 @@
       <div class="classroom-game-grid">
         <div class="classroom-left-column">
           <section class="classroom-card-area ${playing ? 'active-board' : ''}" aria-label="Shared matching card">
-            <div class="classroom-card-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">1.5s</span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
+            <div class="classroom-card-stage ${view.status === 'paused' ? 'stage-paused' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard, highlightSymbolId: view.pendingMatch?.symbolId ?? null })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">${view.pendingMatch.onFire ? '🔥 THREE IN A ROW!' : 'GREAT SPOT!'}</div><strong class="celebration-name">${view.pendingMatch.onFire ? `${escape(view.pendingMatch.playerName)}'s on fire! 🔥` : `${escape(view.pendingMatch.playerName)}!`}</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">${(view.pendingMatch.celebrationMs / 1000).toFixed(1)}s</span></div><div class="celebration-progress" style="--spot-celebration-ms:${view.pendingMatch.celebrationMs}ms"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
             <div class="classroom-card-status">${playing && view.lastEvent ? `✨ ${escape(view.lastEvent.playerName)} spotted the match!` : ''}</div>
           </section>
         </div>
@@ -599,14 +601,16 @@
   }
   function studentCelebration() {
     if (!view?.pendingMatch) return '';
-    const theirName = escape(view.pendingMatch.playerName);
-    const yours = view.pendingMatch.playerName === view.me?.name;
-    return `<div class="student-score-celebration" role="status" aria-live="assertive">
-      <div class="student-score-burst" aria-hidden="true">✦ ✧ ★ ✦</div>
-      <div class="student-score-kicker">${yours ? 'YOU SPOTTED IT!' : 'SOMEONE GOT THE MATCH!'}</div>
-      <strong class="student-score-name">${theirName}!</strong>
-      <div class="student-score-caption">${yours ? 'Brilliant spotting!' : 'Brilliant spotting — congratulations!'} 🎉</div>
-      <div class="student-score-next">Next card in <b>1.5 seconds</b></div>
+    const match = view.pendingMatch;
+    const theirName = escape(match.playerName);
+    const yours = match.playerName === view.me?.name;
+    const onFire = Boolean(match.onFire);
+    return `<div class="student-score-celebration ${onFire ? 'student-streak-fire' : ''}" role="status" aria-live="assertive" style="--spot-celebration-ms:${match.celebrationMs}ms">
+      <div class="student-score-burst" aria-hidden="true">${onFire ? '🔥 ✦ 🔥' : '✦ ✧ ★ ✦'}</div>
+      <div class="student-score-kicker">${onFire ? 'THREE CORRECT IN A ROW!' : (yours ? 'YOU SPOTTED IT!' : 'SOMEONE GOT THE MATCH!')}</div>
+      <strong class="student-score-name">${onFire ? `${theirName}'s on fire! 🔥` : `${theirName}!`}</strong>
+      <div class="student-score-caption">${onFire ? 'Unstoppable spotting!' : (yours ? 'Brilliant spotting!' : 'Brilliant spotting — congratulations!')} ${onFire ? '🔥' : '🎉'}</div>
+      <div class="student-score-next">Next card in <b>${(match.celebrationMs / 1000).toFixed(1)} seconds</b></div>
       <div class="student-score-timer" aria-hidden="true"><span></span></div>
     </div>`;
   }
@@ -628,12 +632,12 @@
     const cardsLeft = Math.max(0, view.cardsToWin - myPoints);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
-    const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
-    screen.innerHTML = `<div class="student-game-content">
+    const penaltyActive = !celebrating && Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
+    screen.innerHTML = `<div class="student-game-content" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">
       ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge student-remain-badge">⚡ ${cardsLeft} LEFT <span class="remaining-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${view.cardsToWin}" aria-valuenow="${cardsLeft}"><span class="remaining-fill" style="width:${Math.round(cardsLeft / view.cardsToWin * 100)}%"></span></span></span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive }), cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 1.5 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 1.5 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
-       </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''} ${celebrating ? 'stage-match-celebrating' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null }), cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+       <div class="board-bottom"><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? `✨ Great match! New card coming in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…` : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
+       </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}</div>${studentCelebration()}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
       winningEventShown = view.lastEvent?.id;

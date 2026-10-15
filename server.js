@@ -10,6 +10,7 @@ const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./dec
 const rooms = new Map();
 const MAX_PLAYERS = 40;
 const CELEBRATION_MS = 1500;
+const FIRE_CELEBRATION_MS = 2000;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
@@ -58,7 +59,20 @@ function view(room, role, playerId) {
     myCard:p?.inRound && room.status !== 'countdown' ? topCard(p) : null,
     me:p ? { id:p.id, name:p.name, points:p.points, inRound:p.inRound, lockedOut:Boolean(p.blockedTurn && p.blockedTurn === room.cardTurn) } : null,
     winnerId:room.winnerId, lastEvent:room.lastEvent,
-    pendingMatch:room.pendingMatch ? { eventId:room.pendingMatch.eventId, playerName:room.pendingMatch.playerName, symbol:room.pendingMatch.symbol, endsAt:room.pendingMatch.endsAt } : null,
+    pendingMatch:room.pendingMatch ? {
+      eventId:room.pendingMatch.eventId,
+      playerName:room.pendingMatch.playerName,
+      symbol:room.pendingMatch.symbol,
+      symbolId:room.pendingMatch.symbolId,
+      streak:room.pendingMatch.streak,
+      onFire:room.pendingMatch.onFire,
+      celebrationMs:room.pendingMatch.celebrationMs,
+      endsAt:room.pendingMatch.endsAt,
+      // Each student's own card has a unique matching symbol against the
+      // teacher card; this is not always the same as the scorer's picture.
+      matchSymbolId:p?.inRound && p.hand.length && room.teacherCard ?
+        getSharedSymbol(room.teacherCard.id,topCard(p).id) : null
+    } : null,
     startedAt:room.startedAt, endedAt:room.endedAt
   };
 }
@@ -74,7 +88,7 @@ function broadcast(room) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
 }
-// Only the server can advance the shared card, 1.5 seconds after a correct match.
+// Only the server can advance the shared card: 1.5 seconds normally or 2 on fire.
 // A single pending match per room prevents overlapping celebrations or stale guesses.
 function finalizeMatch(room, eventId) {
   if (!room.pendingMatch || room.pendingMatch.eventId !== eventId || rooms.get(room.code) !== room) return false;
@@ -112,6 +126,8 @@ function startRound(room) {
   room.endedAt = null;
   room.cardTurn = 1;
   room.lastEvent = null;
+  room.streakPlayerId = null;
+  room.streakCount = 0;
   const initial = crypto.randomInt(DECK.length);
   room.teacherCard = cardView(initial, room.theme);
   for (const student of room.players.values()) {
@@ -162,7 +178,7 @@ function action(body) {
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
       status:'lobby', revision:0, cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
-      winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
+      winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
@@ -235,6 +251,8 @@ function action(body) {
     room.teacherCard = null;
     room.winnerId = null;
     room.lastEvent = null;
+    room.streakPlayerId = null;
+    room.streakCount = 0;
     room.startedAt = null;
     room.endedAt = null;
     room.cardTurn = 0;
@@ -252,6 +270,11 @@ function action(body) {
     if (data.cardTurn !== room.cardTurn || data.cardId !== own.id) return failure('The card has changed.',{ stale:true });
     const correct = getSharedSymbol(room.teacherCard.id, own.id);
     if (Number(data.symbol) !== correct) {
+      // A missed guess breaks this player's consecutive-correct streak.
+      if (room.streakPlayerId === p.id) {
+        room.streakPlayerId = null;
+        room.streakCount = 0;
+      }
       p.lockUntil = Date.now() + 500;
       p.blockedTurn = room.cardTurn;
       // If everyone makes a mistake, advance the shared card automatically.
@@ -275,13 +298,22 @@ function action(body) {
     const won = p.points >= room.cardsToWin;
     room.eventNumber++;
     const eventId = room.eventNumber;
-    const endsAt = Date.now() + CELEBRATION_MS;
+    const streak = room.streakPlayerId === p.id ? room.streakCount + 1 : 1;
+    room.streakPlayerId = p.id;
+    room.streakCount = streak;
+    const onFire = streak >= 3;
+    const celebrationMs = onFire ? FIRE_CELEBRATION_MS : CELEBRATION_MS;
+    const endsAt = Date.now() + celebrationMs;
     const symbols = symbolsForTheme(room.theme);
-    room.lastEvent = { id:eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1], points:p.points, won };
-    room.pendingMatch = { eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1], oldCenter:room.teacherCard.id, won, endsAt };
+    room.lastEvent = { id:eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1], points:p.points, won, streak, onFire };
+    room.pendingMatch = {
+      eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1],
+      symbolId:correct, oldCenter:room.teacherCard.id, won, endsAt,
+      celebrationMs, streak, onFire
+    };
     broadcast(room);
-    room.pendingTimer = setTimeout(() => finalizeMatch(room, eventId), CELEBRATION_MS);
-    return { ok:true, correct:true, won, celebrationMs:CELEBRATION_MS };
+    room.pendingTimer = setTimeout(() => finalizeMatch(room, eventId), celebrationMs);
+    return { ok:true, correct:true, won, celebrationMs, streak, onFire };
   }
   return failure('Unknown game action.');
 }
@@ -378,4 +410,4 @@ setInterval(() => {
 },15000).unref();
 
 if (require.main===module) server.listen(PORT,'0.0.0.0',()=>console.log(`Spot Sprint ready at http://localhost:${PORT}`));
-module.exports = { server, action, rooms, view, finalizeMatch, CELEBRATION_MS };
+module.exports = { server, action, rooms, view, finalizeMatch, CELEBRATION_MS, FIRE_CELEBRATION_MS };

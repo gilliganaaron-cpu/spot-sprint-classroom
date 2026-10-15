@@ -2326,3 +2326,84 @@ html.teacher-active .header-game-settings input#cards-to-win:focus-visible {
   outline:2px solid #baf0ff;
   outline-offset:4px;
 }
+
+/* v26: all-player reveal of each student's matching picture. */
+.stage-match-celebrating .spot-match-reveal,
+.shared-card-section .spot-match-reveal,
+.classroom-card-stage .spot-match-reveal {
+  z-index:32 !important;
+  isolation:isolate;
+  pointer-events:none;
+  animation: spot-picture-reveal var(--spot-celebration-ms,1500ms) cubic-bezier(.2,.8,.22,1) both !important;
+  filter: drop-shadow(0 0 11px #fff3a2) drop-shadow(0 0 23px #ffb94e);
+}
+.stage-match-celebrating .spot-match-reveal::before,
+.shared-card-section .spot-match-reveal::before,
+.classroom-card-stage .spot-match-reveal::before {
+  content:'';
+  position:absolute;
+  inset:-16%;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(circle,rgba(255,238,157,.57) 0%,rgba(255,200,90,.29) 48%,transparent 75%);
+  box-shadow:0 0 29px 13px rgba(255,210,110,.27);
+  animation:spot-picture-halo .5s ease-in-out infinite alternate;
+  z-index:-1;
+}
+@keyframes spot-picture-reveal {
+  0% {transform:translate(-50%,-50%) scale(var(--s)) rotate(var(--rotate));}
+  17%,82% {transform:translate(-50%,-50%) scale(calc(var(--s) * 2.02)) rotate(var(--rotate));}
+  100% {transform:translate(-50%,-50%) scale(calc(var(--s) * 1.5)) rotate(var(--rotate));}
+}
+@keyframes spot-picture-halo {from{opacity:.5;}to{opacity:1;}}
+/* Keep the correctly matching picture readable, not masked by the text overlay.
+   The celebration is a top-of-screen announcement instead of a full-screen veil. */
+html.student-active .student-score-celebration {
+  position:fixed;
+  inset:auto;
+  top:clamp(79px,11dvh,116px);
+  left:50%;
+  transform:translateX(-50%);
+  width:min(450px,85vw);
+  max-height:160px;
+  padding:8px 20px 10px;
+  gap:2px;
+  border:2px solid rgba(255,217,135,.86);
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(31,19,77,.97),rgba(68,32,97,.94));
+  box-shadow:0 12px 37px rgba(4,5,26,.48),0 0 25px rgba(242,173,69,.38);
+  backdrop-filter:blur(6px);
+  animation:spot-banner-pop .22s ease-out both;
+  pointer-events:none;
+  z-index:100;
+}
+html.student-active .student-score-celebration .student-score-burst {font-size:15px;line-height:1;}
+html.student-active .student-score-celebration .student-score-kicker {font-size:10px;letter-spacing:1.5px;}
+html.student-active .student-score-celebration .student-score-name {
+  font-size:clamp(21px,2.1vw,32px);
+  line-height:1.08;
+}
+html.student-active .student-score-celebration .student-score-caption {font-size:11px;line-height:1.1;}
+html.student-active .student-score-celebration .student-score-next {font-size:11px;margin-top:0;}
+html.student-active .student-score-celebration .student-score-timer {
+  margin-top:3px;height:5px;max-width:270px;
+}
+html.student-active .student-score-celebration .student-score-timer span {
+  animation:student-score-shrink var(--spot-celebration-ms,1500ms) linear forwards;
+}
+html.student-active .student-streak-fire {
+  border-color:#ffae46 !important;
+  background:linear-gradient(130deg,rgba(78,29,64,.97),rgba(138,52,40,.96)) !important;
+  box-shadow:0 0 28px rgba(255,111,49,.59),0 9px 31px rgba(14,2,30,.5);
+}
+@keyframes spot-banner-pop {from{opacity:0;scale:.9;}to{opacity:1;scale:1;}}
+.celebration-overlay .celebration-progress::after {
+  animation-duration:var(--spot-celebration-ms,1500ms) !important;
+}
+@media(prefers-reduced-motion:reduce) {
+  .stage-match-celebrating .spot-match-reveal,
+  .shared-card-section .spot-match-reveal,
+  .classroom-card-stage .spot-match-reveal {animation:none !important; transform:translate(-50%,-50%) scale(calc(var(--s)*1.55)) rotate(var(--rotate)) !important;}
+  html.student-active .student-score-celebration {animation:none !important;}
+  html.student-active .student-score-celebration .student-score-timer span {animation:none !important;}
+}

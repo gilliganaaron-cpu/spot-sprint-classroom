@@ -236,3 +236,96 @@ test('theme selection propagates identical symbols to teacher and student and pe
   assert.equal(call('room:settings',{cardsToWin:5,theme:'invalid'},teacherAuth).ok,false);
   rooms.delete(teacher.code);
 });
+
+
+test('three consecutive correct matches trigger a 2-second fire celebration for everyone, while revealing each learner’s own match', () => {
+  const { FIRE_CELEBRATION_MS } = require('../server');
+  assert.equal(FIRE_CELEBRATION_MS, 2000);
+  const teacher = call('room:create',{});
+  const scorer = call('room:join',{code:teacher.code,name:'Aaron'});
+  const observer = call('room:join',{code:teacher.code,name:'Sophie'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const sAuth={role:'student',code:teacher.code,token:scorer.token};
+  const oAuth={role:'student',code:teacher.code,token:observer.token};
+  const room=rooms.get(teacher.code);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive'},tAuth).ok,true);
+  assert.equal(call('room:start',{},tAuth).ok,true);
+  skipCountdown(room);
+  for (let turn=1;turn<=3;turn++) {
+    const myCard=room.players.get(scorer.token).hand[0].id;
+    const otherCard=room.players.get(observer.token).hand[0].id;
+    const center=room.teacherCard.id;
+    const myMatch=getSharedSymbol(center,myCard);
+    const otherMatch=getSharedSymbol(center,otherCard);
+    const oldTurn=room.cardTurn;
+    const result=call('game:match',{symbol:myMatch,cardTurn:oldTurn,cardId:myCard},sAuth);
+    assert.equal(result.correct,true);
+    assert.equal(result.streak,turn);
+    assert.equal(result.onFire,turn>=3);
+    assert.equal(result.celebrationMs,turn===3 ? 2000 : 1500);
+    const otherView=call('room:resume',oAuth).view;
+    const scorerView=call('room:resume',sAuth).view;
+    const teacherView=call('room:resume',tAuth).view;
+    assert.equal(otherView.pendingMatch.playerName,'Aaron');
+    assert.equal(otherView.pendingMatch.streak,turn);
+    assert.equal(otherView.pendingMatch.celebrationMs,result.celebrationMs);
+    assert.equal(otherView.pendingMatch.onFire,turn>=3);
+    assert.equal(otherView.pendingMatch.matchSymbolId,otherMatch,
+      'other student gets the match for their OWN card, not necessarily Aaron’s');
+    assert.equal(scorerView.pendingMatch.matchSymbolId,myMatch);
+    assert.equal(teacherView.pendingMatch.symbolId,myMatch);
+    assert.equal(otherView.myCard.symbols.filter(s=>s.id===otherMatch).length,1);
+    assert.equal(otherView.teacherCard.symbols.filter(s=>s.id===otherMatch).length,1);
+    assert.equal(room.cardTurn,oldTurn,'card does not change until the announcement ends');
+    assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+    assert.equal(room.cardTurn,oldTurn+1);
+  }
+  // Another student scoring interrupts Aaron’s fire streak.
+  const otherHand=room.players.get(observer.token).hand[0].id;
+  const match=getSharedSymbol(room.teacherCard.id,otherHand);
+  const answer=call('game:match',{symbol:match,cardId:otherHand,cardTurn:room.cardTurn},oAuth);
+  assert.equal(answer.correct,true);
+  assert.equal(answer.streak,1);
+  assert.equal(answer.onFire,false);
+  assert.equal(answer.celebrationMs,1500);
+  assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+  // Another game keeps all participants, but resets the streak completely.
+  assert.equal(call('room:restart',{},tAuth).ok,true);
+  assert.equal(room.streakCount,0);
+  assert.equal(room.streakPlayerId,null);
+  assert.equal(room.players.size,2);
+  assert.equal(call('room:reset',{},tAuth).ok,true);
+  rooms.delete(teacher.code);
+});
+
+test('an incorrect guess breaks a winning streak before three in a row', () => {
+  const teacher=call('room:create',{});
+  const scorer=call('room:join',{code:teacher.code,name:'Morgan'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const sAuth={role:'student',code:teacher.code,token:scorer.token};
+  const room=rooms.get(teacher.code);
+  call('room:start',{},tAuth);
+  skipCountdown(room);
+  for (let i=0;i<2;i++) {
+    const own=room.players.get(scorer.token).hand[0].id;
+    const correct=getSharedSymbol(room.teacherCard.id,own);
+    assert.equal(call('game:match',{symbol:correct,cardId:own,cardTurn:room.cardTurn},sAuth).correct,true);
+    assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+  }
+  assert.equal(room.streakCount,2);
+  const own=room.players.get(scorer.token).hand[0].id;
+  const correct=getSharedSymbol(room.teacherCard.id,own);
+  const wrong=DECK[own].find(id=>id!==correct);
+  assert.equal(call('game:match',{symbol:wrong,cardId:own,cardTurn:room.cardTurn},sAuth).correct,false);
+  assert.equal(room.streakCount,0);
+  // In the real game a miss locks you out until the card changes.
+  const p=room.players.get(scorer.token);
+  p.blockedTurn=0;p.lockUntil=0;
+  const response=call('game:match',{symbol:correct,cardId:own,cardTurn:room.cardTurn},sAuth);
+  assert.equal(response.correct,true);
+  assert.equal(response.streak,1);
+  assert.equal(response.onFire,false);
+  assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+  assert.equal(call('room:reset',{},tAuth).ok,true);
+  rooms.delete(teacher.code);
+});
