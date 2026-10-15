@@ -8,6 +8,7 @@
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const teacherHeaderInfo = document.getElementById('teacher-header-info');
   const teacherHeaderActions = document.getElementById('teacher-header-actions');
+  const studentHeaderInfo = document.getElementById('student-header-info');
   const ENTRY_KEY = 'spotsprint:session';
   const HOST_KEY = 'spotsprint:teacherSession';
   const SOUND_KEY = 'spotsprint:muted';
@@ -296,9 +297,9 @@
     </div>`;
   }
 
-  function stackedCard(cardHtml, remaining, small = false) {
+  function stackedCard(cardHtml, remaining, small = false, wrong = false) {
     const depth = Math.max(0, Math.min(4, Number(remaining || 1) - 1));
-    return `<div class="card-stack ${small ? 'card-stack-small' : ''}" data-depth="${depth}">${Array.from({ length: depth }, (_, i) => `<span class="stack-layer stack-layer-${i + 1}" aria-hidden="true"></span>`).join('')}<div class="stack-top">${cardHtml}</div></div>`;
+    return `<div class="card-stack ${small ? 'card-stack-small' : ''}" data-depth="${depth}">${Array.from({ length: depth }, (_, i) => `<span class="stack-layer stack-layer-${i + 1}" aria-hidden="true"></span>`).join('')}<div class="stack-top">${cardHtml}</div>${wrong ? '<div class="card-wrong-cover" role="alert"><span>Bad luck!<small>Wait for next card</small></span></div>' : ''}</div>`;
   }
   function startCountdownMs() {
     if (!view || view.status !== 'countdown' || !view.countdownEndsAt) return 0;
@@ -366,6 +367,19 @@
     if (!['lobby','countdown'].includes(view.status)) buttons.push('<button type="button" class="header-round-control" data-action="reset">↩ Lobby</button>');
     return buttons.join('');
   }
+  function updateStudentHeader() {
+    const active = view?.role === 'student' &&
+      !(view.status === 'lobby' || (['playing','paused'].includes(view.status) && !view.me?.inRound));
+    studentHeaderInfo.hidden = !active;
+    document.documentElement.classList.toggle('student-active', Boolean(active));
+    if (!active) { studentHeaderInfo.innerHTML = ''; return; }
+    const scored = view.me?.points || 0;
+    const maximum = Math.max(1, view.cardsToWin || 10);
+    const left = Math.max(0, maximum - scored);
+    const finished = view.status === 'finished';
+    const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><strong>${finished ? (view.winnerId === view.me?.id ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on the shared card'}</div></div><div class="student-live-score" aria-label="Your score ${scored} out of ${maximum}"><small>YOUR SCORE</small><strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div></div>${!isFull && !finished ? '<button class="student-fullscreen-nudge" type="button" data-action="fullscreen" aria-label="Show game in full screen">⛶ Fullscreen</button>' : ''}`;
+  }
   function updateTeacherHeader() {
     const isTeacher = view?.role === 'teacher';
     teacherHeaderInfo.hidden = !isTeacher;
@@ -373,7 +387,7 @@
     document.documentElement.classList.toggle('teacher-active', isTeacher);
     if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
     const topSettings = view.status === 'lobby'
-      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>▧ &nbsp; Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
+      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
       : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
     teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><small>Student website</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
     teacherHeaderActions.innerHTML = teacherControls();
@@ -478,13 +492,12 @@
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
     const penaltyActive = Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
-    screen.innerHTML = `<div class="student-header"><div><div class="eyebrow">ROOM ${escape(view.code)} <span class="eyebrow-dot">●</span> ${done ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><h1>${done ? (view.winnerId === view.me.id ? 'You won the race! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me.name)}!`}</h1><p>${done ? (view.winnerId === view.me.id ? 'Incredible spotting! You cleared every card first.' : `${escape(winner?.name || 'A classmate')} cleared their cards first. Great effort!`) : 'Tap the picture on YOUR card that also appears on the shared card.'}</p></div>
-      <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
+    screen.innerHTML = `<div class="student-game-content">
       ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge student-remain-badge">⚡ ${cardsLeft} LEFT <span class="remaining-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${view.cardsToWin}" aria-valuenow="${cardsLeft}"><span class="remaining-fill" style="width:${Math.round(cardsLeft / view.cardsToWin * 100)}%"></span></span></span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive }), cardsLeft)}${startCountdownOverlay('student')}${penaltyActive ? '<div class="wrong-lock-overlay"><div class="wrong-lock-badge">✖ Bad luck!</div><div class="wrong-lock-text">No more guesses until the next card appears.</div></div>' : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''}">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive }), cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
        <div class="board-bottom"><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 1.5 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 1.5 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
-    ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}${studentCelebration()}`;
+    ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}</div>${studentCelebration()}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
       winningEventShown = view.lastEvent?.id;
       launchConfetti();
@@ -492,6 +505,7 @@
   }
   function render() {
     updateTeacherHeader();
+    updateStudentHeader();
     if (!view) renderLanding();
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
@@ -781,8 +795,8 @@
       setTimeout(() => { if (document.activeElement?.id !== 'theme-select') render(); }, 50);
     }
   });
-  document.addEventListener('fullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
-  document.addEventListener('webkitfullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
+  document.addEventListener('fullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); else if (view?.role === 'student') updateStudentHeader(); });
+  document.addEventListener('webkitfullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); else if (view?.role === 'student') updateStudentHeader(); });
   window.addEventListener('resize', () => { if (document.fullscreenElement && view?.role === 'teacher') render(); });
   updateFullscreenUI();
   setSoundUI();
