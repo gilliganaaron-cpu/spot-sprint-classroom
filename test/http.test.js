@@ -19,6 +19,11 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
     });
     return r.json();
   };
+  const sky=await fetch(base+'/cosmic-sky-bg.jpg');
+  assert.equal(sky.status,200, 'background request must not crash the server');
+  assert.equal(sky.headers.get('content-type'),'image/jpeg');
+  assert.ok((await sky.arrayBuffer()).byteLength > 10000);
+  assert.equal((await fetch(base+'/health')).status,200, 'server survives image request');
   const atlas=await fetch(base+'/symbols.webp');
   assert.equal(atlas.status,200, 'same source image must be served to all screens');
   assert.equal(atlas.headers.get('content-type'),'image/webp');

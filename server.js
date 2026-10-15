@@ -340,7 +340,7 @@ const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
   '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp', '/cosmic-sky-bg.jpg':'cosmic-sky-bg.jpg', '/spot-sprint-wordmark.webp':'spot-sprint-wordmark.webp', '/arcade-mountains.webp':'arcade-mountains.webp'
 };
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png' };
 const server = http.createServer((req,res) => {
   const url=new URL(req.url,'http://localhost');
   if (req.method==='GET' && url.pathname==='/health') return sendJson(res,200,{ok:true,service:'spot-sprint'});
@@ -348,11 +348,15 @@ const server = http.createServer((req,res) => {
   if (req.method==='GET' && url.pathname==='/events') return connectEvents(req,res,url);
   if (req.method==='GET' && Object.hasOwn(allowFiles,url.pathname)) {
     const file=path.join(publicDir,allowFiles[url.pathname]);
+    if (!fs.existsSync(file)) return sendJson(res,404,failure('Asset unavailable.'));
     res.writeHead(200,{
-      'Content-Type':mime[path.extname(file)],
+      'Content-Type':mime[path.extname(file)] || 'application/octet-stream',
       'Cache-Control':'no-store, max-age=0', 'X-Content-Type-Options':'nosniff'
     });
-    fs.createReadStream(file).pipe(res);
+    fs.createReadStream(file).on('error', error => {
+      console.error('Static asset read failed:', file, error.message);
+      res.destroy(error);
+    }).pipe(res);
     return;
   }
   if (req.method==='GET' && url.pathname==='/favicon.ico') { res.writeHead(204); res.end(); return; }
