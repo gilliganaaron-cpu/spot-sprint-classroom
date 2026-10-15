@@ -201,3 +201,33 @@ test('new round preserves joined students, code and their existing tokens throug
   assert.equal(call('room:resume',bAuth).view.status,'lobby');
   rooms.delete(teacher.code);
 });
+
+test('theme selection propagates identical symbols to teacher and student and persists across rounds', () => {
+  const { THEME_SYMBOLS, getSharedSymbol } = require('../deck');
+  const teacher = call('room:create', {});
+  const student = call('room:join', { code:teacher.code, name:'Theme Tester' });
+  const room = rooms.get(teacher.code);
+  const teacherAuth = { role:'teacher', code:teacher.code, token:teacher.token };
+  const studentAuth = { role:'student', code:teacher.code, token:student.token };
+  for (const theme of ['sports','animals','emojis','scifi','mixed']) {
+    assert.equal(call('room:settings',{cardsToWin:5,theme},teacherAuth).ok,true);
+    assert.equal(room.theme,theme);
+    assert.equal(call('room:start',{},teacherAuth).ok,true);
+    assert.equal(room.status,'countdown');
+    clearTimeout(room.startTimer);
+    room.startTimer = null;
+    room.status='playing';
+    const shared = getSharedSymbol(room.teacherCard.id,room.players.get(student.token).hand[0].id);
+    const expected = THEME_SYMBOLS[theme][shared];
+    const hostSymbol = room.teacherCard.symbols.find(s=>s.id === shared);
+    const studentSymbol = room.players.get(student.token).hand[0].symbols.find(s=>s.id === shared);
+    assert.ok(hostSymbol && studentSymbol);
+    assert.equal(hostSymbol.label, expected[1]);
+    assert.equal(studentSymbol.label,expected[1]);
+    assert.equal(hostSymbol.emoji,expected[0]);
+    assert.equal(studentSymbol.emoji,expected[0]);
+    assert.equal(call('room:reset',{},teacherAuth).ok,true);
+  }
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'invalid'},teacherAuth).ok,false);
+  rooms.delete(teacher.code);
+});

@@ -28,6 +28,23 @@
       [16,'turtle'], [33,'doughnut'], [48,'basketball'], [56,'rainbow']
     ].map(([id,label]) => ({ id, label }))
   };
+
+  const THEME_META = {
+    mixed: { label: 'General (Mixed)', icon: '✨' },
+    sports: { label: 'Sports', icon: '🏅' },
+    animals: { label: 'Animals', icon: '🐾' },
+    emojis: { label: 'Emojis', icon: '😄' },
+    'sci-fi': { label: 'Sci-Fi', icon: '🚀' },
+    scifi: { label: 'Sci-Fi', icon: '🚀' }
+  };
+  const THEME_SPRITES = {
+    mixed: '/symbols.webp?v=20261015-10',
+    sports: '/symbols-sports.webp?v=20261015-10',
+    animals: '/symbols-animals.webp?v=20261015-10',
+    emojis: '/symbols-emojis.webp?v=20261015-10',
+    scifi: '/symbols-scifi.webp?v=20261015-10',
+    'sci-fi': '/symbols-scifi.webp?v=20261015-10'
+  };
   function cardVariation(cardId, symbolId, index, salt) {
     // Stable across rerenders; varies from card to card even for the same symbol.
     let n = (Math.imul(cardId + 37, 19771) ^ Math.imul(symbolId + 59, 27449) ^ Math.imul(index + 1, 31469) ^ salt) >>> 0;
@@ -38,7 +55,9 @@
   function artwork(symbolId) {
     const x = (symbolId % 8) * (100 / 7);
     const y = Math.floor(symbolId / 8) * (100 / 7);
-    return `<span class="symbol-art" aria-hidden="true" style="background-position:${x.toFixed(5)}% ${y.toFixed(5)}%"></span>`;
+    const theme = view?.theme || 'mixed';
+    const sprite = THEME_SPRITES[theme] || THEME_SPRITES.mixed;
+    return `<span class="symbol-art" aria-hidden="true" style="--symbol-sheet:url('${sprite}');background-position:${x.toFixed(5)}% ${y.toFixed(5)}%"></span>`;
   }
   let view = null;
   let session = readSession();
@@ -323,7 +342,7 @@
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>START</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="btn btn-start-orb" data-action="start" aria-label="Start game"><img src="/start-rocket.webp?v=20261015-9" alt="" aria-hidden="true"><span>START GAME</span></button>');
     if (view.status === 'countdown') buttons.push('<span class="countdown-status-label">GET READY!</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="btn btn-outline full" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause game</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="btn btn-accent full" data-action="pause">▶ Resume game</button>');
@@ -393,7 +412,7 @@
       <section class="top-game-controls">
         <div class="top-controls-title"><span>GAME CONTROLS</span><span class="status-pill status-${view.status}">${view.status.toUpperCase()}</span></div>
         <div class="top-controls-main">
-          ${view.status === 'lobby' ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Cards to win</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div>` : `<div class="top-target">FIRST TO <strong>${view.cardsToWin}</strong> CARDS</div>`}
+          ${view.status === 'lobby' ? `<div class="controls-stack"><div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"><div class="cards-range-ticks"><span>5</span><span>15</span><span>25</span></div></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span><strong>${escape(THEME_META[view.theme]?.label || 'General (Mixed)')}</strong></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div></div>` : `<div class="top-target">${escape(THEME_META[view.theme]?.icon || '✨')}<strong>${escape(THEME_META[view.theme]?.label || 'General (Mixed)')}</strong><span>First to ${view.cardsToWin} cards</span></div>`}
           <div class="control-buttons">${teacherControls()}</div>
         </div>
       </section>
@@ -674,11 +693,12 @@
     if (e.target.id === 'player-name') joinDraft.name = e.target.value;
   });
   document.addEventListener('change', async e => {
-    if (e.target.id !== 'cards-to-win') return;
+    if (!['cards-to-win','theme-select'].includes(e.target.id)) return;
     if (view?.role !== 'teacher' || view.status !== 'lobby') return;
-    const n = Number(e.target.value);
-    const r = await send('room:settings', { cardsToWin: n });
-    if (!r.ok) { toast(r.error || 'Could not update cards.', true); render(); }
+    const n = Number(document.getElementById('cards-to-win')?.value || view.cardsToWin);
+    const theme = document.getElementById('theme-select')?.value || view.theme || 'mixed';
+    const r = await send('room:settings', { cardsToWin: n, theme });
+    if (!r.ok) { toast(r.error || 'Could not update game settings.', true); render(); }
   });
   document.addEventListener('fullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });
   document.addEventListener('webkitfullscreenchange', () => { updateFullscreenUI(); if (view?.role === 'teacher') render(); });

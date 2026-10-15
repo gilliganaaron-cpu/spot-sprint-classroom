@@ -976,3 +976,128 @@ html.fullscreen-mode .teacher-sidebar .player-list {max-height:100%;overflow:hid
 @media(max-width:860px) {
   .top-controls-main .btn-start-orb {width:100px;height:100px;}
 }
+
+
+/* v10 themed control panel + screenshot-inspired polish */
+:root {
+  --warm-gold: #ffd35a;
+  --sun-orange: #ff9f2d;
+  --hot-pink: #ff5fb2;
+  --midnight-2: #0f1739;
+}
+body {
+  background:
+    radial-gradient(circle at 14% 6%, rgba(36,116,255,.28) 0, transparent 24%),
+    radial-gradient(circle at 84% 18%, rgba(120,64,255,.20) 0, transparent 18%),
+    radial-gradient(circle at 50% 78%, rgba(255,108,54,.15) 0, transparent 18%),
+    linear-gradient(180deg, #07112a 0%, #101b45 38%, #170f2e 100%);
+}
+.symbol-art,.symbol-button .symbol-art,.picture-card-small .symbol-art { background-image: var(--symbol-sheet, url('/symbols.webp?v=20261015-10')); }
+.teacher-top-row {
+  grid-template-columns: minmax(315px,1fr) minmax(200px,.48fr) minmax(420px,1.15fr);
+  gap: 14px;
+}
+.teacher-top-row .join-website-box,
+.teacher-top-row .room-code-box,
+.top-game-controls,
+.teacher-sidebar .leaderboard-panel,
+.board-panel {
+  border: 1px solid rgba(90,143,255,.34);
+  box-shadow: 0 18px 38px rgba(2,8,28,.34), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.teacher-top-row .join-website-box,
+.teacher-top-row .room-code-box,
+.top-game-controls {
+  background: linear-gradient(180deg, rgba(7,19,59,.90), rgba(10,22,68,.86));
+}
+.teacher-top-row .join-website-address { font-size: clamp(18px,1.4vw,22px); }
+.teacher-top-row .room-code-box strong { font-size: clamp(44px,4vw,62px); letter-spacing: 2px; }
+.top-controls-main { align-items: stretch; }
+.controls-stack { display: grid; gap: 10px; flex: 1.2; }
+.cards-range-panel, .theme-panel {
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 12px 14px;
+}
+.theme-panel { padding-bottom: 13px; }
+.theme-select-wrap { position: relative; }
+.theme-select {
+  width: 100%; appearance: none; border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(9,17,45,.95), rgba(19,22,55,.95)); color: #fff;
+  border-radius: 14px; padding: 14px 42px 14px 15px; font-size: 16px; font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.theme-chevron { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #ffdf84; pointer-events: none; font-size: 19px; font-weight: 800; }
+.theme-panel .cards-range-heading strong { font-size: 18px; }
+.top-target { display:grid; place-items:center; gap: 6px; font-size:12px; }
+.top-target strong { font-size: 20px !important; color: #fff3ca; }
+.top-target span { color: #d9d9ef; font-size: 12px; font-weight: 700; }
+.top-controls-main .control-buttons { display:grid; place-items:center; min-width: 150px; }
+.top-controls-main .btn-start-orb,
+.btn-start-orb {
+  width: min(160px, 100%); height: min(160px, 100%); border-radius: 50%; padding: 0;
+  background: radial-gradient(circle at 50% 35%, #ffe996 0%, #ffd24d 30%, #ff9f2d 62%, #f86532 82%, #7d2fff 100%);
+  border: 4px solid rgba(255,233,150,.46);
+  box-shadow: 0 0 0 7px rgba(255,192,68,.13), 0 0 30px rgba(255,148,50,.45), 0 18px 45px rgba(9,10,30,.46);
+}
+.btn-start-orb::after { box-shadow: inset 0 0 0 3px rgba(255,255,255,.24); }
+.btn-start-orb img { inset: 12%; width: 76%; height: 76%; border-radius: 50%; }
+.btn-start-orb > span {
+  bottom: 8px; left: 50%; transform: translateX(-50%); width: 84%; text-align: center;
+  font-size: 14px; letter-spacing: 1px; line-height: 1.1; font-weight: 950; color: #221539;
+  text-shadow: 0 1px 0 rgba(255,255,255,.55);
+}
+.teacher-grid { grid-template-columns: minmax(0,1.08fr) minmax(345px,.82fr); gap: 18px; }
+.board-panel {
+  background: linear-gradient(180deg, rgba(5,18,59,.96), rgba(15,20,54,.94));
+}
+.stage {
+  background: radial-gradient(circle at 50% 70%, rgba(255,167,54,.22), transparent 27%),
+              radial-gradient(circle at 50% 58%, rgba(255,79,161,.10), transparent 34%),
+              linear-gradient(180deg, rgba(3,10,32,.35), rgba(10,14,39,.02));
+}
+.teacher-sidebar .leaderboard-panel,
+.sidebar-section.leaderboard-panel {
+  background: linear-gradient(180deg, #fff3b1 0%, #f8d58b 18%, #f2c17a 100%) !important;
+  border-color: rgba(255,187,74,.48);
+}
+.teacher-sidebar .leaderboard-panel::before {
+  background: linear-gradient(180deg, rgba(255,255,255,.36), rgba(255,255,255,0));
+}
+.teacher-sidebar .leaderboard-panel .sidebar-title h2,
+.teacher-sidebar .leaderboard-panel .player-count { color: #402451; }
+.teacher-sidebar .leaderboard-panel .player-count { background: rgba(255,255,255,.62); }
+.teacher-sidebar .leaderboard-panel .player-row {
+  background: linear-gradient(180deg, rgba(20,60,126,.94), rgba(9,47,103,.97)) !important;
+  border-color: rgba(255,255,255,.08);
+}
+.teacher-sidebar .leaderboard-panel .player-row .player-name,
+.teacher-sidebar .leaderboard-panel .player-row .score,
+.teacher-sidebar .leaderboard-panel .player-row .rank,
+.teacher-sidebar .leaderboard-panel .player-row .player-details { color: #fff !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="1"] { background: linear-gradient(90deg, #ffcf2f, #ffd95e) !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="1"] .player-name,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="1"] .score,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="1"] .rank { color: #341a46 !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="2"] { background: linear-gradient(90deg, #dbe4f8, #eef5ff) !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="2"] .player-name,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="2"] .score,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="2"] .rank { color: #2f2140 !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="3"] { background: linear-gradient(90deg, #ffb06b, #ffca92) !important; }
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="3"] .player-name,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="3"] .score,
+.teacher-sidebar .leaderboard-panel .player-row[data-rank="3"] .rank { color: #371d3a !important; }
+.teacher-sidebar .leaderboard-panel .rank { background: rgba(0,0,0,.14) !important; }
+.teacher-sidebar .leaderboard-panel .tiny-progress { background: rgba(255,255,255,.18); }
+.teacher-sidebar .leaderboard-panel .tiny-progress span { background: #6d2e88; }
+@media (max-width: 1100px) {
+  .teacher-top-row { grid-template-columns: 1fr 230px; }
+  .top-game-controls { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .teacher-top-row { grid-template-columns: 1fr; }
+  .top-game-controls { grid-column: auto; }
+  .top-controls-main { flex-direction: column; }
+  .top-controls-main .btn-start-orb { width: 135px; height: 135px; }
+}

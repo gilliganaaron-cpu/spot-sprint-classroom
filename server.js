@@ -5,7 +5,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { SYMBOLS, DECK, getSharedSymbol } = require('./deck');
+const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./deck');
 
 const rooms = new Map();
 const MAX_PLAYERS = 40;
@@ -29,16 +29,19 @@ function shuffle(original) {
   }
   return items;
 }
-function cardView(id) {
-  return { id, symbols: shuffle(DECK[id]).map(n => ({ id: n, emoji: SYMBOLS[n][0], label: SYMBOLS[n][1] })) };
+function cardView(id, theme = 'mixed') {
+  const symbols = symbolsForTheme(theme);
+  return { id, symbols: shuffle(DECK[id]).map(n => ({ id: n, emoji: symbols[n][0], label: symbols[n][1] })) };
 }
+
 function topCard(player) { return player.hand.length ? player.hand[0] : null; }
 function chooseCenter(room, former) {
   const taken = new Set([...room.players.values()].filter(p => p.inRound && p.hand.length).map(p => topCard(p).id));
   let options = DECK.map((_, i) => i).filter(i => !taken.has(i) && i !== former);
   if (!options.length) options = DECK.map((_, i) => i).filter(i => !taken.has(i));
-  return cardView(options[crypto.randomInt(options.length)]);
+  return cardView(options[crypto.randomInt(options.length)], room.theme);
 }
+
 function playerList(room) {
   return [...room.players.values()].map(p => ({
     id:p.id, name:p.name, points:p.points, online:Boolean(p.stream),
@@ -48,7 +51,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    code:room.code, role, status:room.status, cardsToWin:room.cardsToWin,
+    code:room.code, role, status:room.status, cardsToWin:room.cardsToWin, theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -109,13 +112,13 @@ function startRound(room) {
   room.cardTurn = 1;
   room.lastEvent = null;
   const initial = crypto.randomInt(DECK.length);
-  room.teacherCard = cardView(initial);
+  room.teacherCard = cardView(initial, room.theme);
   for (const student of room.players.values()) {
     student.inRound = true;
     student.points = 0;
     student.lockUntil = 0;
     student.blockedTurn = 0;
-    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(cardView);
+    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(id => cardView(id, room.theme));
   }
   broadcast(room);
   const code = room.code;
@@ -157,7 +160,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', cardsToWin:10, teacherCard:null, cardTurn:0,
+      status:'lobby', cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
@@ -196,7 +199,10 @@ function action(body) {
     if (room.status !== 'lobby') return failure('Change this before starting a race.');
     const n = Number(data.cardsToWin);
     if (!Number.isInteger(n) || n < 5 || n > 25) return failure('Choose between 5 and 25 cards.');
+    const theme = String(data.theme || room.theme || 'mixed');
+    if (!Object.hasOwn(THEME_SYMBOLS, theme)) return failure('Choose a valid card set.');
     room.cardsToWin = n;
+    room.theme = theme;
     broadcast(room);
     return success();
   }
@@ -269,8 +275,9 @@ function action(body) {
     room.eventNumber++;
     const eventId = room.eventNumber;
     const endsAt = Date.now() + CELEBRATION_MS;
-    room.lastEvent = { id:eventId, playerId:p.id, playerName:p.name, symbol:SYMBOLS[correct][0], points:p.points, won };
-    room.pendingMatch = { eventId, playerId:p.id, playerName:p.name, symbol:SYMBOLS[correct][0], oldCenter:room.teacherCard.id, won, endsAt };
+    const symbols = symbolsForTheme(room.theme);
+    room.lastEvent = { id:eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1], points:p.points, won };
+    room.pendingMatch = { eventId, playerId:p.id, playerName:p.name, symbol:symbols[correct][1], oldCenter:room.teacherCard.id, won, endsAt };
     broadcast(room);
     room.pendingTimer = setTimeout(() => finalizeMatch(room, eventId), CELEBRATION_MS);
     return { ok:true, correct:true, won, celebrationMs:CELEBRATION_MS };
@@ -330,7 +337,7 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp'
+  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp'
 };
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml' };
 const server = http.createServer((req,res) => {
