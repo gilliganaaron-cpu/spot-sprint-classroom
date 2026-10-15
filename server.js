@@ -9,7 +9,7 @@ const { SYMBOLS, DECK, getSharedSymbol } = require('./deck');
 
 const rooms = new Map();
 const MAX_PLAYERS = 40;
-const CELEBRATION_MS = 3000;
+const CELEBRATION_MS = 2500;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const PORT = Number(process.env.PORT) || 3000;
 const publicDir = path.join(__dirname, 'public');
@@ -69,7 +69,7 @@ function broadcast(room) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
 }
-// Only the server can advance the shared card, three seconds after a correct match.
+// Only the server can advance the shared card, 2.5 seconds after a correct match.
 // A single pending match per room prevents overlapping celebrations or stale guesses.
 function finalizeMatch(room, eventId) {
   if (!room.pendingMatch || room.pendingMatch.eventId !== eventId || rooms.get(room.code) !== room) return false;
@@ -290,9 +290,9 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css'
+  '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp'
 };
-const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8' };
+const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp' };
 const server = http.createServer((req,res) => {
   const url=new URL(req.url,'http://localhost');
   if (req.method==='GET' && url.pathname==='/health') return sendJson(res,200,{ok:true,service:'spot-sprint'});

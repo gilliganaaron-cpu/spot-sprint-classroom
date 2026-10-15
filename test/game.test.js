@@ -47,7 +47,7 @@ test('teacher creates room, student joins, correct taps clear cards and declare 
       assert.notEqual(r.teacherCard.id,before);
     }
   }
-  assert.equal(CELEBRATION_MS, 3000);
+  assert.equal(CELEBRATION_MS, 2500);
   assert.equal(r.status,'finished');
   assert.equal(r.winnerId,s.token);
   assert.equal(call('room:start',{},tAuth).ok,true);

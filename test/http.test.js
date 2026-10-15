@@ -19,6 +19,10 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
     });
     return r.json();
   };
+  const atlas=await fetch(base+'/symbols.webp');
+  assert.equal(atlas.status,200, 'same source image must be served to all screens');
+  assert.equal(atlas.headers.get('content-type'),'image/webp');
+  assert.ok((await atlas.arrayBuffer()).byteLength > 10000);
   const tRoom=await post('room:create');
   const sRoom=await post('room:join',{code:tRoom.code,name:'Alex'});
   assert.equal(tRoom.ok,true);
@@ -49,10 +53,10 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   assert.equal(next.cardTurn,current.cardTurn);
   assert.ok(next.pendingMatch);
   assert.equal(next.pendingMatch.playerName,'Alex');
-  assert.ok(next.pendingMatch.endsAt > Date.now()+2500);
+  assert.ok(next.pendingMatch.endsAt > Date.now()+2200);
   const blocked=await post('game:match',{symbol:firstMatching,cardTurn:next.cardTurn,cardId:next.myCard.id},sAuth);
   assert.equal(blocked.ok,false,'no guesses can be accepted during the delay');
-  await new Promise(resolve=>setTimeout(resolve,3200));
+  await new Promise(resolve=>setTimeout(resolve,2700));
   const afterWait=(await post('room:resume',sAuth)).view;
   assert.equal(afterWait.pendingMatch,null);
   assert.notEqual(afterWait.teacherCard.id,current.teacherCard.id);
@@ -60,9 +64,9 @@ test('real HTTP join, live stream, game progress, and win condition', async t =>
   const second=await post('game:match',{symbol:secondMatching,cardTurn:afterWait.cardTurn,cardId:afterWait.myCard.id},sAuth);
   assert.equal(second.won,true);
   const finished=(await post('room:resume',sAuth)).view;
-  assert.equal(finished.status,'playing', 'winner animation gets full 3 seconds too');
+  assert.equal(finished.status,'playing', 'winner animation gets full 2.5 seconds too');
   assert.ok(finished.pendingMatch);
-  await new Promise(resolve=>setTimeout(resolve,3200));
+  await new Promise(resolve=>setTimeout(resolve,2700));
   const final=(await post('room:resume',sAuth)).view;
   assert.equal(final.status,'finished');
   assert.equal(final.winnerId,sRoom.token);

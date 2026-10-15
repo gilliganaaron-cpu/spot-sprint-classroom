@@ -13,17 +13,32 @@
   const query = new URLSearchParams(location.search);
   const suggestedCode = (query.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
   const format = n => String(n).padStart(2, '0');
+  // The source illustration for each symbol is ALWAYS the same sprite image,
+  // regardless of device / browser emoji fonts. Only its scale and placement
+  // vary by card, in the spirit of Spot It.
   const positions = [
-    [50, 51, 1.08], [51, 18, 1.0], [76, 31, 0.97], [80, 59, 0.91],
-    [62, 79, 1.05], [33, 78, 0.94], [18, 54, 1.02], [27, 29, 0.96]
+    [50, 50], [51, 18], [75, 31], [80, 58],
+    [63, 79], [32, 79], [19, 57], [26, 29]
   ];
   const preview = {
     id: 1,
     symbols: [
-      ['🦊','fox'], ['🌻','sunflower'], ['🚀','rocket'], ['🎸','guitar'],
-      ['🐢','turtle'], ['🍩','doughnut'], ['🏀','basketball'], ['🌈','rainbow']
-    ].map(([emoji, label], id) => ({ emoji, label, id }))
+      [2,'fox'], [23,'sunflower'], [43,'rocket'], [35,'guitar'],
+      [16,'turtle'], [33,'doughnut'], [48,'basketball'], [56,'rainbow']
+    ].map(([id,label]) => ({ id, label }))
   };
+  function cardVariation(cardId, symbolId, index, salt) {
+    // Stable across rerenders; varies from card to card even for the same symbol.
+    let n = (Math.imul(cardId + 37, 19771) ^ Math.imul(symbolId + 59, 27449) ^ Math.imul(index + 1, 31469) ^ salt) >>> 0;
+    n = Math.imul(n ^ (n >>> 15), 2246822507) >>> 0;
+    n = Math.imul(n ^ (n >>> 13), 3266489909) >>> 0;
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967295;
+  }
+  function artwork(symbolId) {
+    const x = (symbolId % 8) * (100 / 7);
+    const y = Math.floor(symbolId / 8) * (100 / 7);
+    return `<span class="symbol-art" aria-hidden="true" style="background-position:${x.toFixed(5)}% ${y.toFixed(5)}%"></span>`;
+  }
   let view = null;
   let session = readSession();
   let localMuted = localStorage.getItem(SOUND_KEY) === 'true';
@@ -203,15 +218,22 @@
   }
   function symbolCard(card, { small = false, interactive = false, faded = false } = {}) {
     const symbols = card?.symbols || preview.symbols;
+    const cardId = Number(card?.id ?? 1);
     const baseClasses = `picture-card ${small ? 'picture-card-small' : ''} ${interactive ? 'picture-card-clickable' : ''} ${faded ? 'picture-card-faded' : ''}`;
     return `<div class="${baseClasses}" role="group" aria-label="${interactive ? 'Your card. Select the matching picture.' : 'Picture matching card'}">
       <div class="card-inner-ring" aria-hidden="true"></div>
       ${symbols.map((item, index) => {
-        const [x, y, scale] = positions[index];
-        const label = `Picture: ${escape(item.label)}`;
+        const [x, y] = positions[index];
+        // Changing sizes and small rotations create the Spot It challenge without
+        // ever changing a picture's actual artwork or identity.
+        const scale = (0.72 + cardVariation(cardId, item.id, index, 6129) * .67).toFixed(2);
+        const rotate = Math.round((cardVariation(cardId, item.id, index, 19031) - .5) * 34);
+        const style = `--x:${x}%;--y:${y}%;--s:${scale};--rotate:${rotate}deg`;
+        const label = escape(item.label);
+        const art = artwork(item.id);
         return interactive
-          ? `<button class="symbol symbol-button" style="--x:${x}%;--y:${y}%;--s:${scale}" type="button" data-action="guess" data-symbol="${item.id}" aria-label="${label}" title="${escape(item.label)}"><span aria-hidden="true">${escape(item.emoji)}</span></button>`
-          : `<span class="symbol" style="--x:${x}%;--y:${y}%;--s:${scale}" role="img" aria-label="${label}">${escape(item.emoji)}</span>`;
+          ? `<button class="symbol symbol-button" style="${style}" type="button" data-action="guess" data-symbol="${item.id}" aria-label="Picture: ${label}" title="${label}">${art}</button>`
+          : `<span class="symbol" style="${style}" role="img" aria-label="Picture: ${label}">${art}</span>`;
       }).join('')}
     </div>`;
   }
@@ -296,7 +318,7 @@
     ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
     <div class="game-grid teacher-grid">
       <section class="board-panel ${playing ? 'active-board' : ''}">
-        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'The shared card goes here'}</h2></div><span class="board-badge">${celebrating ? '✨ NEXT CARD IN 3…' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
+        <div class="panel-heading"><div>${headerPill('THE BIG-SCREEN CARD', playing ? 'LIVE' : 'SPOT SPRINT')}<h2>${playing || done ? 'Match this card' : 'The shared card goes here'}</h2></div><span class="board-badge">${celebrating ? '✨ NEW CARD IN 2.5s' : playing ? '⚡ MATCH NOW' : done ? '🏁 FINISHED' : '🎮 PREVIEW'}</span></div>
         <div class="stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.teacherCard || preview, { faded: !view.teacherCard })}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">GREAT SPOT!</div><strong class="celebration-name">${escape(view.pendingMatch.playerName)}!</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-count"><b>3</b><b>2</b><b>1</b></span></div><div class="celebration-progress"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
         <div class="board-bottom">${playing && view.lastEvent ? `<span class="last-score">✨ <b>${escape(view.lastEvent.playerName)}</b> spotted ${escape(view.lastEvent.symbol)} — ${view.lastEvent.points}/${view.cardsToWin}</span>` : `<span>Each pair of different cards has exactly <b>one</b> picture in common.</span>`}<span class="board-hint">👀 Look closely!</span></div>
       </section>
@@ -336,7 +358,7 @@
       <div class="personal-score"><small>YOUR SCORE</small><strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="tiny-progress"><span style="width:${myPoints / view.cardsToWin * 100}%"></span></div></div></div>
       ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge">⚡ ${view.cardsToWin - myPoints} LEFT</span></div>
        <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''}">${symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating })}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span id="guess-feedback">${celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 3 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 3 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">👆 Tap the picture!</span></div>
+       <div class="board-bottom"><span id="guess-feedback">${celebrating ? (view.pendingMatch.playerName === view.me.name ? '✨ Great match! New card coming in 2.5 seconds…' : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in 2.5 seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">👆 Tap the picture!</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
