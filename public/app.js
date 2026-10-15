@@ -249,9 +249,11 @@
         <p class="landing-description">One card on the big screen. One card on every student's device. Spot the matching picture, click it and race to clear your deck first!</p>
         <div class="landing-card-wrap">${symbolCard(preview)}<span class="orbit-label orbit-label-top">8 pictures</span><span class="orbit-label orbit-label-bottom">1 perfect match</span></div>
         <div class="hero-highlights"><span>✓ Live multiplayer</span><span>✓ No student accounts</span><span>✓ Real-time leaderboard</span></div>
+        <div class="landing-update-banner"><span class="update-pill">NEW FEATURES</span><div><strong>Lobby music + fullscreen teacher display</strong><p>Create a game to hear the new waiting-room music and see the big joining address and room code on your projector.</p></div></div>
       </section>
       <section class="start-panel">
-        <div class="start-panel-heading"><span class="start-icon">✳</span><div><h2>Ready, set, SPOT!</h2><p>Choose how you want to play.</p></div></div>
+        <div class="start-panel-heading"><span class="start-icon">✳</span><div><span class="new-feature-line">★ NEW: Lobby music &amp; fullscreen</span><h2>Ready, set, SPOT!</h2><p>Choose how you want to play.</p></div></div>
+        <div class="landing-address"><small>STUDENTS OPEN THIS WEBSITE TO JOIN</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div>
         <div class="start-option teacher-option">
           <div class="option-tag">👩‍🏫 FOR THE TEACHER</div>
           <h3>Host a game</h3>

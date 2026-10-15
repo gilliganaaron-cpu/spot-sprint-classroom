@@ -302,7 +302,7 @@ const server = http.createServer((req,res) => {
     const file=path.join(publicDir,allowFiles[url.pathname]);
     res.writeHead(200,{
       'Content-Type':mime[path.extname(file)],
-      'Cache-Control':'no-cache', 'X-Content-Type-Options':'nosniff'
+      'Cache-Control':'no-store, max-age=0', 'X-Content-Type-Options':'nosniff'
     });
     fs.createReadStream(file).pipe(res);
     return;
