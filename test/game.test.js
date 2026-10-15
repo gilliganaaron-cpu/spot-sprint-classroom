@@ -329,3 +329,54 @@ test('an incorrect guess breaks a winning streak before three in a row', () => {
   assert.equal(call('room:reset',{},tAuth).ok,true);
   rooms.delete(teacher.code);
 });
+
+
+test('teacher removes inappropriate lobby name and kicked student must rejoin with a new name', () => {
+  const teacher=call('room:create',{});
+  const first=call('room:join',{code:teacher.code,name:'Offensive Nickname'});
+  const other=call('room:join',{code:teacher.code,name:'Casey'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const removedAuth={role:'student',code:teacher.code,token:first.token};
+  const otherAuth={role:'student',code:teacher.code,token:other.token};
+  const room=rooms.get(teacher.code);
+  let sse='';
+  const kicked=room.players.get(first.token);
+  kicked.stream={write(s){sse+=s;}, end(){this.ended=true;},writableEnded:false,destroyed:false};
+  const beforeCount=room.players.size;
+  const result=call('room:remove-player',{playerId:first.token},tAuth);
+  assert.equal(result.ok,true);
+  assert.equal(result.removedPlayerId,first.token);
+  assert.equal(room.players.size,beforeCount-1);
+  assert.equal(room.players.has(first.token),false);
+  assert.equal(room.players.has(other.token),true);
+  assert.equal(result.view.players.some(p=>p.name==='Offensive Nickname'),false);
+  assert.equal(room.kickedTokens.has(first.token),true);
+  assert.match(sse,/event: removed/);
+  assert.match(sse,/different name/);
+  const retry=call('room:resume',removedAuth,removedAuth);
+  assert.equal(retry.ok,false);
+  assert.equal(retry.removed,true);
+  assert.match(retry.error,/Join again/);
+  assert.equal(call('room:resume',otherAuth,otherAuth).ok,true);
+  const fresh=call('room:join',{code:teacher.code,name:'Sam'});
+  assert.equal(fresh.ok,true);
+  assert.notEqual(fresh.token,first.token);
+  assert.equal(room.players.size,2);
+  rooms.delete(teacher.code);
+});
+
+test('only the teacher may remove names, and not after a round has started', () => {
+  const teacher=call('room:create',{});
+  const a=call('room:join',{code:teacher.code,name:'Alex'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const sAuth={role:'student',code:teacher.code,token:a.token};
+  const room=rooms.get(teacher.code);
+  assert.equal(call('room:remove-player',{playerId:a.token},sAuth).ok,false);
+  assert.equal(room.players.has(a.token),true);
+  assert.equal(call('room:remove-player',{playerId:'not a player'},tAuth).ok,false);
+  assert.equal(call('room:start',{},tAuth).ok,true);
+  assert.equal(call('room:remove-player',{playerId:a.token},tAuth).ok,false);
+  assert.equal(room.players.has(a.token),true);
+  assert.equal(call('room:reset',{},tAuth).ok,true);
+  rooms.delete(teacher.code);
+});

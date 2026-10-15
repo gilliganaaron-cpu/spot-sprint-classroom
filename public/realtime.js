@@ -32,6 +32,12 @@
           try { fire('room:update',JSON.parse(e.data)); } catch { /* malformed event */ }
         };
         stream.addEventListener('replaced',()=>fire('session:replaced'));
+        stream.addEventListener('removed',e=>{
+          let payload = {};
+          try { payload = JSON.parse(e.data); } catch { /* optional reason */ }
+          fire('session:removed',payload);
+          client.clearRoom();
+        });
         stream.onopen=()=>{
           const wasConnected=client.connected;
           client.connected=true;

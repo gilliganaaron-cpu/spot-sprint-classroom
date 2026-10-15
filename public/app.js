@@ -442,7 +442,7 @@
     // overflowing the screen, even for a 40-student classroom.
     const compact = document.documentElement.classList.contains('fullscreen-mode') && view.role === 'teacher';
     const cols = window.innerWidth >= 1100 ? 2 : 1;
-    const maxVisible = compact ? Math.max(5, Math.min(40, Math.floor((window.innerHeight - 450) / 35) * cols)) : view.players.length;
+    const maxVisible = view.status === 'lobby' ? view.players.length : (compact ? Math.max(5, Math.min(40, Math.floor((window.innerHeight - 450) / 35) * cols)) : view.players.length);
     const listed = view.players.slice(0, maxVisible);
     const more = view.players.length - listed.length;
     if (!view.players.length) return `<div class="empty-players"><span>👀</span><strong>No players yet</strong><small>Students enter the room code to join.</small></div>`;
@@ -451,6 +451,7 @@
       <div class="player-details"><div class="player-name">${escape(p.name)} ${p.id === view.winnerId ? '👑' : ''}${!p.online ? '<span class="offline-label">offline</span>' : ''}${!p.inRound && ['playing','paused'].includes(view.status) ? '<span class="offline-label">next round</span>' : ''}</div>
       ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / view.cardsToWin) * 100}%"></span></div>` : ''}</div>
       ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}<small>/${view.cardsToWin}</small></b>` : ''}
+      ${view.role === 'teacher' && view.status === 'lobby' ? `<button type="button" class="player-remove" data-action="remove-player" data-player-id="${escape(p.id)}" title="Delete inappropriate name" aria-label="Delete inappropriate name: ${escape(p.name)}">×</button>` : ''}
       </div>`).join('')}${more ? `<div class="more-players">+ ${more} more players · showing leaders</div>` : ''}</div>`;
   }
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
@@ -705,6 +706,8 @@
       // A room change or stale request must not overwrite a newer session.
       if (result.ok && session?.token === current.token && session?.code === current.code) {
         updateView(result.view);
+      } else if (result.removed && session?.token === current.token) {
+        handleTeacherRemoval(result.error);
       }
     } catch { /* SSE will reconnect, and the next poll can retry. */ }
     finally { syncBusy = false; }
@@ -739,6 +742,8 @@
       socket.setRoom(session);
       updateView(result.view, true);
       if (session.role === 'student' && !suggestedCode) history.replaceState(null, '', `/?room=${encodeURIComponent(session.code)}`);
+    } else if (result.removed) {
+      handleTeacherRemoval(result.error);
     } else {
       clearSession();
       render();
@@ -755,6 +760,18 @@
     connection.classList.add('not-connected');
   });
   socket.on('room:update', data => { lastServerPushAt = Date.now(); updateView(data); });
+  function handleTeacherRemoval(message) {
+    if (session?.role !== 'student') return;
+    const code = session.code;
+    clearSession();
+    joinDraft = { code, name:'' };
+    history.replaceState(null, '', '/?room=' + encodeURIComponent(code));
+    render();
+    toast(message || 'Your name was removed by the teacher. Please join again with a different name.', true);
+  }
+  socket.on('session:removed', data => {
+    handleTeacherRemoval(data?.reason);
+  });
   socket.on('session:replaced', () => {
     clearSession();
     render();
@@ -823,6 +840,22 @@
       if (!r.ok) { toast(r.error, true); render(); return; }
       saveSession('teacher', r.code, r.token);
       updateView(r.view, true);
+      return;
+    }
+    if (action === 'remove-player') {
+      if (view?.role !== 'teacher' || view.status !== 'lobby') return;
+      const playerId = button.dataset.playerId;
+      const player = view.players.find(p => p.id === playerId);
+      if (!player) return;
+      if (!confirm(`Remove "${player.name}" from this room? They must join again with a different name.`)) return;
+      button.disabled = true;
+      const result = await send('room:remove-player', { playerId });
+      if (!result.ok) {
+        button.disabled = false;
+        toast(result.error || 'Could not remove that name.', true);
+      } else if (result.view) {
+        updateView(result.view);
+      }
       return;
     }
     if (action === 'leave') { clearSession(); history.replaceState(null, '', '/'); render(); return; }

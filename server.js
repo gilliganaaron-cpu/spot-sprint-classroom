@@ -178,7 +178,7 @@ function action(body) {
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
       status:'lobby', revision:0, cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
-      winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
+      winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
@@ -200,6 +200,9 @@ function action(body) {
     return success({ code, token:p.id, view:view(room, 'student', p.id) });
   }
   if (command === 'room:resume') {
+    const staleRoom = rooms.get(String(data?.code || '').toUpperCase());
+    if (data?.role === 'student' && staleRoom?.kickedTokens?.has(data.token))
+      return failure('The teacher removed this name. Join again with a different name.', { removed:true });
     auth = resolveAuth({ session: data }, data?.role);
     if (!auth) return failure('That session is no longer available.');
     room = auth.room;
@@ -212,6 +215,24 @@ function action(body) {
   room = auth.room;
   p = auth.p;
 
+  if (command === 'room:remove-player') {
+    if (room.status !== 'lobby') return failure('You can only remove names before a round starts.');
+    const playerId = String(data.playerId || '');
+    const player = room.players.get(playerId);
+    if (!player) return failure('That student is no longer in this room.');
+    room.kickedTokens.add(playerId);
+    room.players.delete(playerId);
+    if (player.stream) {
+      writeEvent(player.stream, {
+        reason:'The teacher removed this name. Join again using a different name.',
+        code:room.code
+      }, 'removed');
+      player.stream.end();
+      player.stream = null;
+    }
+    broadcast(room);
+    return success({ removedPlayerId:playerId, view:view(room,'teacher') });
+  }
   if (command === 'room:settings') {
     if (room.status !== 'lobby') return failure('Change this before starting a race.');
     const n = Number(data.cardsToWin);
