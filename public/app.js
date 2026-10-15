@@ -74,6 +74,13 @@
   let musicDucked = false;
   let musicMode = null;
   let audio = null;
+  // Suno's direct MP3 stream replaces the synthesised LOBBY tune only.
+  // Keep the existing synthesised playing/countdown track and all effects.
+  const LOBBY_SUNO_AUDIO_URL = 'https://cdn1.suno.ai/a01ed800-735e-4d8e-a615-7a453928f9af.mp3';
+  let lobbyAudio = null;
+  let lobbyAudioUnavailable = false;
+  let lobbyAudioBlocked = false;
+  let lobbyAudioStarting = false;
   let lastEventId = null;
   let winningEventShown = null;
   let toastTimeout = null;
@@ -316,9 +323,79 @@
     musicDucked = false;
     musicMode = null;
   }
+  // Browser audio elements can stream Suno MP3s without CORS. This plays only
+  // on the teacher's device and needs a click to satisfy autoplay policies.
+  function ensureLobbyAudio() {
+    if (lobbyAudioUnavailable || !window.Audio) return false;
+    if (lobbyAudio) return true;
+    try {
+      lobbyAudio = new Audio(LOBBY_SUNO_AUDIO_URL);
+      lobbyAudio.loop = true;
+      lobbyAudio.preload = 'auto';
+      lobbyAudio.volume = .46; // Gentle lobby level, independent of effects.
+      lobbyAudio.addEventListener('error', () => {
+        lobbyAudioUnavailable = true;
+        stopLobbyAudio();
+        syncMusic(); // If Suno cannot load, use the original lobby score.
+      });
+      return true;
+    } catch {
+      lobbyAudioUnavailable = true;
+      return false;
+    }
+  }
+  function stopLobbyAudio() {
+    if (!lobbyAudio) return;
+    lobbyAudio.pause();
+    try { lobbyAudio.currentTime = 0; } catch { /* Stream not yet seekable. */ }
+  }
+  function startLobbyAudio() {
+    if (!ensureLobbyAudio() || lobbyAudioBlocked) return false;
+    if (lobbyAudio.paused && !lobbyAudioStarting) {
+      lobbyAudioStarting = true;
+      try {
+        const result = lobbyAudio.play();
+        if (result && typeof result.then === 'function') {
+          result.then(() => {
+            lobbyAudioStarting = false;
+            // An in-flight play must never leak into the actual race.
+            if (!musicEnabled || view?.role !== 'teacher' || !['lobby'].includes(view.status)) {
+              // The create-room click plays before the server reply, which
+              // momentarily leaves the teacher view empty; only stop if we
+              // are definitely in a different active screen.
+              if (view?.role === 'student' || (view?.role === 'teacher' && view.status !== 'lobby') || !musicEnabled)
+                stopLobbyAudio();
+            }
+          }).catch(err => {
+            lobbyAudioStarting = false;
+            if (err?.name === 'AbortError') return; // Deliberately stopped.
+            lobbyAudioBlocked = true;
+            syncMusic(); // Audio permission/stream issue: synthesised fallback.
+          });
+        } else lobbyAudioStarting = false;
+      } catch {
+        lobbyAudioStarting = false;
+        lobbyAudioBlocked = true;
+        return false;
+      }
+    }
+    return true;
+  }
   function syncMusic() {
-    const mode = view?.role === 'teacher' && ['lobby','playing','countdown'].includes(view.status) && musicEnabled && audio && audio.state === 'running' ? (view.status === 'countdown' ? 'playing' : view.status) : null;
-    if (!mode) { stopMusic(); return; }
+    const mode = view?.role === 'teacher' && ['lobby','playing','countdown'].includes(view.status) && musicEnabled
+      ? (view.status === 'countdown' ? 'playing' : view.status)
+      : null;
+    if (!mode) { stopLobbyAudio(); stopMusic(); return; }
+
+    if (mode === 'lobby' && !lobbyAudioUnavailable && !lobbyAudioBlocked) {
+      stopMusic(); // Do not layer the synth lobby score over the song.
+      if (startLobbyAudio()) return;
+    } else {
+      stopLobbyAudio(); // Stop the MP3 at the very start of countdown/game.
+    }
+
+    // Original Web Audio score: active race, or fallback if Suno is unavailable.
+    if (!audio || audio.state !== 'running') { stopMusic(); return; }
     if (musicMode !== mode) stopMusic();
     if (!musicTimer) {
       musicMode = mode;
@@ -346,7 +423,7 @@
   function setSoundUI() {
     musicBtn.hidden = view?.role !== 'teacher';
     fullscreenBtn.hidden = !view || !['teacher','student'].includes(view.role);
-    const name = view?.status === 'lobby' ? 'Lobby music' : 'Game music';
+    const name = view?.status === 'lobby' ? 'Game Start! lobby music' : 'Game music';
     musicBtn.innerHTML = musicEnabled ? '🎵' : '🎵';
     musicBtn.title = musicEnabled ? `Turn ${name.toLowerCase()} off` : `Turn ${name.toLowerCase()} on`;
     musicBtn.setAttribute('aria-label', musicBtn.title);
@@ -861,6 +938,7 @@
     }
     if (action === 'music') {
       musicEnabled = !musicEnabled;
+      if (musicEnabled) lobbyAudioBlocked = false; // This click permits another play attempt.
       localStorage.setItem(MUSIC_KEY, String(musicEnabled));
       unlockAudio();
       setSoundUI();
@@ -870,6 +948,9 @@
     }
     if (action === 'create') {
       if (creating) return;
+      // Prime the streamed lobby song directly on the Create-game click;
+      // invoking play only after the async server reply can be autoplay-blocked.
+      if (musicEnabled) startLobbyAudio();
 
       // Fullscreen must be requested directly in the user click, before the
       // asynchronous network request (otherwise browsers refuse it).
@@ -899,7 +980,7 @@
       }
       const r = await send('room:create');
       creating = false;
-      if (!r.ok) { toast(r.error, true); render(); return; }
+      if (!r.ok) { stopLobbyAudio(); toast(r.error, true); render(); return; }
       saveSession('teacher', r.code, r.token);
       updateView(r.view, true);
       return;
