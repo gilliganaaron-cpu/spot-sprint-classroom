@@ -449,15 +449,35 @@
     return `<div class="player-list">${listed.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}" data-player-id="${p.id}" data-rank="${i+1}">
       <span class="rank">${view.status === 'lobby' ? '●' : (i + 1)}</span>
       <div class="player-details"><div class="player-name">${escape(p.name)} ${p.id === view.winnerId ? '👑' : ''}${!p.online ? '<span class="offline-label">offline</span>' : ''}${!p.inRound && ['playing','paused'].includes(view.status) ? '<span class="offline-label">next round</span>' : ''}</div>
-      ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / view.cardsToWin) * 100}%"></span></div>` : ''}</div>
-      ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}<small>/${view.cardsToWin}</small></b>` : ''}
+      ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / (view.gameMode === 'timed' ? Math.max(1,view.players[0]?.points || 1) : view.cardsToWin)) * 100}%"></span></div>` : ''}</div>
+      ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}${view.gameMode === "timed" ? "" : `<small>/${view.cardsToWin}</small>`}</b>` : ''}
       ${view.role === 'teacher' && view.status === 'lobby' ? `<button type="button" class="player-remove" data-action="remove-player" data-player-id="${escape(p.id)}" title="Delete inappropriate name" aria-label="Delete inappropriate name: ${escape(p.name)}">×</button>` : ''}
       </div>`).join('')}${more ? `<div class="more-players">+ ${more} more players · showing leaders</div>` : ''}</div>`;
   }
   function headerPill(label, strong) { return `<div class="panel-kicker">${escape(label)}${strong ? ` <strong>${escape(strong)}</strong>` : ''}</div>`; }
+  // Only the server determines when a timed race ends.
+  function roundClockMs() {
+    if (view?.gameMode !== 'timed') return 0;
+    if (view.status === 'playing' && view.timeEndsAt)
+      return Math.max(0,view.timeEndsAt - Date.now());
+    if (view.status === 'paused') return Math.max(0,view.timeRemainingMs || 0);
+    if (view.status === 'finished') return 0;
+    return view.timeLimitSec * 1000;
+  }
+  function roundClockLabel() {
+    const n = Math.ceil(roundClockMs() / 1000);
+    return Math.floor(n/60) + ':' + String(n%60).padStart(2,'0');
+  }
+  function updateClockDisplay() {
+    if (view?.gameMode !== 'timed') return;
+    document.querySelectorAll('[data-round-clock]').forEach(el => el.textContent = roundClockLabel());
+    const ratio = Math.max(0,Math.min(1,roundClockMs()/(view.timeLimitSec * 1000)));
+    document.querySelectorAll('[data-time-progress]').forEach(el => el.style.width = Math.round(ratio*100) + '%');
+  }
+  setInterval(updateClockDisplay,250);
   function teacherControls() {
     const buttons = [];
-    if (view.status === 'lobby') buttons.push('<button type="button" class="header-start-game" data-action="start" aria-label="Start game"><span class="play-triangle">▶</span><span>START GAME</span></button>');
+    if (view.status === 'lobby') buttons.push('<button type="button" class="header-start-game header-start-compact" data-action="start" aria-label="Start game">START</button>');
     if (view.status === 'countdown') buttons.push('<span class="header-countdown">3 · 2 · 1</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="header-round-control" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause</button>`);
     if (view.status === 'paused') buttons.push('<button type="button" class="header-start-game" data-action="pause">▶ Resume</button>');
@@ -473,10 +493,11 @@
     document.documentElement.classList.toggle('student-active', Boolean(active));
     if (!active) { studentHeaderInfo.innerHTML = ''; return; }
     const scored = view.me?.points || 0;
+    const timed = view.gameMode === 'timed';
     const maximum = Math.max(1, view.cardsToWin || 10);
     const left = Math.max(0, maximum - scored);
     const finished = view.status === 'finished';
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><strong>${finished ? (view.winnerId === view.me?.id ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on your card below to a picture on the shared teacher card to your right, or the main classroom screen'}</div></div><div class="student-live-score" aria-label="Your score ${scored} out of ${maximum}"><small>YOUR SCORE</small><strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div></div>`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : (timed ? 'TIMED CHALLENGE' : 'LIVE MATCH RACE')}</div><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on your card below to a picture on the shared teacher card to your right, or the main classroom screen'}</div></div><div class="student-live-score" aria-label="Your score ${scored} points"><small>${timed ? "TIME LEFT" : "YOUR SCORE"}</small>${timed ? `<strong data-round-clock>${roundClockLabel()}</strong><div class="student-live-track"><span data-time-progress style="width:${Math.round(roundClockMs()/(view.timeLimitSec * 1000)*100)}%"></span></div><small>${scored} points</small>` : `<strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div>`}</div>`;
   }
   // Keep teacher settings mounted while a room stays in the lobby.
   // Server push messages must not replace the range input mid-drag.
@@ -485,11 +506,15 @@
   let queuedSettings = null;
   function syncHeaderSettings(slider, themePicker) {
     if (sliderEditing || settingsSavePending || queuedSettings) return;
-    const cards = String(view.cardsToWin);
-    if (slider.value !== cards) slider.value = cards;
-    slider.style.setProperty('--range-fill', String((view.cardsToWin - 5) * 5) + '%');
-    const count = teacherHeaderInfo.querySelector('#cards-range-value');
-    if (count) count.textContent = cards;
+    if (slider) {
+      const cards = String(view.cardsToWin);
+      if (slider.value !== cards) slider.value = cards;
+      slider.style.setProperty('--range-fill', String((view.cardsToWin-5)*5) + '%');
+      const count = teacherHeaderInfo.querySelector('#cards-range-value');
+      if (count) count.textContent = cards;
+    }
+    const timePicker = teacherHeaderInfo.querySelector('#time-limit');
+    if (timePicker && timePicker.value !== String(view.timeLimitSec)) timePicker.value = String(view.timeLimitSec);
     if (document.activeElement !== themePicker && themePicker.value !== view.theme)
       themePicker.value = view.theme;
   }
@@ -518,19 +543,44 @@
     if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
     // Updating a scoreboard or receiving a network ping must not destroy the
     // control with which the teacher is currently interacting.
+
     const currentSlider = teacherHeaderInfo.querySelector('#cards-to-win');
     const currentTheme = teacherHeaderInfo.querySelector('#theme-select');
     if (view.status === 'lobby' && teacherHeaderInfo.dataset.roomCode === view.code &&
-        currentSlider && currentTheme) {
-      syncHeaderSettings(currentSlider, currentTheme);
+      teacherHeaderInfo.dataset.gameMode === view.gameMode && currentTheme) {
+      syncHeaderSettings(currentSlider,currentTheme);
       teacherHeaderActions.innerHTML = teacherControls();
       return;
     }
+    const timed = view.gameMode === 'timed';
+    const modeControls = '<div class="challenge-mode-toggle" role="group" aria-label="Win condition">' +
+      '<button type="button" data-action="set-mode" data-mode="cards" class="' + (timed ? '' : 'selected') +
+      '" aria-pressed="' + (!timed) + '">Cards</button><span>or</span>' +
+      '<button type="button" data-action="set-mode" data-mode="timed" class="' + (timed ? 'selected' : '') +
+      '" aria-pressed="' + timed + '">⏱ Timed</button></div>';
+    const cardsControl = '<div class="challenge-control-row"><label for="cards-to-win">Number of cards</label>' +
+      '<strong id="cards-range-value">' + view.cardsToWin + '</strong></div>' +
+      '<input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="' + view.cardsToWin +
+      '" aria-label="Number of cards to win" style="--range-fill:' + ((view.cardsToWin-5)*5) + '%">';
+    const secondsControl = '<div class="challenge-control-row"><label for="time-limit">Time limit</label>' +
+      '<select id="time-limit" aria-label="Timed challenge duration">' +
+      [60,90,120].map(sec => '<option value="' + sec + '"' + (sec === view.timeLimitSec ? ' selected' : '') + '>' + sec + 's</option>').join('') +
+      '</select></div>';
+    const themeControl = '<div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label>' +
+      '<div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">' +
+      (view.availableThemes || ['mixed','sports','animals','emojis','scifi','festive']).map(key =>
+      '<option value="' + key + '"' + (key === view.theme ? ' selected' : '') + '>' +
+      escape(THEME_META[key]?.icon || '✨') + ' ' + escape(THEME_META[key]?.label || key) + '</option>').join('') +
+      '</select><span class="theme-chevron">▾</span></div></div>';
     const topSettings = view.status === 'lobby'
-      ? `<div class="cards-range-panel"><label for="cards-to-win" class="cards-range-heading"><span>▣ &nbsp; Number of cards</span><strong id="cards-range-value">${view.cardsToWin}</strong></label><input id="cards-to-win" class="cards-range" type="range" min="5" max="25" step="1" value="${view.cardsToWin}" aria-label="Number of cards to win, 5 to 25" style="--range-fill:${(view.cardsToWin-5)*5}%"></div><div class="theme-panel"><label for="theme-select" class="cards-range-heading"><span>Card set</span></label><div class="theme-select-wrap"><select id="theme-select" class="theme-select" aria-label="Choose card set theme">${(view.availableThemes || ['mixed','sports','animals','emojis','scifi','festive']).map(key => `<option value="${key}" ${key === view.theme ? 'selected' : ''}>${escape(THEME_META[key]?.icon || '✨')} ${escape(THEME_META[key]?.label || key)}</option>`).join('')}</select><span class="theme-chevron">▾</span></div></div>`
-      : `<div class="game-status-settings"><span>${escape(THEME_META[view.theme]?.icon || '✨')} ${escape(THEME_META[view.theme]?.label || 'Mixed')}</span><b>First to ${view.cardsToWin} cards</b></div>`;
+      ? '<div class="cards-range-panel challenge-panel" data-win-mode="' + view.gameMode + '">' +
+        modeControls + (timed ? secondsControl : cardsControl) + '</div>' + themeControl
+      : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
+        ' ' + escape(THEME_META[view.theme]?.label || 'Mixed') + '</span><b>' +
+        (timed ? '⏱ <span data-round-clock>' + roundClockLabel() + '</span>' : 'First to ' + view.cardsToWin + ' cards') + '</b></div>';
     teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><small>Student website</small><strong>${escape(location.host || 'spot-sprint-classroom.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
     teacherHeaderInfo.dataset.roomCode = view.code;
+    teacherHeaderInfo.dataset.gameMode = view.gameMode;
     teacherHeaderActions.innerHTML = teacherControls();
   }
   function renderLanding() {
@@ -580,8 +630,9 @@
     const winner = view.players.find(p => p.id === view.winnerId);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
+    const champions = view.players.filter(p => (view.winnerIds || []).includes(p.id));
     screen.innerHTML = `<div class="classroom-dashboard">
-      ${done && winner ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>CLASS CHAMPION</small><strong>${escape(winner.name)}</strong><span>First to ${view.cardsToWin} matching pictures!</span></div><span class="banner-star">✦</span></div>` : ''}
+      ${done && (winner || view.gameMode === 'timed') ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>${view.gameMode === 'timed' ? (champions.length > 1 ? 'JOINT CHAMPIONS' : 'TIME IS UP!') : 'CLASS CHAMPION'}</small><strong>${champions.length ? champions.map(p=>escape(p.name)).join(' & ') : (winner ? escape(winner.name) : 'Great effort!')}</strong><span>${view.gameMode === 'timed' ? `Highest score after ${view.timeLimitSec} seconds` : `First to ${view.cardsToWin} matching pictures!`}</span></div><span class="banner-star">✦</span></div>` : ''}
       <div class="classroom-game-grid">
         <div class="classroom-left-column">
           <section class="classroom-card-area ${playing ? 'active-board' : ''}" aria-label="Shared matching card">
@@ -620,23 +671,26 @@
     const inRace = Boolean(view.me?.inRound);
     const done = view.status === 'finished';
     const winner = view.players.find(p => p.id === view.winnerId);
+    const isWinner = view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id);
+    const isTie = (view.winnerIds || []).length > 1;
     if (view.status === 'lobby' || (playing && !inRace)) {
       screen.innerHTML = `<div class="waiting-screen"><div class="waiting-glow">${symbolCard(preview, { small: true, faded: true })}</div>
       <div class="waiting-info"><div class="eyebrow">✓ YOU'RE IN THE GAME</div><h1>Hi, ${escape(view.me.name)}! <span>👋</span></h1>
       <p>${playing ? 'The current race has already started. You will play in the next round.' : "You are on the list. The teacher will start the race soon."}</p>
-      <div class="waiting-pills"><span>ROOM <b>${escape(view.code)}</b></span><span>${view.cardsToWin} matches to win</span></div><div class="pulse-text"><span class="live-dot"></span>${playing ? 'Waiting for the next race…' : 'Waiting for your teacher to start…'}</div>
+      <div class="waiting-pills"><span>ROOM <b>${escape(view.code)}</b></span><span>${view.gameMode === 'timed' ? view.timeLimitSec + '-second challenge' : view.cardsToWin + ' matches to win'}</span></div><div class="pulse-text"><span class="live-dot"></span>${playing ? 'Waiting for the next race…' : 'Waiting for your teacher to start…'}</div>
       <div class="waiting-students"><strong>Players in room (${view.players.length})</strong><div class="avatar-stack">${view.players.slice(0, 15).map(p => `<span title="${escape(p.name)}">${escape(p.name.slice(0,1).toUpperCase())}</span>`).join('')}</div></div>
       <button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div></div>${studentCelebration()}`;
       return;
     }
     const myPoints = view.me?.points || 0;
+    const timed = view.gameMode === 'timed';
     const cardsLeft = Math.max(0, view.cardsToWin - myPoints);
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
     const penaltyActive = !celebrating && Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
     screen.innerHTML = `<div class="student-game-content" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">
-      ${done ? `<div class="student-result"><span>${view.winnerId === view.me.id ? '🏆' : '🎉'}</span><h2>${view.winnerId === view.me.id ? 'You are the champion!' : `Well played, ${escape(view.me.name)}!`}</h2><p>${view.winnerId === view.me.id ? 'You were the first to clear your deck.' : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge student-remain-badge">⚡ ${cardsLeft} LEFT <span class="remaining-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${view.cardsToWin}" aria-valuenow="${cardsLeft}"><span class="remaining-fill" style="width:${Math.round(cardsLeft / view.cardsToWin * 100)}%"></span></span></span></div>
-       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''} ${celebrating ? 'stage-match-celebrating' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null }), cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
+      ${done ? `<div class="student-result"><span>${isWinner ? '🏆' : '🎉'}</span><h2>${isWinner ? (isTie ? 'Joint champion!' : 'You are the champion!') : `Well played, ${escape(view.me.name)}!`}</h2><p>${isWinner ? (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds!` : 'You were the first to clear your deck.') : (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds.` : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`)}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it. Tap it. Score!</h2></div><span class="board-badge student-remain-badge">⚡ ${timed ? myPoints + " PTS" : cardsLeft + " LEFT"} <span class="remaining-track" role="progressbar" aria-label="${timed ? "Time remaining" : "Cards remaining"}" aria-valuemin="0" aria-valuemax="${timed ? view.timeLimitSec : view.cardsToWin}" aria-valuenow="${timed ? Math.ceil(roundClockMs()/1000) : cardsLeft}"><span class="remaining-fill" ${timed ? "data-time-progress" : ""} style="width:${timed ? Math.round(roundClockMs()/(view.timeLimitSec*1000)*100) : Math.round(cardsLeft/view.cardsToWin*100)}%"></span></span></span></div>
+       <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''} ${celebrating ? 'stage-match-celebrating' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null }), timed ? 25 : cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
        <div class="board-bottom"><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? `✨ Great match! New card coming in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…` : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}</div>${studentCelebration()}`;
@@ -651,6 +705,7 @@
     if (!view) renderLanding();
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
+    updateClockDisplay();
     setSoundUI();
     updateFullscreenUI();
     queueCountdownRefresh();
@@ -842,6 +897,19 @@
       updateView(r.view, true);
       return;
     }
+    if (action === 'set-mode') {
+      if (view?.role !== 'teacher' || view.status !== 'lobby') return;
+      const mode = button.dataset.mode;
+      if (!['cards','timed'].includes(mode) || mode === view.gameMode || settingsSavePending) return;
+      queuedSettings = {
+        cardsToWin:Number(document.getElementById('cards-to-win')?.value || view.cardsToWin),
+        timeLimitSec:Number(document.getElementById('time-limit')?.value || view.timeLimitSec || 90),
+        gameMode:mode,
+        theme:document.getElementById('theme-select')?.value || view.theme
+      };
+      void flushGameSettings();
+      return;
+    }
     if (action === 'remove-player') {
       if (view?.role !== 'teacher' || view.status !== 'lobby') return;
       const playerId = button.dataset.playerId;
@@ -861,6 +929,7 @@
     if (action === 'leave') { clearSession(); history.replaceState(null, '', '/'); render(); return; }
     if (!view) return;
     if (action === 'start') {
+      if (settingsSavePending || queuedSettings) { toast('Saving your game options. Try Start again in a moment.'); return; }
       button.disabled = true;
       const r = await send('room:start');
       if (!r.ok) { button.disabled = false; toast(r.error || 'Could not start the race.', true); }
@@ -956,14 +1025,14 @@
     if (e.target.id === 'player-name') joinDraft.name = e.target.value;
   });
   document.addEventListener('change', async e => {
-    if (!['cards-to-win','theme-select'].includes(e.target.id)) return;
+    if (!['cards-to-win','theme-select','time-limit'].includes(e.target.id)) return;
     if (view?.role !== 'teacher' || view.status !== 'lobby') return;
     const n = Number(document.getElementById('cards-to-win')?.value || view.cardsToWin);
     const theme = document.getElementById('theme-select')?.value || view.theme || 'mixed';
     // Input updates the number immediately. One request saves on release;
     // a newer change supersedes any queued setting, so dragging feels stable.
     sliderEditing = true;
-    queuedSettings = { cardsToWin: n, theme };
+    queuedSettings = { cardsToWin: n, theme, gameMode:view.gameMode, timeLimitSec:Number(document.getElementById('time-limit')?.value || view.timeLimitSec || 90) };
     void flushGameSettings();
   });
   document.addEventListener('focusout', e => {

@@ -380,3 +380,70 @@ test('only the teacher may remove names, and not after a round has started', () 
   assert.equal(call('room:reset',{},tAuth).ok,true);
   rooms.delete(teacher.code);
 });
+
+test('timed challenge scores by time, pauses safely, replenishes decks and keeps students for replay', () => {
+  const { finishTimedRound } = require('../server');
+  const teacher=call('room:create',{});
+  const alpha=call('room:join',{code:teacher.code,name:'Alex'});
+  const beta=call('room:join',{code:teacher.code,name:'Mia'});
+  const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+  const aAuth={role:'student',code:teacher.code,token:alpha.token};
+  const room=rooms.get(teacher.code);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:90},tAuth).ok,true);
+  assert.equal(call('room:settings',{cardsToWin:5,theme:'festive',gameMode:'timed',timeLimitSec:30},tAuth).ok,false);
+  assert.equal(call('room:start',{},tAuth).ok,true);
+  assert.equal(room.players.get(alpha.token).hand.length,25,'timed rounds have enough cards to keep scoring');
+  const startup=room.startTimer;
+  clearTimeout(startup);
+  startup._onTimeout(); // begins the timed race after the 3-2-1 countdown
+  assert.equal(room.status,'playing');
+  assert.ok(room.timeEndsAt>Date.now()+88000);
+  assert.equal(call('room:pause',{},tAuth).ok,true);
+  assert.equal(room.status,'paused');
+  assert.equal(room.timeEndsAt,null);
+  assert.equal(room.timeTimer,null,'pausing cancels scheduled deadline');
+  assert.equal(call('room:pause',{},tAuth).ok,true);
+  assert.equal(room.status,'playing');
+  assert.ok(room.timeEndsAt>Date.now()+88000);
+  for(let i=0;i<28;i++){
+    const own=room.players.get(alpha.token).hand[0].id;
+    const shared=getSharedSymbol(room.teacherCard.id,own);
+    const result=call('game:match',{symbol:shared,cardId:own,cardTurn:room.cardTurn},aAuth);
+    assert.equal(result.correct,true);
+    assert.equal(result.won,false,'timed challenge must not finish at a card target');
+    assert.equal(finalizeMatch(room,room.pendingMatch.eventId),true);
+    assert.equal(room.status,'playing');
+  }
+  assert.equal(room.players.get(alpha.token).points,28);
+  assert.ok(room.players.get(alpha.token).hand.length>0,'timed deck replenishes after 25 matches');
+  room.players.get(beta.token).points=28;
+  assert.equal(finishTimedRound(room),true);
+  assert.equal(room.status,'finished');
+  assert.equal(room.winnerId,null,'ties have no single champion');
+  assert.equal(room.winnerIds.length,2,'both top scorers are joint champions');
+  assert.equal(call('game:match',{symbol:1,cardId:1,cardTurn:room.cardTurn},aAuth).ok,false);
+  assert.equal(call('room:restart',{},tAuth).ok,true);
+  assert.equal(room.players.size,2,'students remain enrolled for next round');
+  assert.equal(room.players.get(alpha.token).points,0);
+  assert.equal(room.timeRemainingMs,90000);
+  assert.equal(room.winnerIds.length,0);
+  assert.equal(call('room:reset',{},tAuth).ok,true);
+  rooms.delete(teacher.code);
+});
+
+test('Cards mode remains the default and timed mode can be switched off before starting', () => {
+ const teacher=call('room:create',{});
+ const tAuth={role:'teacher',code:teacher.code,token:teacher.token};
+ assert.equal(teacher.view.gameMode,'cards');
+ assert.equal(call('room:settings',{cardsToWin:7,theme:'animals',gameMode:'timed',timeLimitSec:60},tAuth).ok,true);
+ assert.equal(call('room:settings',{cardsToWin:7,theme:'animals',gameMode:'cards',timeLimitSec:60},tAuth).ok,true);
+ const player=call('room:join',{code:teacher.code,name:'Morgan'});
+ const sAuth={role:'student',code:teacher.code,token:player.token};
+ const room=rooms.get(teacher.code);
+ assert.equal(call('room:start',{},tAuth).ok,true);
+ assert.equal(room.players.get(player.token).hand.length,7,'Cards mode uses the selected number');
+ skipCountdown(room);
+ assert.equal(call('room:resume',sAuth).view.gameMode,'cards');
+ assert.equal(call('room:reset',{},tAuth).ok,true);
+ rooms.delete(teacher.code);
+});

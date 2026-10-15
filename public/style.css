@@ -2443,3 +2443,175 @@ html.student-active .student-streak-fire {
 .arcade-leaderboard .player-row:focus-within .player-remove,
 .arcade-leaderboard .player-remove:focus-visible {pointer-events:auto;}
 @media(hover:none) { .arcade-leaderboard .player-remove {pointer-events:auto;} }
+
+/* Version 28: single-row Cards-or-Timed setting; retain projector-sized code and website. */
+html.teacher-active .header-game-settings {
+  height:64px !important;
+  min-height:64px;
+  align-items:stretch;
+  gap:6px;
+}
+html.teacher-active .header-join-site,
+html.teacher-active .header-room-code,
+html.teacher-active .header-game-settings .challenge-panel,
+html.teacher-active .header-game-settings .theme-panel {
+  height:64px !important;
+  min-height:64px;
+  max-height:64px;
+  box-sizing:border-box;
+}
+html.teacher-active .header-game-settings .challenge-panel {
+  display:flex;flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  padding:5px 8px 4px !important;
+  overflow:visible !important;
+  flex:1 1 163px !important;
+  min-width:136px;
+  gap:3px;
+}
+.challenge-mode-toggle {
+  display:flex;align-items:center;gap:3px;
+  height:21px;min-height:21px;
+  justify-content:space-between;
+  white-space:nowrap;
+}
+.challenge-mode-toggle button {
+  border:1px solid rgba(147,167,238,.25);
+  border-radius:7px;
+  background:rgba(43,51,108,.55);
+  color:#e7e9ff;
+  flex:1 1 0;
+  min-width:0;
+  height:21px;
+  cursor:pointer;
+  font-size:clamp(10px,.8vw,12px);
+  font-weight:800;
+  padding:0 3px;
+  line-height:19px;
+  white-space:nowrap;
+  transition:background .12s ease;
+}
+.challenge-mode-toggle button.selected {
+  color:#18324d;
+  background:#d8f4a2;
+  border-color:#f7ffd7;
+}
+.challenge-mode-toggle button:focus-visible {outline:2px solid #dff8ff;outline-offset:1px;}
+.challenge-mode-toggle>span {
+  font-size:9px;
+  color:#bac9ef;
+  font-style:italic;
+}
+.challenge-control-row {
+  display:flex;align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  min-height:17px;
+  height:17px;
+}
+.challenge-control-row label {
+  color:#e1eaff;
+  font-size:clamp(9px,.75vw,11px);
+  white-space:nowrap;
+  font-weight:750;
+}
+.challenge-control-row #cards-range-value {
+  position:static !important;
+  transform:none !important;
+  line-height:1 !important;
+  color:#ffe8aa !important;
+  font-size:18px !important;
+  padding:0 !important;
+  flex:0 0 auto;
+}
+html.teacher-active .header-game-settings .challenge-panel .cards-range {
+  width:100%;
+  height:11px !important;
+  min-height:11px !important;
+  margin:1px 0 3px !important;
+}
+html.teacher-active .header-game-settings .challenge-panel .cards-range::-webkit-slider-thumb {
+  width:25px !important;height:25px !important;
+}
+html.teacher-active .header-game-settings .challenge-panel .cards-range::-moz-range-thumb {
+  width:22px !important;height:22px !important;
+}
+.challenge-control-row #time-limit {
+  flex:0 0 77px;
+  width:77px;
+  height:29px;
+  min-height:29px;
+  border-radius:8px;
+  padding:2px 5px;
+  background:#242e6a;
+  border:1px solid #91b0e3;
+  color:white;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+html.teacher-active .header-game-settings .theme-panel {
+  flex:0 0 148px !important;
+  min-width:135px !important;
+}
+html.teacher-active .header-game-settings .game-status-settings {
+  height:64px;
+  min-height:64px;
+  box-sizing:border-box;
+}
+html.teacher-active .teacher-header-actions .header-start-compact {
+  flex:0 0 71px !important;
+  width:71px !important;
+  min-width:71px !important;
+  max-width:71px !important;
+  height:48px !important;
+  font-size:14px !important;
+  border-radius:18px !important;
+  padding:5px 2px !important;
+  letter-spacing:.5px;
+}
+@media(min-width:1021px) and (max-width:1250px){
+  html.teacher-active .header-game-settings {
+    flex:0 1 290px !important;min-width:271px !important;
+  }
+  html.teacher-active .header-game-settings .challenge-panel {
+    min-width:133px !important;
+  }
+  html.teacher-active .header-game-settings .theme-panel {
+    flex:0 0 133px !important;min-width:129px !important;
+  }
+}
+@media(max-width:1020px) {
+  html.teacher-active .header-game-settings {
+    width:100%;flex:1 1 100% !important;
+    min-width:270px !important;
+    height:64px !important;
+  }
+  html.teacher-active .header-game-settings .challenge-panel {
+    flex:1 1 160px !important;
+    min-width:138px !important;
+  }
+}
+@media(max-width:540px) {
+  html.teacher-active .teacher-header-actions .header-start-compact {
+    flex-basis:65px !important;width:65px !important;min-width:65px !important;max-width:65px !important;
+  }
+}
+
+/* Keep both win-condition choices comfortably inside the 64px header panel. */
+html.teacher-active .header-game-settings .challenge-mode-toggle {
+  height:19px;min-height:19px;
+}
+html.teacher-active .header-game-settings .challenge-mode-toggle button {
+  height:19px;min-height:19px;line-height:17px;
+}
+html.teacher-active .header-game-settings .challenge-control-row {
+  height:16px;min-height:16px;
+}
+html.teacher-active .header-game-settings .challenge-panel {
+  gap:2px;
+}
+html.teacher-active .header-game-settings .challenge-panel .cards-range {
+  margin:0 0 3px !important;height:10px !important;min-height:10px !important;
+}

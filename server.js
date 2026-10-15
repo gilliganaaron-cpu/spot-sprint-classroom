@@ -52,7 +52,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    code:room.code, role, status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
+    code:room.code, role, status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -88,6 +88,35 @@ function broadcast(room) {
     if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
   }
 }
+// Timed races end at the authoritative server deadline, even when a student
+// is watching a match celebration. Scores awarded before the deadline count.
+function finishTimedRound(room) {
+  if (room.status !== 'playing' || room.gameMode !== 'timed') return false;
+  clearTimeout(room.timeTimer); room.timeTimer = null;
+  clearTimeout(room.pendingTimer); room.pendingTimer = null;
+  clearTimeout(room.wrongTurnTimer); room.wrongTurnTimer = null;
+  room.pendingMatch = null;
+  room.timeEndsAt = null;
+  room.timeRemainingMs = 0;
+  room.status = 'finished';
+  room.endedAt = Date.now();
+  const ranked = playerList(room).filter(p => p.inRound);
+  const best = Math.max(0, ...ranked.map(p => p.points));
+  room.winnerIds = best > 0 ? ranked.filter(p => p.points === best).map(p => p.id) : [];
+  room.winnerId = room.winnerIds.length === 1 ? room.winnerIds[0] : null;
+  broadcast(room);
+  return true;
+}
+function scheduleTimedFinish(room) {
+  clearTimeout(room.timeTimer);
+  if (room.gameMode !== 'timed' || room.status !== 'playing') return;
+  const wait = Math.max(0, room.timeEndsAt - Date.now());
+  room.timeTimer = setTimeout(() => {
+    room.timeTimer = null;
+    if (rooms.get(room.code) === room && room.status === 'playing' && room.gameMode === 'timed')
+      finishTimedRound(room);
+  }, wait);
+}
 // Only the server can advance the shared card: 1.5 seconds normally or 2 on fire.
 // A single pending match per room prevents overlapping celebrations or stale guesses.
 function finalizeMatch(room, eventId) {
@@ -99,11 +128,16 @@ function finalizeMatch(room, eventId) {
   const player = room.players.get(pending.playerId);
   if (!player) return false;
   player.hand.shift();
-  if (pending.won) {
+  if (pending.won && room.gameMode === 'cards') {
     room.status = 'finished';
     room.winnerId = player.id;
+    room.winnerIds = [player.id];
     room.endedAt = Date.now();
   } else {
+    if (room.gameMode === 'timed' && !player.hand.length) {
+      const refill = shuffle(DECK.map((_,i)=>i).filter(i=>i!==room.teacherCard.id));
+      player.hand = refill.slice(0,25).map(id=>cardView(id,room.theme));
+    }
     room.teacherCard = chooseCenter(room, pending.oldCenter);
     room.cardTurn++;
   }
@@ -117,10 +151,14 @@ function startRound(room) {
   clearTimeout(room.pendingTimer);
   clearTimeout(room.wrongTurnTimer);
   clearTimeout(room.startTimer);
-  room.pendingTimer = room.wrongTurnTimer = room.startTimer = null;
+  clearTimeout(room.timeTimer);
+  room.pendingTimer = room.wrongTurnTimer = room.startTimer = room.timeTimer = null;
   room.pendingMatch = null;
   room.status = 'countdown';
   room.winnerId = null;
+  room.winnerIds = [];
+  room.timeEndsAt = null;
+  room.timeRemainingMs = room.timeLimitSec * 1000;
   room.startedAt = Date.now();
   room.countdownEndsAt = room.startedAt + 3000;
   room.endedAt = null;
@@ -135,7 +173,7 @@ function startRound(room) {
     student.points = 0;
     student.lockUntil = 0;
     student.blockedTurn = 0;
-    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.cardsToWin).map(id => cardView(id, room.theme));
+    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
   }
   broadcast(room);
   const code = room.code;
@@ -145,6 +183,10 @@ function startRound(room) {
     if (rooms.get(code) !== room || room.status !== 'countdown' || room.countdownEndsAt !== end) return;
     room.status = 'playing';
     room.countdownEndsAt = null;
+    if (room.gameMode === 'timed') {
+      room.timeEndsAt = Date.now() + room.timeRemainingMs;
+      scheduleTimedFinish(room);
+    }
     broadcast(room);
   }, 3000);
   return success({ status:'countdown', code:room.code, countdownEndsAt:end, view:view(room,'teacher') });
@@ -177,7 +219,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', revision:0, cardsToWin:10, theme:'mixed', teacherCard:null, cardTurn:0,
+      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:90, timeEndsAt:null, timeRemainingMs:90000, timeTimer:null, winnerIds:[], theme:'mixed', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
@@ -239,7 +281,14 @@ function action(body) {
     if (!Number.isInteger(n) || n < 5 || n > 25) return failure('Choose between 5 and 25 cards.');
     const theme = String(data.theme || room.theme || 'mixed');
     if (!Object.hasOwn(THEME_SYMBOLS, theme)) return failure('Choose a valid card set.');
+    const gameMode = String(data.gameMode || room.gameMode || 'cards');
+    const timeLimitSec = Number(data.timeLimitSec ?? room.timeLimitSec ?? 90);
+    if (!['cards','timed'].includes(gameMode)) return failure('Choose Cards or Timed.');
+    if (![60,90,120].includes(timeLimitSec)) return failure('Choose 60, 90 or 120 seconds.');
     room.cardsToWin = n;
+    room.gameMode = gameMode;
+    room.timeLimitSec = timeLimitSec;
+    room.timeRemainingMs = timeLimitSec * 1000;
     room.theme = theme;
     broadcast(room);
     return success({ view:view(room,'teacher') });
@@ -255,7 +304,21 @@ function action(body) {
   if (command === 'room:pause') {
     if (!['playing','paused'].includes(room.status)) return failure('The race is not running.');
     if (room.pendingMatch) return failure('Wait for the new card before pausing.');
-    room.status = room.status === 'playing' ? 'paused' : 'playing';
+    if (room.status === 'playing') {
+      if (room.gameMode === 'timed') {
+        room.timeRemainingMs = Math.max(0,room.timeEndsAt - Date.now());
+        room.timeEndsAt = null;
+        clearTimeout(room.timeTimer);
+        room.timeTimer = null;
+      }
+      room.status = 'paused';
+    } else {
+      room.status = 'playing';
+      if (room.gameMode === 'timed') {
+        room.timeEndsAt = Date.now() + room.timeRemainingMs;
+        scheduleTimedFinish(room);
+      }
+    }
     broadcast(room);
     return success();
   }
@@ -263,6 +326,11 @@ function action(body) {
     clearTimeout(room.pendingTimer);
     clearTimeout(room.wrongTurnTimer);
     clearTimeout(room.startTimer);
+    clearTimeout(room.timeTimer);
+    room.timeTimer = null;
+    room.timeEndsAt = null;
+    room.timeRemainingMs = room.timeLimitSec * 1000;
+    room.winnerIds = [];
     room.startTimer = null;
     room.countdownEndsAt = null;
     room.pendingTimer = null;
@@ -316,7 +384,7 @@ function action(body) {
     // Award the point immediately, but HOLD the shared card for the full celebration.
     // Leave all player cards in place until the flip so everybody stays in sync.
     p.points++;
-    const won = p.points >= room.cardsToWin;
+    const won = room.gameMode === 'cards' && p.points >= room.cardsToWin;
     room.eventNumber++;
     const eventId = room.eventNumber;
     const streak = room.streakPlayerId === p.id ? room.streakCount + 1 : 1;
@@ -431,4 +499,4 @@ setInterval(() => {
 },15000).unref();
 
 if (require.main===module) server.listen(PORT,'0.0.0.0',()=>console.log(`Spot Sprint ready at http://localhost:${PORT}`));
-module.exports = { server, action, rooms, view, finalizeMatch, CELEBRATION_MS, FIRE_CELEBRATION_MS };
+module.exports = { server, action, rooms, view, finalizeMatch, finishTimedRound, CELEBRATION_MS, FIRE_CELEBRATION_MS };
