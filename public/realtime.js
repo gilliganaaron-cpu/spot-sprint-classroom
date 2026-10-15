@@ -32,6 +32,12 @@
           try { fire('room:update',JSON.parse(e.data)); } catch { /* malformed event */ }
         };
         stream.addEventListener('replaced',()=>fire('session:replaced'));
+        stream.addEventListener('room-closed',e=>{
+          let payload = {};
+          try { payload = JSON.parse(e.data); } catch { /* optional reason */ }
+          fire('room:closed',payload);
+          client.clearRoom();
+        });
         stream.addEventListener('removed',e=>{
           let payload = {};
           try { payload = JSON.parse(e.data); } catch { /* optional reason */ }

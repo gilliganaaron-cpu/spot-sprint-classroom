@@ -215,7 +215,11 @@ function action(body) {
   let p;
 
   if (command === 'room:create') {
-    if (rooms.size > 200) return failure('The server has too many rooms. Try again shortly.');
+    const oldHost = data?.previousHost;
+    const previousRoom = oldHost?.role === 'teacher' ? rooms.get(String(oldHost.code || '').toUpperCase()) : null;
+    const canReplace = Boolean(previousRoom && previousRoom.hostToken === oldHost.token);
+    if (rooms.size > 200 && !canReplace) return failure('The server has too many rooms. Try again shortly.');
+    // Generate the new code BEFORE closing the old room: never reuse its code.
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
@@ -224,6 +228,27 @@ function action(body) {
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
+    if (canReplace) {
+      // A new class needs a new, empty room. Students do not carry over.
+      for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer'])
+        clearTimeout(previousRoom[timer]);
+      previousRoom.status = 'closed';
+      const message = { reason:'This class session has ended. Ask your teacher for the new game code.' };
+      for (const student of previousRoom.players.values()) {
+        if (student.stream) {
+          writeEvent(student.stream, message, 'room-closed');
+          student.stream.end();
+          student.stream = null;
+        }
+      }
+      if (previousRoom.hostStream) {
+        writeEvent(previousRoom.hostStream, message, 'room-closed');
+        previousRoom.hostStream.end();
+        previousRoom.hostStream = null;
+      }
+      previousRoom.players.clear();
+      rooms.delete(previousRoom.code);
+    }
     return success({ code, token:room.hostToken, view:view(room, 'teacher') });
   }
   if (command === 'room:join') {

@@ -11,6 +11,7 @@
   const studentHeaderInfo = document.getElementById('student-header-info');
   const ENTRY_KEY = 'spotsprint:session';
   const HOST_KEY = 'spotsprint:teacherSession';
+  const PREVIOUS_HOST_KEY = 'spotsprint:previousTeacherRoom';
   const SOUND_KEY = 'spotsprint:muted';
   const MUSIC_KEY = 'spotsprint:musicEnabled';
   const query = new URLSearchParams(location.search);
@@ -107,7 +108,10 @@
   function saveSession(role, code, token) {
     session = { role, code, token };
     sessionStorage.setItem(ENTRY_KEY, JSON.stringify(session));
-    if (role === 'teacher') localStorage.setItem(HOST_KEY, JSON.stringify(session));
+    if (role === 'teacher') {
+      localStorage.setItem(HOST_KEY, JSON.stringify(session));
+      localStorage.removeItem(PREVIOUS_HOST_KEY);
+    }
     lastServerPushAt = 0;
     socket.setRoom(session);
   }
@@ -912,6 +916,14 @@
   socket.on('session:removed', data => {
     handleTeacherRemoval(data?.reason);
   });
+  socket.on('room:closed', data => {
+    if (session?.role !== 'student') return;
+    clearSession();
+    joinDraft = { code:'', name:'' };
+    history.replaceState(null, '', '/');
+    render();
+    toast(data?.reason || 'The class session has ended. Ask for the new code.', true);
+  });
   socket.on('session:replaced', () => {
     clearSession();
     render();
@@ -965,21 +977,14 @@
       }
       creating = true;
       render();
-      // Only create a fresh room if there is no valid active teacher room.
-      // Returning from the landing page should not disconnect enrolled students.
-      let previous = null;
-      try { previous = JSON.parse(localStorage.getItem(HOST_KEY) || 'null'); } catch { /* bad storage */ }
-      if (previous?.role === 'teacher') {
-        const reconnect = await send('room:resume', previous);
-        if (reconnect?.ok) {
-          creating = false;
-          saveSession('teacher', previous.code, previous.token);
-          updateView(reconnect.view, true);
-          return;
-        }
-        localStorage.removeItem(HOST_KEY);
-      }
-      const r = await send('room:create');
+      // Create Game on the MAIN screen always starts a NEW CLASS.
+      let previousHost = null;
+      try {
+        previousHost = JSON.parse(localStorage.getItem(PREVIOUS_HOST_KEY) ||
+          localStorage.getItem(HOST_KEY) || 'null');
+      } catch { /* malformed/stale host credentials */ }
+      const r = await send('room:create',
+        { previousHost: previousHost?.role === 'teacher' ? previousHost : null });
       creating = false;
       if (!r.ok) { stopLobbyAudio(); toast(r.error, true); render(); return; }
       saveSession('teacher', r.code, r.token);
@@ -1015,7 +1020,15 @@
       }
       return;
     }
-    if (action === 'leave') { clearSession(); history.replaceState(null, '', '/'); render(); return; }
+    if (action === 'leave') {
+      // Remember teacher credentials only to close the old class if New Game is clicked.
+      const formerHost = session?.role === 'teacher' ? session : null;
+      clearSession();
+      if (formerHost) localStorage.setItem(PREVIOUS_HOST_KEY, JSON.stringify(formerHost));
+      history.replaceState(null, '', '/');
+      render();
+      return;
+    }
     if (!view) return;
     if (action === 'start') {
       if (settingsSavePending || queuedSettings) { toast('Saving your game options. Try Start again in a moment.'); return; }

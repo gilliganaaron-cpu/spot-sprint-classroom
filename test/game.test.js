@@ -454,3 +454,42 @@ test('Cards mode remains the default and timed mode can be switched off before s
  assert.equal(call('room:reset',{},tAuth).ok,true);
  rooms.delete(teacher.code);
 });
+
+
+test('Create Game from home starts a new class with a new code, empty roster and closes prior connections', () => {
+  const old = call('room:create',{});
+  const alex = call('room:join',{code:old.code,name:'Alex'});
+  const sam = call('room:join',{code:old.code,name:'Sam'});
+  const oldRoom=rooms.get(old.code);
+  let closedNotice='';
+  const oldPlayer=oldRoom.players.get(alex.token);
+  oldPlayer.stream={write(msg){closedNotice+=msg;},end(){this.ended=true;},writableEnded:false,destroyed:false};
+  const previousHost={role:'teacher',code:old.code,token:old.token};
+  const fresh=call('room:create',{previousHost});
+  assert.equal(fresh.ok,true);
+  assert.notEqual(fresh.code,old.code,'new class must receive a different four-letter code');
+  assert.equal(fresh.view.status,'lobby');
+  assert.equal(fresh.view.players.length,0,'new class must start with no students');
+  assert.equal(rooms.get(old.code),undefined,'old code cannot still be joined');
+  assert.match(closedNotice,/event: room-closed/);
+  assert.equal(oldPlayer.stream,null);
+  assert.equal(call('room:join',{code:old.code,name:'Pat'}).ok,false);
+  const nextStudent=call('room:join',{code:fresh.code,name:'Pat'});
+  assert.equal(nextStudent.ok,true);
+  assert.equal(fresh.view.gameMode,'cards','new class resets to default win setting');
+  const freshRoom=rooms.get(fresh.code);
+  assert.equal(freshRoom.players.size,1);
+  rooms.delete(fresh.code);
+});
+
+test('unauthorised previousHost cannot close somebody else’s active class', () => {
+  const first=call('room:create',{});
+  const pupil=call('room:join',{code:first.code,name:'Jamie'});
+  const other=call('room:create',{previousHost:{role:'teacher',code:first.code,token:'wrong-token'}});
+  assert.equal(other.ok,true);
+  assert.notEqual(other.code,first.code);
+  assert.equal(rooms.get(first.code).players.has(pupil.token),true);
+  assert.equal(call('room:resume',{role:'student',code:first.code,token:pupil.token}).ok,true);
+  rooms.delete(first.code);
+  rooms.delete(other.code);
+});
