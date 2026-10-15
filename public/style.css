@@ -2046,3 +2046,88 @@ html.teacher-active .header-room-code strong {font-size:clamp(37px,3.25vw,56px) 
  .student-live-score strong {font-size:20px;}
  .student-fullscreen-nudge {padding:7px 5px;font-size:10px;}
 }
+
+/* v20 — Student top bar and more generous shared teacher-card preview */
+html.student-active .student-header-info {justify-content:flex-start;gap:clamp(8px,1.25vw,18px);}
+html.student-active .student-live-intro {flex:0 1 clamp(270px,35vw,545px);max-width:545px;}
+html.student-active .student-live-hint {white-space:normal;overflow:visible;line-height:1.13;font-size:clamp(10px,.82vw,12px);max-width:545px;}
+html.student-active .student-live-score {flex:0 0 108px;min-width:96px;}
+html.student-active .header-right {margin-left:auto;}
+html.student-active #fullscreen-btn {
+ appearance:none;background:transparent !important;border:0 !important;
+ border-radius:0 !important;box-shadow:none !important;color:#9cdeff;
+ padding:3px !important;width:33px;height:33px;min-width:33px;
+ font-size:23px;line-height:1;display:grid;place-items:center;
+}
+html.student-active #fullscreen-btn:hover,html.student-active #fullscreen-btn:focus-visible {
+ background:rgba(95,168,255,.15) !important;outline:2px solid rgba(127,190,255,.6);outline-offset:2px;
+}
+html.student-active .student-game-content {padding:4px 0 5px;}
+html.student-active .student-game-content .student-grid {
+ grid-template-columns:minmax(0,1.24fr) minmax(310px,.84fr);gap:8px;
+}
+html.student-active .student-game-content .personal-board .panel-heading {padding:5px 10px;}
+html.student-active .student-game-content .student-stage {padding:4px 3px 9px;}
+html.student-active .student-game-content .student-sidebar {gap:7px;}
+html.student-active .student-game-content .student-sidebar .shared-card-section {
+ flex:0 0 clamp(225px,39dvh,345px);
+ padding:8px 12px 7px;
+ display:flex;flex-direction:column;
+}
+html.student-active .student-game-content .student-sidebar .shared-card-section .sidebar-title {
+ flex:0 0 auto;margin-bottom:1px;
+}
+html.student-active .student-game-content .student-sidebar .mini-stage {
+ flex:1 1 auto;min-height:0;height:auto;max-height:none;
+ padding:0 0 2px;overflow:hidden;display:flex;
+ justify-content:center;align-items:center;
+}
+html.student-active .student-game-content .student-sidebar .mini-stage .picture-card-small {
+ width:min(315px,32dvh,96%) !important;aspect-ratio:1 / 1 !important;
+ height:auto !important;max-height:100%;margin:auto;
+}
+html.student-active .student-game-content .student-sidebar .player-row {min-height:35px;padding:4px 7px;}
+html.student-active .student-game-content .student-sidebar > .sidebar-section:last-child {padding:8px 11px;}
+
+/* Teacher controls: card-set label over a fixed-width dropdown, card number always visible */
+html.teacher-active .header-game-settings {flex:0 1 328px !important;min-width:292px;gap:6px;}
+html.teacher-active .header-game-settings .cards-range-panel {
+ flex:1 1 159px !important;min-width:136px;overflow:visible !important;
+}
+html.teacher-active .header-game-settings .cards-range-panel .cards-range-heading {
+ display:flex;justify-content:space-between;align-items:center;gap:4px;min-width:0;
+}
+html.teacher-active .header-game-settings .cards-range-panel .cards-range-heading strong {
+ position:static !important;display:inline-block !important;flex:0 0 auto;min-width:24px;
+ color:#ffe8ad !important;background:transparent !important;box-shadow:none !important;
+ border:0 !important;padding:0 2px !important;font-size:19px !important;line-height:1.05;
+}
+html.teacher-active .header-game-settings .theme-panel {
+ flex:0 0 150px !important;min-width:136px;display:flex;flex-direction:column;
+ align-items:stretch;justify-content:center;gap:3px;padding:4px 7px !important;
+}
+html.teacher-active .header-game-settings .theme-panel .cards-range-heading {
+ display:block;width:auto;flex:0 0 auto;margin:0 !important;line-height:1;
+}
+html.teacher-active .header-game-settings .theme-panel .theme-select-wrap {
+ width:100%;flex:0 0 auto;min-width:0;
+}
+html.teacher-active .header-game-settings .theme-panel .theme-select {
+ width:100% !important;height:33px;
+ padding:6px 25px 6px 7px !important;font-size:12px !important;
+}
+@media (min-width:1021px) and (max-width:1250px) {
+ html.teacher-active .header-game-settings {flex:0 1 308px !important;min-width:275px;}
+ html.teacher-active .header-game-settings .cards-range-panel {min-width:127px;}
+ html.teacher-active .header-game-settings .theme-panel {flex-basis:143px !important;min-width:132px;}
+}
+@media (max-width:950px) {
+ html.student-active .student-game-content .student-grid {grid-template-columns:1fr;}
+ html.student-active .student-game-content .student-sidebar .shared-card-section {display:none;}
+ html.student-active .student-live-intro {flex:1 1 auto;}
+ html.student-active .student-live-hint {font-size:10px;}
+}
+@media (max-width:540px) {
+ html.student-active .student-live-score {flex-basis:78px;min-width:78px;}
+ html.student-active .student-header-info {gap:5px;}
+}

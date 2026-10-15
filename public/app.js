@@ -259,7 +259,7 @@
   function updateFullscreenUI() {
     const on = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
     document.documentElement.classList.toggle('fullscreen-mode', on);
-    fullscreenBtn.innerHTML = on ? '⤢ <span>Exit full screen</span>' : '⛶ <span>Full screen</span>';
+    fullscreenBtn.innerHTML = view?.role === 'student' ? (on ? '⤢' : '⛶') : (on ? '⤢ <span>Exit full screen</span>' : '⛶ <span>Full screen</span>');
     fullscreenBtn.setAttribute('aria-pressed', String(on));
     fullscreenBtn.setAttribute('title', on ? 'Exit full screen' : 'Show the game without scrolling');
   }
@@ -377,8 +377,7 @@
     const maximum = Math.max(1, view.cardsToWin || 10);
     const left = Math.max(0, maximum - scored);
     const finished = view.status === 'finished';
-    const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><strong>${finished ? (view.winnerId === view.me?.id ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on the shared card'}</div></div><div class="student-live-score" aria-label="Your score ${scored} out of ${maximum}"><small>YOUR SCORE</small><strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div></div>${!isFull && !finished ? '<button class="student-fullscreen-nudge" type="button" data-action="fullscreen" aria-label="Show game in full screen">⛶ Fullscreen</button>' : ''}`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><div class="student-live-room">ROOM ${escape(view.code)} <span>•</span> ${finished ? 'RACE OVER' : 'LIVE MATCH RACE'}</div><strong>${finished ? (view.winnerId === view.me?.id ? 'You won! 🏆' : 'Race finished!') : `Your turn, ${escape(view.me?.name || 'player')}!`}</strong><div class="student-live-hint">${finished ? 'Great spotting!' : 'Match a picture on your card below to a picture on the shared picture card to your right, or the main classroom screen'}</div></div><div class="student-live-score" aria-label="Your score ${scored} out of ${maximum}"><small>YOUR SCORE</small><strong>${scored}<span>/${maximum}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${maximum}" aria-valuenow="${left}"><span style="width:${Math.round(left / maximum * 100)}%"></span></div></div>`;
   }
   function updateTeacherHeader() {
     const isTeacher = view?.role === 'teacher';
@@ -510,6 +509,7 @@
     else if (view.role === 'teacher') renderTeacher();
     else renderStudent();
     setSoundUI();
+    updateFullscreenUI();
     queueCountdownRefresh();
   }
   function updateView(next, initial = false) {
