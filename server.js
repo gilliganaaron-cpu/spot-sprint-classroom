@@ -223,7 +223,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'mixed', teacherCard:null, cardTurn:0,
+      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'scifi', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };

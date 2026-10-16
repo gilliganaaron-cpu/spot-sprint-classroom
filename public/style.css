@@ -2871,3 +2871,43 @@ html.student-active .personal-board .board-bottom .board-hint {margin-left:auto;
 .student-position-badge[data-position="1"] {background:linear-gradient(145deg,#fff0a1,#e4ad25);border-color:#fff0aa;color:#513700;}
 .student-position-badge[data-position="2"] {background:linear-gradient(145deg,#f3f6fb,#a8b1bf);border-color:#f4f7fc;color:#303c4b;}
 .student-position-badge[data-position="3"] {background:linear-gradient(145deg,#edbc8e,#ba783e);border-color:#f2c79f;color:#47270e;}
+
+/* Precisely centre the note in its circular control. */
+html.teacher-active .header-right .music-btn {
+  display:grid !important;place-items:center !important;position:relative;
+  padding:0 !important;border-radius:50% !important;line-height:1 !important;
+}
+.music-note-icon {display:block;width:24px;height:24px;overflow:visible;}
+/* A separate lobby-only aura: the white card and its symbols never animate. */
+html.teacher-lobby .classroom-card-stage {container-type:size;isolation:isolate;}
+html.teacher-lobby .classroom-card-stage .picture-card {
+  width:min(80cqw,80cqh,780px) !important;flex-shrink:0;z-index:1;
+  background:#fff !important;filter:none;
+}
+.lobby-card-aura {
+  position:absolute;left:50%;top:50%;width:min(80cqw,80cqh,780px);aspect-ratio:1;
+  transform:translate(-50%,-50%);pointer-events:none;z-index:0;
+}
+.lobby-card-aura i {
+  position:absolute;inset:-7%;border:14px solid rgba(255,255,255,.42);
+  border-radius:47% 53% 49% 51% / 53% 47% 52% 48%;
+  box-shadow:0 -8px 23px rgba(255,255,255,.42),12px 5px 28px rgba(174,218,255,.34),-10px 7px 27px rgba(235,189,235,.3);
+  filter:blur(9px);animation:lobby-aura-wave 8s ease-in-out infinite,lobby-aura-turn 38s linear infinite;
+}
+.lobby-card-aura i:nth-child(2) {
+  inset:-4%;border-width:10px;opacity:.4;
+  border-radius:52% 48% 54% 46% / 48% 53% 47% 52%;
+  animation-delay:-4s,-17s;animation-duration:10s,51s;animation-direction:normal,reverse;
+}
+@keyframes lobby-aura-wave {
+  0%,100% {scale:1;opacity:.32;}
+  50% {scale:1.05;opacity:.65;}
+}
+@keyframes lobby-aura-turn {to {rotate:360deg;}}
+html.student-active .student-game-content .student-sidebar > .sidebar-section:last-child {
+  background:linear-gradient(155deg,rgba(67,36,70,.94),rgba(47,29,61,.96));
+  border-color:rgba(210,134,178,.28);
+}
+@media(prefers-reduced-motion:reduce) {
+  .lobby-card-aura i {animation:none;opacity:.35;}
+}
