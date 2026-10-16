@@ -2836,3 +2836,19 @@ html.teacher-active .header-join-site {display:flex !important;align-items:cente
 html.teacher-active .header-join-site .join-globe {display:block !important;flex:0 0 18px;font-size:17px !important;line-height:1;}
 html.teacher-active .header-join-site > div {flex:1;min-width:0;width:auto;}
 html.teacher-active .header-join-site strong.fitted-join-url {white-space:nowrap !important;overflow-wrap:normal;word-break:normal;line-height:1.1 !important;letter-spacing:-.6px !important;}
+
+/* Keep the lobby settings boxes aligned, including fullscreen's inherited margin. */
+html.teacher-active .header-game-settings {align-items:stretch !important;}
+html.teacher-active .header-game-settings .challenge-panel,
+html.teacher-active .header-game-settings .theme-panel {
+  margin:0 !important;align-self:stretch !important;
+}
+.student-position-badge {
+  display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;
+  aspect-ratio:1;border-radius:50%;box-sizing:border-box;
+  border:1px solid rgba(221,255,148,.75);background:rgba(73,86,46,.75);
+  color:#e5ffad;font-size:15px;font-weight:900;line-height:1;
+}
+@media(max-width:950px) {
+  .student-position-badge {flex-basis:34px;width:34px;height:34px;font-size:13px;}
+}
