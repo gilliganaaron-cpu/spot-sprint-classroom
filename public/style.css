@@ -2891,13 +2891,13 @@ html.teacher-lobby .classroom-card-stage .picture-card {
 .lobby-card-aura i {
   position:absolute;inset:-7%;border:14px solid rgba(255,255,255,.42);
   border-radius:47% 53% 49% 51% / 53% 47% 52% 48%;
-  box-shadow:0 -8px 23px rgba(255,255,255,.42),12px 5px 28px rgba(174,218,255,.34),-10px 7px 27px rgba(235,189,235,.3);
-  filter:blur(9px);animation:lobby-aura-wave 8s ease-in-out infinite,lobby-aura-turn 38s linear infinite;
+  box-shadow:0 -8px 23px rgba(255,255,255,.42),12px 5px 28px rgba(155,211,255,.34),-10px 7px 27px rgba(255,192,139,.25);
+  filter:blur(9px);animation:lobby-aura-wave 5s ease-in-out infinite,lobby-aura-turn 28s linear infinite,lobby-aura-flow 7s ease-in-out infinite;
 }
 .lobby-card-aura i:nth-child(2) {
   inset:-4%;border-width:10px;opacity:.4;
   border-radius:52% 48% 54% 46% / 48% 53% 47% 52%;
-  animation-delay:-4s,-17s;animation-duration:10s,51s;animation-direction:normal,reverse;
+  animation-delay:-2.5s,-17s,-3s;animation-duration:6.5s,36s,9s;animation-direction:normal,reverse,reverse;
 }
 @keyframes lobby-aura-wave {
   0%,100% {scale:1;opacity:.32;}
@@ -2923,4 +2923,35 @@ html.teacher-active .header-room-code strong.fitted-room-code {
 }
 @media(min-width:1021px) and (max-width:1250px) {
  html.teacher-active .header-room-code strong.fitted-room-code {font-size:55.5px !important;}
+}
+
+/* Soft flame-like wisps drift out from the rim, independently of the stationary card. */
+.lobby-card-aura::before,.lobby-card-aura::after {
+  content:"";position:absolute;inset:-9%;pointer-events:none;border-radius:50%;
+  background:conic-gradient(from 15deg,
+    transparent 0deg,rgba(184,225,255,.62) 23deg,rgba(255,255,255,.55) 39deg,transparent 55deg,
+    rgba(255,194,141,.42) 78deg,transparent 104deg,rgba(186,225,255,.56) 128deg,
+    transparent 155deg,rgba(255,244,228,.54) 181deg,transparent 206deg,
+    rgba(255,190,134,.38) 232deg,transparent 251deg,rgba(169,218,255,.6) 279deg,
+    transparent 303deg,rgba(255,236,215,.5) 331deg,transparent 360deg);
+  mask-image:radial-gradient(circle closest-side,transparent 72%,#000 82%,#000 87%,transparent 100%);
+  filter:blur(8px);opacity:0;
+  animation:lobby-aura-wisp 3.8s ease-in-out infinite,lobby-aura-turn 26s linear infinite;
+}
+.lobby-card-aura::after {
+  animation-duration:4.6s,33s;animation-delay:-2.3s,-12s;animation-direction:normal,reverse;
+}
+@keyframes lobby-aura-flow {
+  0%,100% {border-radius:47% 53% 49% 51% / 53% 47% 52% 48%;}
+  33% {border-radius:53% 47% 52% 48% / 48% 54% 46% 52%;}
+  66% {border-radius:49% 51% 46% 54% / 52% 48% 53% 47%;}
+}
+@keyframes lobby-aura-wisp {
+  0%,100% {scale:.88;opacity:0;}
+  18% {opacity:.22;}
+  55% {scale:1;opacity:.4;}
+  85% {scale:1.035;opacity:0;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .lobby-card-aura::before,.lobby-card-aura::after {animation:none;opacity:.12;}
 }
