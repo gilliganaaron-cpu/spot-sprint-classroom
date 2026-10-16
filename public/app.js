@@ -669,7 +669,7 @@
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
         ' ' + escape(THEME_META[view.theme]?.label || 'Mixed') + '</span><b>' +
         (timed ? '⏱ <span data-round-clock>' + roundClockLabel() + '</span>' : 'First to ' + view.cardsToWin + ' cards') + '</b></div>';
-    teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><strong class="fitted-join-url">${escape(location.host || 'spot-sprint.onrender.com')}</strong></div></div><div class="header-room-code"><span class="join-gamepad" aria-hidden="true">🎮</span><div><small>Game code</small><strong>${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
+    teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><strong class="fitted-join-url">${escape(location.host || 'spot-sprint.onrender.com')}</strong></div></div><div class="header-room-code"><span class="room-code-label"><span class="join-gamepad" aria-hidden="true">🎮</span><small>Code</small></span><div><strong class="fitted-room-code">${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
     teacherHeaderInfo.dataset.roomCode = view.code;
     teacherHeaderInfo.dataset.gameMode = view.gameMode;
     teacherHeaderActions.innerHTML = teacherControls();
@@ -810,6 +810,19 @@
         else high = size;
       }
       text.style.setProperty('font-size', low + 'px', 'important');
+      const code = document.querySelector('.fitted-room-code');
+      if (code) {
+        code.style.removeProperty('font-size');
+        let codeLow = 10, codeHigh = parseFloat(getComputedStyle(code).fontSize);
+        const codeHeight = code.closest('.header-room-code').clientHeight - 8;
+        for (let i = 0; i < 10; i++) {
+          const size = (codeLow + codeHigh) / 2;
+          code.style.setProperty('font-size', size + 'px', 'important');
+          if (code.scrollWidth <= code.clientWidth && code.offsetHeight <= codeHeight) codeLow = size;
+          else codeHigh = size;
+        }
+        code.style.setProperty('font-size', codeLow + 'px', 'important');
+      }
     });
   }
   window.addEventListener('resize', fitJoinAddress);

@@ -2911,3 +2911,16 @@ html.student-active .student-game-content .student-sidebar > .sidebar-section:la
 @media(prefers-reduced-motion:reduce) {
   .lobby-card-aura i {animation:none;opacity:.35;}
 }
+
+/* Put the label under the controller and use the full box height for the code. */
+html.teacher-active .header-room-code {align-items:center !important;padding:4px !important;gap:5px !important;}
+html.teacher-active .header-room-code .room-code-label {
+  display:flex;flex:0 0 30px;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+}
+html.teacher-active .header-room-code .room-code-label small {display:block;font-size:10px;line-height:1;white-space:nowrap;}
+html.teacher-active .header-room-code strong.fitted-room-code {
+  font-size:clamp(58.5px,4.65vw,81px) !important;line-height:1 !important;letter-spacing:-1.5px !important;
+}
+@media(min-width:1021px) and (max-width:1250px) {
+ html.teacher-active .header-room-code strong.fitted-room-code {font-size:55.5px !important;}
+}
