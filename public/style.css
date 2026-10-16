@@ -2852,3 +2852,22 @@ html.teacher-active .header-game-settings .theme-panel {
 @media(max-width:950px) {
   .student-position-badge {flex-basis:34px;width:34px;height:34px;font-size:13px;}
 }
+
+/* Short student welcome, clear matching instruction and room details below the card. */
+html.student-active.student-card-view .student-live-intro strong {
+  white-space:normal;overflow-wrap:anywhere;font-size:clamp(15px,1.55vw,23px);line-height:1.12;
+}
+html.student-active.student-card-view .personal-board .panel-heading h2 {
+  font-size:clamp(12px,1.15vw,17px);line-height:1.2;white-space:normal;
+}
+html.student-active .student-game-content .personal-board .board-bottom {
+  display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap;
+}
+.student-footer-room {flex:0 0 auto;color:#a8f4df;font-size:10px;line-height:1.25;font-weight:800;}
+.student-footer-mode {display:block;font-size:9px;letter-spacing:.5px;}
+html.student-active .personal-board #guess-feedback {flex:1 1 180px;min-width:0;}
+html.student-active .personal-board .board-bottom .board-hint {margin-left:auto;}
+.student-position-badge {background:linear-gradient(145deg,#a4e57a,#4eac5c);border-color:#bcf2a1;color:#15391d;}
+.student-position-badge[data-position="1"] {background:linear-gradient(145deg,#fff0a1,#e4ad25);border-color:#fff0aa;color:#513700;}
+.student-position-badge[data-position="2"] {background:linear-gradient(145deg,#f3f6fb,#a8b1bf);border-color:#f4f7fc;color:#303c4b;}
+.student-position-badge[data-position="3"] {background:linear-gradient(145deg,#edbc8e,#ba783e);border-color:#f2c79f;color:#47270e;}
