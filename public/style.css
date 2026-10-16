@@ -2830,3 +2830,9 @@ html.teacher-active .header-join-site strong.fitted-join-url {letter-spacing:-.6
  html.student-active.student-card-view .student-panel-actions {gap:5px;}
  html.student-active.student-card-view .personal-board .panel-heading > div:first-child {min-width:0;}
 }
+
+/* Single-line lobby address with a small, fixed-size website icon. */
+html.teacher-active .header-join-site {display:flex !important;align-items:center;gap:6px !important;padding:4px 6px !important;}
+html.teacher-active .header-join-site .join-globe {display:block !important;flex:0 0 18px;font-size:17px !important;line-height:1;}
+html.teacher-active .header-join-site > div {flex:1;min-width:0;width:auto;}
+html.teacher-active .header-join-site strong.fitted-join-url {white-space:nowrap !important;overflow-wrap:normal;word-break:normal;line-height:1.1 !important;letter-spacing:-.6px !important;}
