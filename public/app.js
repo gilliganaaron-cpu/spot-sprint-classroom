@@ -565,6 +565,7 @@
   setInterval(updateClockDisplay,250);
   function teacherControls() {
     const buttons = [];
+    if (['lobby','finished'].includes(view.status)) buttons.push('<button type="button" class="header-change-game" data-action="change-game">Change<br>Game</button>');
     if (view.status === 'lobby') buttons.push('<button type="button" class="header-start-game header-start-compact" data-action="start" aria-label="Start game">START</button>');
     if (view.status === 'countdown') buttons.push('<span class="header-countdown">3 · 2 · 1</span>');
     if (view.status === 'playing') buttons.push(`<button type="button" class="header-round-control" data-action="pause" ${view.pendingMatch ? 'disabled title="Wait for the next card"' : ''}>⏸ Pause</button>`);
@@ -581,7 +582,7 @@
     document.documentElement.classList.toggle('student-active', Boolean(active));
     if (!active) { studentHeaderInfo.innerHTML = ''; return; }
     const finished = view.status === 'finished';
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, Spot it first!`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
   }
   // Keep teacher settings mounted while a room stays in the lobby.
   // Server push messages must not replace the range input mid-drag.
@@ -636,7 +637,7 @@
 
     const currentSlider = teacherHeaderInfo.querySelector('#cards-to-win');
     const currentTheme = teacherHeaderInfo.querySelector('#theme-select');
-    if (view.status === 'lobby' && teacherHeaderInfo.dataset.roomCode === view.code &&
+    if ((view.gameType || 'spot') === 'spot' && view.status === 'lobby' && teacherHeaderInfo.dataset.roomCode === view.code &&
       teacherHeaderInfo.dataset.gameMode === view.gameMode && currentTheme) {
       syncHeaderSettings(currentSlider,currentTheme);
       teacherHeaderActions.innerHTML = teacherControls();
@@ -663,7 +664,7 @@
       '<option value="' + key + '"' + (key === view.theme ? ' selected' : '') + '>' +
       escape(THEME_META[key]?.icon || '✨') + ' ' + escape(THEME_META[key]?.label || key) + '</option>').join('') +
       '</select><span class="theme-chevron">▾</span></div></div>';
-    const topSettings = view.status === 'lobby'
+    const topSettings = view.gameType && view.gameType !== 'spot' ? (view.status === 'lobby' ? WordHub.settings(view) : `<div class="game-status-settings"><b>${WordHub.GAMES[view.gameType].name}</b><span>${view.gameType === 'weave' ? '<span data-round-clock>' + roundClockLabel() + '</span>' : 'Find ' + view.wordSettings.wordCount + ' words'}</span></div>`) : view.status === 'lobby'
       ? '<div class="cards-range-panel challenge-panel" data-win-mode="' + view.gameMode + '">' +
         modeControls + (timed ? secondsControl : cardsControl) + '</div>' + themeControl
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
@@ -863,13 +864,25 @@
   document.fonts?.ready.then(fitJoinAddress);
   function render() {
     cancelAnimationFrame(waitingLensFrame);
-    document.documentElement.classList.toggle('student-card-view', Boolean(view?.role === 'student' && ['countdown','playing','paused'].includes(view.status) && (view.status === 'countdown' || view.me?.inRound)));
+    const wordGame = Boolean(view?.gameType && view.gameType !== 'spot');
+    document.documentElement.classList.toggle('word-game-active', wordGame);
+    const brand = document.querySelector('.brand-complete-logo');
+    const gameMeta = wordGame ? WordHub.GAMES[view.gameType] : WordHub.GAMES.spot;
+    if (!brand.src.endsWith(gameMeta.icon)) brand.src = gameMeta.icon;
+    brand.alt = gameMeta.name;
+    document.getElementById('active-game-name').textContent = wordGame ? gameMeta.name : '';
+    document.title = gameMeta.name + ' · Classroom Arcade';
+    document.documentElement.classList.toggle('student-card-view', Boolean(!wordGame && view?.role === 'student' && ['countdown','playing','paused'].includes(view.status) && (view.status === 'countdown' || view.me?.inRound)));
     document.documentElement.classList.toggle('teacher-lobby', Boolean(view?.role === 'teacher' && view.status === 'lobby'));
     updateTeacherHeader();
     updateStudentHeader();
-    if (!view) renderLanding();
-    else if (view.role === 'teacher') renderTeacher();
-    else renderStudent();
+    if (wordGame) WordHub.render(view, {send, updateView, toast, playerList});
+    else {
+      WordHub.clear();
+      if (!view) renderLanding();
+      else if (view.role === 'teacher') renderTeacher();
+      else renderStudent();
+    }
     fitJoinAddress();
     updateClockDisplay();
     setSoundUI();
@@ -892,7 +905,8 @@
     if (old && next.cardTurn !== old.cardTurn) penaltyTurn = null;
     if (next.me?.lockedOut) penaltyTurn = next.cardTurn;
     if (!initial && next.lastEvent?.id && next.lastEvent.id !== lastEventId) {
-      if (next.role === 'teacher') playSound('celebrate');
+      if (next.gameType && next.gameType !== 'spot') {if (next.lastEvent.playerId === next.me?.id) playSound('correct');}
+      else if (next.role === 'teacher') playSound('celebrate');
       else playSound('correct'); // All students hear a short cue, not just the scorer.
     } else if (!initial && next.status === 'countdown' && old?.status !== 'countdown') {
       playSound('start');
@@ -1010,6 +1024,14 @@
   async function handleAction(button) {
     const action = button.dataset.action;
     unlockAudio();
+    if (action === 'change-game') {
+      WordHub.picker(async gameType => {
+        const result = await send('room:select-game', {gameType});
+        if (!result.ok) {toast(result.error, true); return;}
+        updateView(result.view);
+      }, view.gameType || 'spot');
+      return;
+    }
     if (action === 'fullscreen') {
       try {
         if (document.fullscreenElement || document.webkitFullscreenElement) {

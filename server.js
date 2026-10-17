@@ -7,6 +7,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./deck');
 
+const { createWeave, createSearch, validatePath, TOPICS } = require('./wordgames');
 const rooms = new Map();
 const MAX_PLAYERS = 40;
 const CELEBRATION_MS = 1500;
@@ -52,7 +53,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    code:room.code, role, status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
+    code:room.code, role, gameType:room.gameType || 'spot', wordSettings:room.wordSettings, puzzle:room.puzzle && !['lobby','countdown'].includes(room.status) ? {id:room.puzzle.id, size:room.puzzle.size, grid:room.puzzle.grid, words:room.puzzle.words || [], solutionCount:room.puzzle.solutions?.size || 0, answers:room.status === 'finished' && room.gameType === 'weave' ? [...room.puzzle.solutions.keys()].sort((a,b)=>b.length-a.length || a.localeCompare(b)) : []} : null, foundWords:p?.foundWords || [], foundPaths:p?.foundPaths || [], status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -148,6 +149,7 @@ function finalizeMatch(room, eventId) {
 // Students temporarily offline stay registered and rejoin their active round.
 function startRound(room) {
   if (room.players.size === 0) return failure('Wait for at least one student to join.');
+  const nextPuzzle = room.gameType === 'weave' ? createWeave(room.wordSettings) : room.gameType === 'search' ? createSearch(room.wordSettings) : null;
   clearTimeout(room.pendingTimer);
   clearTimeout(room.wrongTurnTimer);
   clearTimeout(room.startTimer);
@@ -167,13 +169,15 @@ function startRound(room) {
   room.streakPlayerId = null;
   room.streakCount = 0;
   const initial = crypto.randomInt(DECK.length);
-  room.teacherCard = cardView(initial, room.theme);
+  room.puzzle = nextPuzzle;
+  room.teacherCard = nextPuzzle ? null : cardView(initial, room.theme);
   for (const student of room.players.values()) {
     student.inRound = true;
+    student.foundWords = []; student.foundPaths = []; student.lastWordAt = 0;
     student.points = 0;
     student.lockUntil = 0;
     student.blockedTurn = 0;
-    student.hand = shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
+    student.hand = nextPuzzle ? [] : shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
   }
   broadcast(room);
   const code = room.code;
@@ -223,7 +227,7 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'scifi', teacherCard:null, cardTurn:0,
+      gameType:'spot', wordSettings:{gridSize:4,minLength:3,duration:180,wordCount:10,topic:'mixed',difficulty:'normal'}, puzzle:null, spotSettings:null, status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'scifi', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
@@ -276,7 +280,7 @@ function action(body) {
     return success({ code:room.code, view:view(room, data.role, auth.p?.id) });
   }
 
-  const role = command === 'game:match' ? 'student' : 'teacher';
+  const role = ['game:match','word:submit'].includes(command) ? 'student' : 'teacher';
   auth = resolveAuth(body, role);
   if (!auth) return failure('This game session has expired. Refresh and join again.');
   room = auth.room;
@@ -300,8 +304,45 @@ function action(body) {
     broadcast(room);
     return success({ removedPlayerId:playerId, view:view(room,'teacher') });
   }
+  if (command === 'room:select-game') {
+    if (!['lobby','finished'].includes(room.status)) return failure('Return to the lobby before changing games.');
+    if (!['spot','weave','search'].includes(data.gameType)) return failure('Choose a game from the picker.');
+    if (room.gameType === 'spot') room.spotSettings={cardsToWin:room.cardsToWin,gameMode:room.gameMode,timeLimitSec:room.timeLimitSec,theme:room.theme};
+    for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer']) { clearTimeout(room[timer]); room[timer]=null; }
+    room.gameType=data.gameType;
+    if (room.gameType === 'spot') Object.assign(room,room.spotSettings || {cardsToWin:10,gameMode:'cards',timeLimitSec:120,theme:'scifi'});
+    else { room.gameMode=room.gameType==='weave'?'timed':'cards'; room.timeLimitSec=room.wordSettings.duration; room.cardsToWin=room.wordSettings.wordCount; }
+    room.timeRemainingMs=room.timeLimitSec*1000; room.timeEndsAt=null; room.countdownEndsAt=null;
+    room.status='lobby'; room.puzzle=null; room.teacherCard=null; room.pendingMatch=null; room.lastEvent=null;
+    room.winnerId=null; room.winnerIds=[]; room.startedAt=null; room.endedAt=null;
+    for (const student of room.players.values()) {student.points=0;student.inRound=false;student.hand=[];student.foundWords=[];student.foundPaths=[];student.blockedTurn=0;}
+    broadcast(room);
+    return success({view:view(room,'teacher')});
+  }
+  if (command === 'room:word-settings') {
+    if (room.status !== 'lobby' || room.gameType === 'spot') return failure('Choose a word game in the lobby first.');
+    const next={...room.wordSettings,...data};
+    if (![4,5].includes(next.gridSize) || ![3,4].includes(next.minLength) || ![60,120,180,240,300,360].includes(next.duration) || ![5,10,15,20].includes(next.wordCount) || !Object.hasOwn(TOPICS,next.topic) || !['easy','normal','hard'].includes(next.difficulty)) return failure('Choose one of the available game settings.');
+    room.wordSettings={gridSize:next.gridSize,minLength:next.minLength,duration:next.duration,wordCount:next.wordCount,topic:next.topic,difficulty:next.difficulty};
+    room.timeLimitSec=next.duration;room.timeRemainingMs=next.duration*1000;room.cardsToWin=next.wordCount;
+    broadcast(room);return success({view:view(room,'teacher')});
+  }
+  if (command === 'word:submit') {
+    if (!['weave','search'].includes(room.gameType) || room.status!=='playing' || !p.inRound || !room.puzzle) return failure('Wait for your teacher to start.');
+    if (room.gameType==='weave' && Date.now()>=room.timeEndsAt) {finishTimedRound(room);return failure('Time is up!');}
+    if (data.puzzleId!==room.puzzle.id) return failure('The puzzle has changed. Try the new grid.');
+    if (Date.now()-(p.lastWordAt||0)<180) return failure('One word at a time.');
+    p.lastWordAt=Date.now();
+    const result=validatePath(room.puzzle,data.path,room.gameType,room.wordSettings.minLength);
+    if (result.error) return failure(result.error);
+    if (p.foundWords.includes(result.word)) return failure('You have already found that word.');
+    p.foundWords.push(result.word);p.foundPaths.push({word:result.word,path:[...data.path]});p.points+=result.points;
+    room.lastEvent={id:++room.eventNumber,playerId:p.id,playerName:p.name,word:result.word,points:p.points};
+    if (room.gameType==='search' && p.foundWords.length===room.puzzle.words.length) {room.status='finished';room.winnerId=p.id;room.winnerIds=[p.id];room.endedAt=Date.now();}
+    broadcast(room);return success({word:result.word,points:result.points,view:view(room,'student',p.id)});
+  }
   if (command === 'room:settings') {
-    if (room.status !== 'lobby') return failure('Change this before starting a race.');
+    if (room.status !== 'lobby' || room.gameType !== 'spot') return failure('Change Spot Sprint options in its lobby.');
     const n = Number(data.cardsToWin);
     if (!Number.isInteger(n) || n < 5 || n > 25) return failure('Choose between 5 and 25 cards.');
     const theme = String(data.theme || room.theme || 'mixed');
@@ -362,6 +403,7 @@ function action(body) {
     room.wrongTurnTimer = null;
     room.pendingMatch = null;
     room.status = 'lobby';
+    room.puzzle = null;
     room.teacherCard = null;
     room.winnerId = null;
     room.lastEvent = null;
@@ -371,12 +413,13 @@ function action(body) {
     room.endedAt = null;
     room.cardTurn = 0;
     for (const student of room.players.values()) {
-      student.points=0; student.inRound=false; student.hand=[]; student.blockedTurn=0;
+      student.points=0; student.inRound=false; student.hand=[]; student.blockedTurn=0; student.foundWords=[]; student.foundPaths=[];
     }
     broadcast(room);
     return success();
   }
   if (command === 'game:match') {
+    if (room.gameType !== 'spot') return failure('This is a word game.');
     if (room.status !== 'playing' || !p.inRound || !p.hand.length) return failure('The race is not active.');
     if (room.pendingMatch) return failure('Get ready for the next picture!', { cooldown:true });
     if ((p.blockedTurn && p.blockedTurn === room.cardTurn) || Date.now() < p.lockUntil) return failure('Wait for the next card.',{ cooldown:true, locked:true });
@@ -484,6 +527,7 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
+  '/word-hub.js':'word-hub.js', '/word-hub.css':'word-hub.css', '/word-weave.webp':'word-weave.webp', '/find-a-word.webp':'find-a-word.webp',
   '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/symbols-festive.webp':'symbols-festive.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp', '/cosmic-sky-bg.jpg':'cosmic-sky-bg.jpg', '/spot-sprint-wordmark.webp':'spot-sprint-wordmark.webp', '/arcade-mountains.webp':'arcade-mountains.webp'
 };
 const mime = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.webp':'image/webp', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png' };

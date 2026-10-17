@@ -401,8 +401,9 @@ test('timed challenge scores by time, pauses safely, replenishes decks and keeps
   assert.equal(call('room:start',{},tAuth).ok,true);
   assert.equal(room.players.get(alpha.token).hand.length,25,'timed rounds have enough cards to keep scoring');
   const startup=room.startTimer;
+  const beginTimedRound = startup._onTimeout;
   clearTimeout(startup);
-  startup._onTimeout(); // begins the timed race after the 3-2-1 countdown
+  beginTimedRound(); // begins the timed race after the 3-2-1 countdown
   assert.equal(room.status,'playing');
   assert.ok(room.timeEndsAt>Date.now()+118000);
   assert.equal(call('room:pause',{},tAuth).ok,true);

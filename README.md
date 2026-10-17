@@ -84,3 +84,19 @@ An original synthesised 120-BPM looping background tune plays on the **teacher s
 On the teacher dashboard students see **spot-sprint-classroom.onrender.com** prominently, along with the separate six-character code. Use **⛶ Full screen** in the top-right corner to project the game without a browser toolbar or document scrolling. The fullscreen view fits the card, joining directions, control buttons and leading scores; with large classes the leaderboard shows the highest players plus a count of others.
 
 An original electronic **lobby track** plays on the teacher's screen after the teacher clicks Create Game (a user click is required by browser sound policies). Click **♫ Lobby music playing · Pause** or the top-right music toggle to stop it. When the round begins it transitions to the faster game track; correct matches briefly lower the music while the sound and three-second announcement play. The separate sound control mutes all audio. Music is synthesised in the browser, requires no downloads, and never plays on student devices.
+
+## Classroom game hub
+
+Use **Change Game** in the teacher lobby (or after a round) to choose Spot Sprint, **Word Weave**, or **Find a Word**. Switching returns every connected student to the selected game's lobby without changing the room code, student token, or name. Scores reset for each new round. Return to the lobby before switching away from an active round.
+
+- **Word Weave:** connect adjacent letters horizontally, vertically or diagonally, without reusing a tile. Teachers choose a 4×4 or 5×5 grid, 1–6 minutes, and a minimum of 3 or 4 letters. Each valid word scores once per student; classmates can independently find the same words. Longer words earn more points. QU is one tile and two letters. Highest score wins, with shared winners on a tie.
+- **Find a Word:** choose 5, 10, 15 or 20 targets, Everyday/Animals/Science/Geography, and easy, diagonal or all-direction placement. Drag along a word or tap its two ends. Each found word earns one point; first to find every target wins.
+- Both games use server-validated paths, live scores, pause/resume, a shared countdown, fresh grids each round, and the existing room reconnect mechanism. Late arrivals wait for the next round.
+
+The Word Weave dictionary is an offline 3–12 letter subset of [dwyl/english-words](https://github.com/dwyl/english-words), with a basic inappropriate-term exclusion and Australian spelling additions. It includes uncommon English words; it is not a curriculum-specific vocabulary list. Its public-domain Unlicense is included at `data/WORDS-LICENSE.txt`. The compressed dictionary needs no external API. Word-search themes use small curated lists in `wordgames.js`.
+
+The new game artwork in `public/word-weave.webp` and `public/find-a-word.webp` was generated for this project: ivory letter tiles with a turquoise woven path for Word Weave; an ivory word-search grid with a blue magnifying glass and warm highlighted word for Find a Word. Both use the existing purple classroom arcade palette.
+
+Word Weave takes inspiration from the shared-grid, adjacent-letter, timed word-finding mechanics described in [Netflix's Boggle Party guide](https://help.netflix.com/en/node/486016964629093). Its name, artwork and classroom implementation are original.
+
+Word-game implementation: `wordgames.js`, `public/word-hub.js`, and `public/word-hub.css`. `npm test` runs the existing Spot Sprint tests plus generator, validation, scoring, timer, and cross-game session tests. Rooms remain in memory and do not survive a server restart or deployment.
