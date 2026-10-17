@@ -757,6 +757,39 @@
       <div class="student-score-timer" aria-hidden="true"><span></span></div>
     </div>`;
   }
+  let waitingLensFrame = 0;
+  let waitingLensMotion = null;
+  function startWaitingLens() {
+    cancelAnimationFrame(waitingLensFrame);
+    const wrap = screen.querySelector('.waiting-card-wrap');
+    if (!wrap) return;
+    const lens = wrap.querySelector('.waiting-lens');
+    const zoom = wrap.querySelector('.waiting-lens-copy');
+    const card = wrap.querySelector(':scope > .picture-card');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!waitingLensMotion) waitingLensMotion = {x:50,y:50,fromX:50,fromY:50,toX:50,toY:50,start:0,duration:0,last:-1};
+    function frame(now) {
+      if (!wrap.isConnected) return;
+      const m = waitingLensMotion;
+      if (!reduced && now >= m.start + m.duration) {
+        let target;
+        do { target = Math.floor(Math.random() * positions.length); } while (target === m.last);
+        m.fromX=m.x; m.fromY=m.y; [m.toX,m.toY]=positions[target];
+        m.start=now; m.duration=4200+Math.random()*1800; m.last=target;
+      }
+      const progress = reduced ? 0 : Math.min(1,(now-m.start)/m.duration);
+      const eased=progress*progress*(3-2*progress);
+      if (!reduced) {m.x=m.fromX+(m.toX-m.fromX)*eased; m.y=m.fromY+(m.toY-m.fromY)*eased;}
+      const size=card.getBoundingClientRect().width;
+      const radius=lens.clientWidth/2;
+      lens.style.left=m.x+'%'; lens.style.top=m.y+'%';
+      zoom.style.width=size+'px'; zoom.style.height=size+'px';
+      zoom.style.left=(radius-m.x/100*size*1.65)+'px';
+      zoom.style.top=(radius-m.y/100*size*1.65)+'px';
+      if (!reduced) waitingLensFrame=requestAnimationFrame(frame);
+    }
+    waitingLensFrame=requestAnimationFrame(frame);
+  }
   function renderStudent() {
     const playing = ['playing', 'paused'].includes(view.status);
     const inRace = Boolean(view.me?.inRound);
@@ -765,12 +798,13 @@
     const isWinner = view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id);
     const isTie = (view.winnerIds || []).length > 1;
     if (view.status === 'lobby' || (playing && !inRace)) {
-      screen.innerHTML = `<div class="waiting-screen"><div class="waiting-glow">${symbolCard(preview, { small: true, faded: true })}</div>
+      screen.innerHTML = `<div class="waiting-screen"><div class="waiting-glow"><div class="waiting-card-wrap">${symbolCard(preview, { small: true })}<div class="waiting-magnifier" aria-hidden="true"><div class="waiting-lens"><div class="waiting-lens-window"><div class="waiting-lens-copy">${symbolCard(preview, { small: true })}</div></div></div></div></div></div>
       <div class="waiting-info"><div class="eyebrow">✓ YOU'RE IN THE GAME</div><h1>Hi, ${escape(view.me.name)}! <span>👋</span></h1>
       <p>${playing ? 'The current race has already started. You will play in the next round.' : "You are on the list. The teacher will start the race soon."}</p>
       <div class="waiting-pills"><span>ROOM <b>${escape(view.code)}</b></span><span>${view.gameMode === 'timed' ? view.timeLimitSec + '-second challenge' : view.cardsToWin + ' matches to win'}</span></div><div class="pulse-text"><span class="live-dot"></span>${playing ? 'Waiting for the next race…' : 'Waiting for your teacher to start…'}</div>
       <div class="waiting-students"><strong>Players in room (${view.players.length})</strong><div class="avatar-stack">${view.players.slice(0, 15).map(p => `<span title="${escape(p.name)}">${escape(p.name.slice(0,1).toUpperCase())}</span>`).join('')}</div></div>
       <button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div></div>${studentCelebration()}`;
+      startWaitingLens();
       return;
     }
     const myPoints = view.me?.points || 0;
@@ -784,9 +818,9 @@
     const countdownActive = view.status === 'countdown';
     const penaltyActive = !celebrating && Boolean(view.me?.lockedOut || (penaltyTurn && penaltyTurn === view.cardTurn));
     screen.innerHTML = `<div class="student-game-content" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">
-      ${done ? `<div class="student-result"><span>${isWinner ? '🏆' : '🎉'}</span><h2>${isWinner ? (isTie ? 'Joint champion!' : 'You are the champion!') : `Well played, ${escape(view.me.name)}!`}</h2><p>${isWinner ? (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds!` : 'You were the first to clear your deck.') : (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds.` : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`)}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it on the Teacher Screen. Tap on your card!</h2></div><div class="student-panel-actions"><button id="student-game-fullscreen-btn" class="student-game-fullscreen-btn" type="button" data-action="fullscreen" aria-label="Toggle full screen" aria-pressed="false" title="Enter full screen">⛶</button><span class="student-position-badge" data-position="${myPosition}" aria-label="Your position: ${positionLabel}" title="Your leaderboard position">${positionLabel}</span><div class="student-live-score" aria-label="Your score ${myPoints} points"><small>${timed ? "TIME LEFT" : "YOUR SCORE"}</small>${timed ? `<strong data-round-clock>${roundClockLabel()}</strong><div class="student-live-track"><span data-time-progress style="width:${Math.round(roundClockMs()/(view.timeLimitSec * 1000)*100)}%"></span></div><small>${myPoints} points</small>` : `<strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${view.cardsToWin}" aria-valuenow="${cardsLeft}"><span style="width:${Math.round(cardsLeft / view.cardsToWin * 100)}%"></span></div>`}</div><span class="board-badge student-remain-badge">⚡ ${timed ? myPoints + " PTS" : cardsLeft + " LEFT"} <span class="remaining-track" role="progressbar" aria-label="${timed ? "Time remaining" : "Cards remaining"}" aria-valuemin="0" aria-valuemax="${timed ? view.timeLimitSec : view.cardsToWin}" aria-valuenow="${timed ? Math.ceil(roundClockMs()/1000) : cardsLeft}"><span class="remaining-fill" ${timed ? "data-time-progress" : ""} style="width:${timed ? Math.round(roundClockMs()/(view.timeLimitSec*1000)*100) : Math.round(cardsLeft/view.cardsToWin*100)}%"></span></span></span></div></div>
+      ${done ? `<div class="student-result"><span>${isWinner ? '🏆' : '🎉'}</span><h2>${isWinner ? (isTie ? 'Joint champion!' : 'You are the champion!') : `Well played, ${escape(view.me.name)}!`}</h2><p>${isWinner ? (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds!` : 'You were the first to clear your deck.') : (timed ? `You scored ${myPoints} matches in ${view.timeLimitSec} seconds.` : `You scored ${myPoints} out of ${view.cardsToWin} before the winner finished.`)}</p><div class="result-details">${playerList()}</div><p class="small-muted">Wait for the teacher to start another race.</p></div>` : `<div class="game-grid student-grid"><section class="board-panel personal-board"><div class="panel-heading"><div>${headerPill('YOUR CARD', 'TAP THE MATCH')}<h2>Find it on the Teacher Screen. Tap on your card!</h2></div><div class="student-panel-actions"><span class="student-position-badge" data-position="${myPosition}" aria-label="Your position: ${positionLabel}" title="Your leaderboard position">${positionLabel}</span><div class="student-live-score" aria-label="Your score ${myPoints} points"><small>${timed ? "TIME LEFT" : "YOUR SCORE"}</small>${timed ? `<strong data-round-clock>${roundClockLabel()}</strong><div class="student-live-track"><span data-time-progress style="width:${Math.round(roundClockMs()/(view.timeLimitSec * 1000)*100)}%"></span></div><small>${myPoints} points</small>` : `<strong>${myPoints}<span>/${view.cardsToWin}</span></strong><div class="student-live-track" role="progressbar" aria-label="Cards remaining" aria-valuemin="0" aria-valuemax="${view.cardsToWin}" aria-valuenow="${cardsLeft}"><span style="width:${Math.round(cardsLeft / view.cardsToWin * 100)}%"></span></div>`}</div><span class="board-badge student-remain-badge">⚡ ${timed ? myPoints + " PTS" : cardsLeft + " LEFT"} <span class="remaining-track" role="progressbar" aria-label="${timed ? "Time remaining" : "Cards remaining"}" aria-valuemin="0" aria-valuemax="${timed ? view.timeLimitSec : view.cardsToWin}" aria-valuenow="${timed ? Math.ceil(roundClockMs()/1000) : cardsLeft}"><span class="remaining-fill" ${timed ? "data-time-progress" : ""} style="width:${timed ? Math.round(roundClockMs()/(view.timeLimitSec*1000)*100) : Math.round(cardsLeft/view.cardsToWin*100)}%"></span></span></span></div></div>
        <div class="stage student-stage ${view.status === 'paused' ? 'stage-paused' : ''} ${penaltyActive ? 'stage-wrong-lock' : ''} ${celebrating ? 'stage-match-celebrating' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : stackedCard(symbolCard(view.myCard || preview, { interactive: view.status === 'playing' && !celebrating && !penaltyActive, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null }), timed ? 25 : cardsLeft, false, penaltyActive)}${startCountdownOverlay('student')}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Eyes up to the teacher</span></div>' : ''}</div>
-       <div class="board-bottom"><span class="student-footer-room">Room ${escape(view.code)}<span class="student-footer-mode">${timed ? 'TIMED CHALLENGE' : 'LIVE MATCH RACE'}</span></span><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? `✨ Great match! New card coming in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…` : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></div>
+       <div class="board-bottom"><span class="student-footer-room">Room ${escape(view.code)}<span class="student-footer-mode">${timed ? 'TIMED CHALLENGE' : 'LIVE MATCH RACE'}</span></span><span id="guess-feedback">${countdownActive ? `⏳ Race starts in ${startCountdownNumber()}…` : penaltyActive ? '✖ Bad luck — wait for the next card before trying again.' : celebrating ? (view.pendingMatch.playerName === view.me.name ? `✨ Great match! New card coming in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…` : `✨ ${escape(view.pendingMatch.playerName)} scored! New card in ${(view.pendingMatch.celebrationMs / 1000).toFixed(1)} seconds…`) : view.status === 'paused' ? 'Game paused by teacher.' : 'One of these 8 pictures is on both cards.'}</span><span class="student-footer-actions"><button id="student-game-fullscreen-btn" class="student-game-fullscreen-btn" type="button" data-action="fullscreen" aria-label="Toggle full screen" aria-pressed="false" title="Enter full screen">⛶</button><span class="board-hint">${countdownActive ? '⏳ Get ready…' : penaltyActive ? '🚫 Locked until next card' : '👆 Tap the picture!'}</span></span></div>
        </section><aside class="sidebar student-sidebar"><section class="sidebar-section shared-card-section"><div class="sidebar-title"><h2>📺 Shared teacher card</h2><span class="status-pill status-playing">LIVE</span></div><p class="hint">Also showing on your teacher's screen</p><div class="mini-stage">${symbolCard(view.teacherCard, { small: true, highlightSymbolId: view.pendingMatch?.matchSymbolId ?? null })}</div><p class="hint centered">Compare this with your big card.</p></section><section class="sidebar-section"><div class="sidebar-title"><h2>🏁 Leaderboard</h2><span class="player-count">${view.players.length} players</span></div>${playerList()}</section></aside></div>`}
     ${done ? '<div class="leave-row"><button class="btn btn-quiet" data-action="leave" type="button">Leave game</button></div>' : ''}</div>${studentCelebration()}`;
     if (done && view.lastEvent?.id !== winningEventShown) {
@@ -828,6 +862,7 @@
   window.addEventListener('resize', fitJoinAddress);
   document.fonts?.ready.then(fitJoinAddress);
   function render() {
+    cancelAnimationFrame(waitingLensFrame);
     document.documentElement.classList.toggle('student-card-view', Boolean(view?.role === 'student' && ['countdown','playing','paused'].includes(view.status) && (view.status === 'countdown' || view.me?.inRound)));
     document.documentElement.classList.toggle('teacher-lobby', Boolean(view?.role === 'teacher' && view.status === 'lobby'));
     updateTeacherHeader();

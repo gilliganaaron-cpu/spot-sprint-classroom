@@ -2955,3 +2955,43 @@ html.teacher-active .header-room-code strong.fitted-room-code {
 @media(prefers-reduced-motion:reduce) {
   .lobby-card-aura::before,.lobby-card-aura::after {animation:none;opacity:.12;}
 }
+
+/* Continuous diffuse colour flow replaces the irregular ring edges. */
+.lobby-card-aura i {
+  border:0;inset:-9%;border-radius:50%;box-shadow:none;
+  background:conic-gradient(#a2d8ffb3,#fff3de80,#ffb677ad,#c1e5ffb3,#83c8ffb3,#ffc38fad,#a2d8ffb3);
+  mask-image:radial-gradient(circle closest-side,transparent 73%,#000 84%,#000 88%,transparent 100%);
+  filter:blur(14px);animation:lobby-aura-smooth 5s ease-in-out infinite,lobby-aura-turn 30s linear infinite;
+}
+.lobby-card-aura i:nth-child(2) {
+  inset:-6%;border:0;border-radius:50%;
+  animation:lobby-aura-smooth 6.5s ease-in-out -2.5s infinite,lobby-aura-turn 39s linear -15s infinite reverse;
+}
+.lobby-card-aura::before,.lobby-card-aura::after {display:none;}
+@keyframes lobby-aura-smooth {
+  0%,100% {scale:.99;opacity:.62;}
+  50% {scale:1.045;opacity:.85;}
+}
+.student-footer-actions {display:flex;align-items:center;gap:7px;margin-left:auto;flex:0 0 auto;}
+.student-footer-actions .student-game-fullscreen-btn {width:32px;height:32px;flex-basis:32px;font-size:23px;border-radius:10px;}
+html.student-active .personal-board .student-footer-actions .board-hint {margin:0;}
+/* The lens shows a clipped, enlarged copy of the exact same stationary card. */
+.waiting-card-wrap {position:relative;width:clamp(230px,31vw,350px);aspect-ratio:1;flex:none;}
+.waiting-glow .waiting-card-wrap .picture-card {width:100%;height:100%;box-sizing:border-box;transform:none;}
+.waiting-magnifier {position:absolute;inset:0;pointer-events:none;}
+.waiting-lens {
+  position:absolute;left:50%;top:50%;width:96px;height:96px;
+  transform:translate(-50%,-50%);border-radius:50%;border:5px solid #b4dceb;
+  background:#fff;box-sizing:content-box;isolation:isolate;
+  box-shadow:0 0 0 2px #52677e,0 8px 20px #070b2a66;
+}
+.waiting-lens::after {
+  content:"";position:absolute;width:13px;height:46px;top:85%;left:85%;
+  border-radius:8px;background:linear-gradient(90deg,#455572,#91a8c2,#455572);
+  transform:rotate(-42deg);transform-origin:top center;z-index:-1;
+}
+.waiting-lens-copy {position:absolute;transform:scale(1.65);transform-origin:top left;}
+.waiting-lens-window {position:absolute;inset:0;overflow:hidden;border-radius:50%;}
+.waiting-lens::before {content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 2px 2px 10px #abdfff66;z-index:2;pointer-events:none;}
+@media(max-width:600px) {.waiting-card-wrap {width:230px;}.waiting-lens {width:78px;height:78px;}}
+@media(prefers-reduced-motion:reduce) {.lobby-card-aura i {animation:none;opacity:.6;}}
