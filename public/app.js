@@ -530,15 +530,15 @@
     // overflowing the screen, even for a 40-student classroom.
     const compact = document.documentElement.classList.contains('fullscreen-mode') && view.role === 'teacher';
     const cols = window.innerWidth >= 1100 ? 2 : 1;
-    const maxVisible = view.status === 'lobby' ? view.players.length : (compact ? Math.max(5, Math.min(40, Math.floor((window.innerHeight - 450) / 35) * cols)) : view.players.length);
+    const maxVisible = view.status === 'lobby' ? view.players.length : (compact ? Math.max(6, Math.min(40, Math.floor((window.innerHeight - 450) / 35) * cols)) : view.players.length);
     const listed = view.players.slice(0, maxVisible);
     const more = view.players.length - listed.length;
     if (!view.players.length) return `<div class="empty-players"><span>👀</span><strong>No players yet</strong><small>Students enter the room code to join.</small></div>`;
     return `<div class="player-list">${listed.map((p, i) => `<div class="player-row ${p.id === view.me?.id ? 'self' : ''} ${p.id === view.winnerId ? 'winner-row' : ''} ${!p.online ? 'offline' : ''}" data-player-id="${p.id}" data-rank="${i+1}">
       <span class="rank">${view.status === 'lobby' ? '●' : (i + 1)}</span>
       <div class="player-details"><div class="player-name">${escape(p.name)} ${p.id === view.winnerId ? '👑' : ''}${!p.online ? '<span class="offline-label">offline</span>' : ''}${!p.inRound && ['playing','paused'].includes(view.status) ? '<span class="offline-label">next round</span>' : ''}</div>
-      ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / (view.gameMode === 'timed' ? Math.max(1,view.players[0]?.points || 1) : view.cardsToWin)) * 100}%"></span></div>` : ''}</div>
-      ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}${view.gameMode === "timed" ? "" : `<small>/${view.cardsToWin}</small>`}</b>` : ''}
+      ${showProgress && view.status !== 'lobby' && p.inRound ? `<div class="tiny-progress"><span style="width:${(p.points / ((view.gameMode === 'timed' || view.gameType === 'geo') ? Math.max(1,view.players[0]?.points || 1) : view.cardsToWin)) * 100}%"></span></div>` : ''}</div>
+      ${showProgress && view.status !== 'lobby' && p.inRound ? `<b class="score">${p.points}${(view.gameMode === "timed" || view.gameType === "geo") ? "" : `<small>/${view.cardsToWin}</small>`}</b>` : ''}
       ${view.role === 'teacher' && view.status === 'lobby' ? `<button type="button" class="player-remove" data-action="remove-player" data-player-id="${escape(p.id)}" title="Delete inappropriate name" aria-label="Delete inappropriate name: ${escape(p.name)}">×</button>` : ''}
       </div>`).join('')}${more ? `<div class="more-players">+ ${more} more players · showing leaders</div>` : ''}</div>`;
   }
@@ -582,7 +582,7 @@
     document.documentElement.classList.toggle('student-active', Boolean(active));
     if (!active) { studentHeaderInfo.innerHTML = ''; return; }
     const finished = view.status === 'finished';
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'geo' ? 'explore the world!' : view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
   }
   // Keep teacher settings mounted while a room stays in the lobby.
   // Server push messages must not replace the range input mid-drag.
@@ -664,7 +664,7 @@
       '<option value="' + key + '"' + (key === view.theme ? ' selected' : '') + '>' +
       escape(THEME_META[key]?.icon || '✨') + ' ' + escape(THEME_META[key]?.label || key) + '</option>').join('') +
       '</select><span class="theme-chevron">▾</span></div></div>';
-    const topSettings = view.gameType && view.gameType !== 'spot' ? (view.status === 'lobby' ? WordHub.settings(view) : `<div class="game-status-settings"><b>${WordHub.GAMES[view.gameType].name}</b><span>${view.gameType === 'weave' ? '<span data-round-clock>' + roundClockLabel() + '</span>' : 'Find ' + view.wordSettings.wordCount + ' words'}</span></div>`) : view.status === 'lobby'
+    const topSettings = view.gameType && view.gameType !== 'spot' ? (view.gameType === 'geo' ? MapHub.settings(view) : view.status === 'lobby' ? WordHub.settings(view) : `<div class="game-status-settings"><b>${WordHub.GAMES[view.gameType].name}</b><span>${view.gameType === 'weave' ? '<span data-round-clock>' + roundClockLabel() + '</span>' : 'Find ' + view.wordSettings.wordCount + ' words'}</span></div>`) : view.status === 'lobby'
       ? '<div class="cards-range-panel challenge-panel" data-win-mode="' + view.gameMode + '">' +
         modeControls + (timed ? secondsControl : cardsControl) + '</div>' + themeControl
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
@@ -876,9 +876,10 @@
     document.documentElement.classList.toggle('teacher-lobby', Boolean(view?.role === 'teacher' && view.status === 'lobby'));
     updateTeacherHeader();
     updateStudentHeader();
-    if (wordGame) WordHub.render(view, {send, updateView, toast, playerList});
+    if (view?.gameType === 'geo') { WordHub.clear(); MapHub.render(view, {send, updateView, toast, playerList}); }
+    else if (wordGame) { MapHub.clear(); WordHub.render(view, {send, updateView, toast, playerList}); }
     else {
-      WordHub.clear();
+      MapHub.clear(); WordHub.clear();
       if (!view) renderLanding();
       else if (view.role === 'teacher') renderTeacher();
       else renderStudent();

@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./deck');
 
 const { createWeave, createSearch, validatePath, TOPICS } = require('./wordgames');
+const {createQuestions,publicGeo,REGIONS,PACKS}=require('./geography');
 const rooms = new Map();
 const MAX_PLAYERS = 40;
 const CELEBRATION_MS = 1500;
@@ -53,7 +54,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    code:room.code, role, gameType:room.gameType || 'spot', wordSettings:room.wordSettings, puzzle:room.puzzle && !['lobby','countdown'].includes(room.status) ? {id:room.puzzle.id, size:room.puzzle.size, grid:room.puzzle.grid, words:room.puzzle.words || [], solutionCount:room.puzzle.solutions?.size || 0, answers:room.status === 'finished' && room.gameType === 'weave' ? [...room.puzzle.solutions.keys()].sort((a,b)=>b.length-a.length || a.localeCompare(b)) : []} : null, foundWords:p?.foundWords || [], foundPaths:p?.foundPaths || [], status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
+    geoSettings:room.geoSettings, geo:publicGeo(room,p), code:room.code, role, gameType:room.gameType || 'spot', wordSettings:room.wordSettings, puzzle:room.puzzle && !['lobby','countdown'].includes(room.status) ? {id:room.puzzle.id, size:room.puzzle.size, grid:room.puzzle.grid, words:room.puzzle.words || [], solutionCount:room.puzzle.solutions?.size || 0, answers:room.status === 'finished' && room.gameType === 'weave' ? [...room.puzzle.solutions.keys()].sort((a,b)=>b.length-a.length || a.localeCompare(b)) : []} : null, foundWords:p?.foundWords || [], foundPaths:p?.foundPaths || [], status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -150,6 +151,8 @@ function finalizeMatch(room, eventId) {
 function startRound(room) {
   if (room.players.size === 0) return failure('Wait for at least one student to join.');
   const nextPuzzle = room.gameType === 'weave' ? createWeave(room.wordSettings) : room.gameType === 'search' ? createSearch(room.wordSettings) : null;
+  clearTimeout(room.geoTimer);room.geoTimer=null;
+  room.geo=room.gameType==='geo'?{id:crypto.randomUUID(),questions:createQuestions(room.geoSettings),index:0,phase:'answer',deadline:null,remaining:room.geoSettings.seconds*1000,answers:new Map()}:null;
   clearTimeout(room.pendingTimer);
   clearTimeout(room.wrongTurnTimer);
   clearTimeout(room.startTimer);
@@ -170,14 +173,14 @@ function startRound(room) {
   room.streakCount = 0;
   const initial = crypto.randomInt(DECK.length);
   room.puzzle = nextPuzzle;
-  room.teacherCard = nextPuzzle ? null : cardView(initial, room.theme);
+  room.teacherCard = (nextPuzzle || room.gameType==='geo') ? null : cardView(initial, room.theme);
   for (const student of room.players.values()) {
     student.inRound = true;
     student.foundWords = []; student.foundPaths = []; student.lastWordAt = 0;
     student.points = 0;
     student.lockUntil = 0;
     student.blockedTurn = 0;
-    student.hand = nextPuzzle ? [] : shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
+    student.hand = (nextPuzzle || room.gameType==='geo') ? [] : shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
   }
   broadcast(room);
   const code = room.code;
@@ -187,6 +190,7 @@ function startRound(room) {
     if (rooms.get(code) !== room || room.status !== 'countdown' || room.countdownEndsAt !== end) return;
     room.status = 'playing';
     room.countdownEndsAt = null;
+    if(room.gameType==='geo')beginGeo(room);
     if (room.gameMode === 'timed') {
       room.timeEndsAt = Date.now() + room.timeRemainingMs;
       scheduleTimedFinish(room);
@@ -195,6 +199,21 @@ function startRound(room) {
   }, 3000);
   return success({ status:'countdown', code:room.code, countdownEndsAt:end, view:view(room,'teacher') });
 }
+
+// Map Dash keeps answers private until the shared reveal. Scores are committed once.
+function scheduleGeo(room) {
+  clearTimeout(room.geoTimer);const g=room.geo;
+  if(!g||room.status!=='playing'||g.phase!=='answer')return;
+  room.geoTimer=setTimeout(()=>{if(rooms.get(room.code)===room&&room.geo===g&&room.status==='playing')revealGeo(room);},Math.max(0,g.deadline-Date.now()));
+}
+function beginGeo(room) {const g=room.geo;g.phase='answer';g.remaining=room.geoSettings.seconds*1000;g.deadline=Date.now()+g.remaining;g.answers=new Map();scheduleGeo(room);}
+function revealGeo(room) {
+  const g=room.geo;if(!g||g.phase!=='answer'||room.status!=='playing')return false;
+  clearTimeout(room.geoTimer);room.geoTimer=null;g.phase='reveal';g.deadline=null;g.remaining=0;
+  for(const [id,a] of g.answers){const p=room.players.get(id);if(p)p.points+=a.points;}
+  broadcast(room);return true;
+}
+function finishGeo(room) {clearTimeout(room.geoTimer);room.geoTimer=null;room.status='finished';room.endedAt=Date.now();const players=playerList(room).filter(p=>p.inRound);const best=Math.max(0,...players.map(p=>p.points));room.winnerIds=best>0?players.filter(p=>p.points===best).map(p=>p.id):[];room.winnerId=room.winnerIds.length===1?room.winnerIds[0]:null;broadcast(room);}
 
 function resolveAuth(body, role) {
   const room = rooms.get(String(body?.session?.code || '').toUpperCase());
@@ -227,14 +246,14 @@ function action(body) {
     const code = randomCode();
     room = {
       code, hostToken:token(), hostStream:null, players:new Map(),
-      gameType:'spot', wordSettings:{gridSize:4,minLength:3,duration:180,wordCount:10,topic:'mixed',difficulty:'normal'}, puzzle:null, spotSettings:null, status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'scifi', teacherCard:null, cardTurn:0,
+      geoSettings:{pack:'mixed',region:'World',rounds:10,seconds:20,labels:false},geo:null,geoTimer:null,gameType:'spot', wordSettings:{gridSize:4,minLength:3,duration:180,wordCount:10,topic:'mixed',difficulty:'normal'}, puzzle:null, spotSettings:null, status:'lobby', revision:0, cardsToWin:10, gameMode:'cards', timeLimitSec:120, timeEndsAt:null, timeRemainingMs:120000, timeTimer:null, winnerIds:[], theme:'scifi', teacherCard:null, cardTurn:0,
       winnerId:null, lastEvent:null, eventNumber:0, streakPlayerId:null, streakCount:0, kickedTokens:new Set(), pendingMatch:null, pendingTimer:null, wrongTurnTimer:null,
       startedAt:null, endedAt:null, countdownEndsAt:null, startTimer:null, createdAt:Date.now(), updatedAt:Date.now()
     };
     rooms.set(code, room);
     if (canReplace) {
       // A new class needs a new, empty room. Students do not carry over.
-      for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer'])
+      for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer'])
         clearTimeout(previousRoom[timer]);
       previousRoom.status = 'closed';
       const message = { reason:'This class session has ended. Ask your teacher for the new game code.' };
@@ -280,7 +299,7 @@ function action(body) {
     return success({ code:room.code, view:view(room, data.role, auth.p?.id) });
   }
 
-  const role = ['game:match','word:submit'].includes(command) ? 'student' : 'teacher';
+  const role = ['game:match','word:submit','geo:answer'].includes(command) ? 'student' : 'teacher';
   auth = resolveAuth(body, role);
   if (!auth) return failure('This game session has expired. Refresh and join again.');
   room = auth.room;
@@ -306,21 +325,49 @@ function action(body) {
   }
   if (command === 'room:select-game') {
     if (!['lobby','finished'].includes(room.status)) return failure('Return to the lobby before changing games.');
-    if (!['spot','weave','search'].includes(data.gameType)) return failure('Choose a game from the picker.');
+    if (!['spot','weave','search','geo'].includes(data.gameType)) return failure('Choose a game from the picker.');
     if (room.gameType === 'spot') room.spotSettings={cardsToWin:room.cardsToWin,gameMode:room.gameMode,timeLimitSec:room.timeLimitSec,theme:room.theme};
-    for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer']) { clearTimeout(room[timer]); room[timer]=null; }
+    for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer']) { clearTimeout(room[timer]); room[timer]=null; }
     room.gameType=data.gameType;
     if (room.gameType === 'spot') Object.assign(room,room.spotSettings || {cardsToWin:10,gameMode:'cards',timeLimitSec:120,theme:'scifi'});
     else { room.gameMode=room.gameType==='weave'?'timed':'cards'; room.timeLimitSec=room.wordSettings.duration; room.cardsToWin=room.wordSettings.wordCount; }
     room.timeRemainingMs=room.timeLimitSec*1000; room.timeEndsAt=null; room.countdownEndsAt=null;
-    room.status='lobby'; room.puzzle=null; room.teacherCard=null; room.pendingMatch=null; room.lastEvent=null;
+    room.status='lobby'; room.geo=null; room.puzzle=null; room.teacherCard=null; room.pendingMatch=null; room.lastEvent=null;
     room.winnerId=null; room.winnerIds=[]; room.startedAt=null; room.endedAt=null;
     for (const student of room.players.values()) {student.points=0;student.inRound=false;student.hand=[];student.foundWords=[];student.foundPaths=[];student.blockedTurn=0;}
     broadcast(room);
     return success({view:view(room,'teacher')});
   }
+  if(command==='room:geo-settings') {
+    if(room.gameType!=='geo'||room.status!=='lobby')return failure('Choose Map Dash in the lobby first.');
+    const n={...room.geoSettings,...data};
+    if(!PACKS.includes(n.pack)||!REGIONS.includes(n.region)||![5,10,20].includes(n.rounds)||![15,20,30,45].includes(n.seconds)||typeof n.labels!=='boolean')return failure('Choose an available Map Dash setting.');
+    room.geoSettings={pack:n.pack,region:n.region,rounds:n.rounds,seconds:n.seconds,labels:n.labels};broadcast(room);return success({view:view(room,'teacher')});
+  }
+  if(command==='geo:answer') {
+    const g=room.geo;
+    if(room.gameType!=='geo'||room.status!=='playing'||!p.inRound||!g||g.phase!=='answer')return failure('Wait for the next question.');
+    if(Date.now()>=g.deadline){revealGeo(room);return failure('Time is up!');}
+    const q=g.questions[g.index];
+    if(data.questionId!==q.id)return failure('This question has changed.');
+    if(g.answers.has(p.id))return failure('Your answer is already locked.');
+    const choice=String(data.choice||'');
+    const valid=q.kind==='quiz'?q.choices.some(c=>c.id===choice):require('./data/map-ids.json')[q.map].includes(choice);
+    if(!valid)return failure('Select an answer on this screen.');
+    const correct=choice===q.correct;const points=correct?100+Math.round(50*Math.min(1,Math.max(0,g.deadline-Date.now())/(room.geoSettings.seconds*1000))):0;
+    g.answers.set(p.id,{choice,correct,points});
+    if([...room.players.values()].filter(p=>p.inRound).every(p=>g.answers.has(p.id)))revealGeo(room);else broadcast(room);
+    return success({view:view(room,'student',p.id)});
+  }
+  if(command==='geo:reveal'||command==='geo:next') {
+    if(room.gameType!=='geo'||room.status!=='playing'||!room.geo)return failure('Map Dash is not playing.');
+    const g=room.geo;if(data.questionId!==g.questions[g.index].id)return failure('This question has changed.');
+    if(command==='geo:reveal'){if(!revealGeo(room))return failure('Answers are already revealed.');}
+    else {if(g.phase!=='reveal')return failure('Reveal answers first.');if(g.index+1>=g.questions.length)finishGeo(room);else{g.index++;beginGeo(room);broadcast(room);}}
+    return success({view:view(room,'teacher')});
+  }
   if (command === 'room:word-settings') {
-    if (room.status !== 'lobby' || room.gameType === 'spot') return failure('Choose a word game in the lobby first.');
+    if (room.status !== 'lobby' || !['weave','search'].includes(room.gameType)) return failure('Choose a word game in the lobby first.');
     const next={...room.wordSettings,...data};
     if (![4,5].includes(next.gridSize) || ![3,4].includes(next.minLength) || ![60,120,180,240,300,360].includes(next.duration) || ![5,10,15,20].includes(next.wordCount) || !Object.hasOwn(TOPICS,next.topic) || !['easy','normal','hard'].includes(next.difficulty)) return failure('Choose one of the available game settings.');
     room.wordSettings={gridSize:next.gridSize,minLength:next.minLength,duration:next.duration,wordCount:next.wordCount,topic:next.topic,difficulty:next.difficulty};
@@ -371,6 +418,7 @@ function action(body) {
     if (!['playing','paused'].includes(room.status)) return failure('The race is not running.');
     if (room.pendingMatch) return failure('Wait for the new card before pausing.');
     if (room.status === 'playing') {
+      if(room.gameType==='geo'&&room.geo?.phase==='answer'){room.geo.remaining=Math.max(0,room.geo.deadline-Date.now());room.geo.deadline=null;clearTimeout(room.geoTimer);}
       if (room.gameMode === 'timed') {
         room.timeRemainingMs = Math.max(0,room.timeEndsAt - Date.now());
         room.timeEndsAt = null;
@@ -380,6 +428,7 @@ function action(body) {
       room.status = 'paused';
     } else {
       room.status = 'playing';
+      if(room.gameType==='geo'&&room.geo?.phase==='answer'){room.geo.deadline=Date.now()+room.geo.remaining;scheduleGeo(room);}
       if (room.gameMode === 'timed') {
         room.timeEndsAt = Date.now() + room.timeRemainingMs;
         scheduleTimedFinish(room);
@@ -389,6 +438,7 @@ function action(body) {
     return success();
   }
   if (command === 'room:reset') {
+    clearTimeout(room.geoTimer);room.geoTimer=null;room.geo=null;
     clearTimeout(room.pendingTimer);
     clearTimeout(room.wrongTurnTimer);
     clearTimeout(room.startTimer);
@@ -527,6 +577,8 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
+  '/map-hub.js':'map-hub.js','/map-hub.css':'map-hub.css','/map-data.js':'map-data.js','/map-dash.webp':'map-dash.webp',
+  '/flags/jp.svg':'flags/jp.svg','/flags/fr.svg':'flags/fr.svg','/flags/it.svg':'flags/it.svg','/flags/de.svg':'flags/de.svg','/flags/br.svg':'flags/br.svg','/flags/ca.svg':'flags/ca.svg','/flags/au.svg':'flags/au.svg','/flags/nz.svg':'flags/nz.svg','/flags/in.svg':'flags/in.svg','/flags/za.svg':'flags/za.svg','/flags/gb.svg':'flags/gb.svg','/flags/kr.svg':'flags/kr.svg','/flags/mx.svg':'flags/mx.svg','/flags/ch.svg':'flags/ch.svg','/flags/se.svg':'flags/se.svg','/flags/es.svg':'flags/es.svg',
   '/word-hub.js':'word-hub.js', '/word-hub.css':'word-hub.css', '/word-weave.webp':'word-weave.webp', '/find-a-word.webp':'find-a-word.webp',
   '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/symbols-festive.webp':'symbols-festive.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp', '/cosmic-sky-bg.jpg':'cosmic-sky-bg.jpg', '/spot-sprint-wordmark.webp':'spot-sprint-wordmark.webp', '/arcade-mountains.webp':'arcade-mountains.webp'
 };
@@ -562,10 +614,11 @@ setInterval(() => {
     if (now - room.createdAt > 8*60*60*1000 || (!online && now - room.updatedAt > 45*60*1000)) {
       if (room.hostStream) room.hostStream.end();
       for (const p of room.players.values()) if (p.stream) p.stream.end();
+      for(const k of ['geoTimer','startTimer','timeTimer','pendingTimer','wrongTurnTimer'])clearTimeout(room[k]);
       rooms.delete(code);
     }
   }
 },15000).unref();
 
 if (require.main===module) server.listen(PORT,'0.0.0.0',()=>console.log(`Spot Sprint ready at http://localhost:${PORT}`));
-module.exports = { server, action, rooms, view, finalizeMatch, finishTimedRound, CELEBRATION_MS, FIRE_CELEBRATION_MS };
+module.exports = { server, action, rooms, view, finalizeMatch, finishTimedRound, revealGeo, CELEBRATION_MS, FIRE_CELEBRATION_MS };
