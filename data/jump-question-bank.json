@@ -1,0 +1,4063 @@
+[
+  {
+    "prompt": "Which currency is used in Japan?",
+    "answer": "Yen",
+    "wrong": [
+      "Euro",
+      "Rand",
+      "Baht"
+    ],
+    "explanation": "Japan uses the yen. Currency names can be shared by different countries.",
+    "id": "g0"
+  },
+  {
+    "prompt": "Which currency is used in India?",
+    "answer": "Indian rupee",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "India uses the indian rupee. Currency names can be shared by different countries.",
+    "id": "g1"
+  },
+  {
+    "prompt": "Which currency is used in Brazil?",
+    "answer": "Brazilian real",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "Brazil uses the brazilian real. Currency names can be shared by different countries.",
+    "id": "g2"
+  },
+  {
+    "prompt": "Which currency is used in United Kingdom?",
+    "answer": "Pound sterling",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "United Kingdom uses the pound sterling. Currency names can be shared by different countries.",
+    "id": "g3"
+  },
+  {
+    "prompt": "Which currency is used in South Africa?",
+    "answer": "Rand",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Baht"
+    ],
+    "explanation": "South Africa uses the rand. Currency names can be shared by different countries.",
+    "id": "g4"
+  },
+  {
+    "prompt": "Which currency is used in Thailand?",
+    "answer": "Baht",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "Thailand uses the baht. Currency names can be shared by different countries.",
+    "id": "g5"
+  },
+  {
+    "prompt": "Which currency is used in Switzerland?",
+    "answer": "Swiss franc",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "Switzerland uses the swiss franc. Currency names can be shared by different countries.",
+    "id": "g6"
+  },
+  {
+    "prompt": "Which currency is used in Mexico?",
+    "answer": "Mexican peso",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "Mexico uses the mexican peso. Currency names can be shared by different countries.",
+    "id": "g7"
+  },
+  {
+    "prompt": "Which currency is used in South Korea?",
+    "answer": "Won",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "South Korea uses the won. Currency names can be shared by different countries.",
+    "id": "g8"
+  },
+  {
+    "prompt": "Which currency is used in Australia?",
+    "answer": "Australian dollar",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "Australia uses the australian dollar. Currency names can be shared by different countries.",
+    "id": "g9"
+  },
+  {
+    "prompt": "Which currency is used in New Zealand?",
+    "answer": "New Zealand dollar",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "New Zealand uses the new zealand dollar. Currency names can be shared by different countries.",
+    "id": "g10"
+  },
+  {
+    "prompt": "Which currency is used in China?",
+    "answer": "Yuan renminbi",
+    "wrong": [
+      "Euro",
+      "Yen",
+      "Rand"
+    ],
+    "explanation": "China uses the yuan renminbi. Currency names can be shared by different countries.",
+    "id": "g11"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Japan",
+    "wrong": [
+      "France",
+      "Italy",
+      "Germany"
+    ],
+    "flag": "jp",
+    "explanation": "This is the national flag of Japan.",
+    "id": "g12"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "France",
+    "wrong": [
+      "Japan",
+      "Italy",
+      "Germany"
+    ],
+    "flag": "fr",
+    "explanation": "This is the national flag of France.",
+    "id": "g13"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Italy",
+    "wrong": [
+      "Japan",
+      "France",
+      "Germany"
+    ],
+    "flag": "it",
+    "explanation": "This is the national flag of Italy.",
+    "id": "g14"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Germany",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "de",
+    "explanation": "This is the national flag of Germany.",
+    "id": "g15"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Brazil",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "br",
+    "explanation": "This is the national flag of Brazil.",
+    "id": "g16"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Canada",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "ca",
+    "explanation": "This is the national flag of Canada.",
+    "id": "g17"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Australia",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "au",
+    "explanation": "This is the national flag of Australia.",
+    "id": "g18"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "New Zealand",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "nz",
+    "explanation": "This is the national flag of New Zealand.",
+    "id": "g19"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "India",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "in",
+    "explanation": "This is the national flag of India.",
+    "id": "g20"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "South Africa",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "za",
+    "explanation": "This is the national flag of South Africa.",
+    "id": "g21"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "United Kingdom",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "gb",
+    "explanation": "This is the national flag of United Kingdom.",
+    "id": "g22"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "South Korea",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "kr",
+    "explanation": "This is the national flag of South Korea.",
+    "id": "g23"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Mexico",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "mx",
+    "explanation": "This is the national flag of Mexico.",
+    "id": "g24"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Switzerland",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "ch",
+    "explanation": "This is the national flag of Switzerland.",
+    "id": "g25"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Sweden",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "se",
+    "explanation": "This is the national flag of Sweden.",
+    "id": "g26"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Spain",
+    "wrong": [
+      "Japan",
+      "France",
+      "Italy"
+    ],
+    "flag": "es",
+    "explanation": "This is the national flag of Spain.",
+    "id": "g27"
+  },
+  {
+    "prompt": "“Konnichiwa” is a daytime greeting in which language?",
+    "answer": "Japanese",
+    "wrong": [
+      "Korean",
+      "Italian",
+      "French"
+    ],
+    "explanation": "Konnichiwa is a Japanese daytime greeting, often translated as hello or good afternoon.",
+    "id": "g28"
+  },
+  {
+    "prompt": "“Kia ora” is a greeting in which language?",
+    "answer": "Te reo Māori",
+    "wrong": [
+      "Japanese",
+      "Spanish",
+      "German"
+    ],
+    "explanation": "Kia ora is a greeting in te reo Māori, an Indigenous language of Aotearoa New Zealand.",
+    "id": "g29"
+  },
+  {
+    "prompt": "“Bonjour” is a greeting in which language?",
+    "answer": "French",
+    "wrong": [
+      "Italian",
+      "Japanese",
+      "Spanish"
+    ],
+    "explanation": "Bonjour is a French greeting meaning hello or good day. French is spoken in many countries.",
+    "id": "g30"
+  },
+  {
+    "prompt": "“Hola” means hello in which language?",
+    "answer": "Spanish",
+    "wrong": [
+      "German",
+      "French",
+      "Japanese"
+    ],
+    "explanation": "Hola is Spanish for hello. Spanish is used across Spain and many countries in the Americas.",
+    "id": "g31"
+  },
+  {
+    "prompt": "“Ciao” is an informal greeting in which language?",
+    "answer": "Italian",
+    "wrong": [
+      "Māori",
+      "Japanese",
+      "German"
+    ],
+    "explanation": "Ciao can mean hello or goodbye in Italian.",
+    "id": "g32"
+  },
+  {
+    "prompt": "“Hallo” is a common greeting in which of these languages?",
+    "answer": "German",
+    "wrong": [
+      "Japanese",
+      "Māori",
+      "Spanish"
+    ],
+    "explanation": "Hallo is used as a greeting in German and also in some other languages.",
+    "id": "g33"
+  },
+  {
+    "prompt": "Sushi is especially associated with which country?",
+    "answer": "Japan",
+    "wrong": [
+      "Italy",
+      "Mexico",
+      "France"
+    ],
+    "explanation": "Sushi is a Japanese food tradition centred on seasoned rice, with many different toppings and fillings.",
+    "id": "g34"
+  },
+  {
+    "prompt": "Neapolitan pizza is associated with which country?",
+    "answer": "Italy",
+    "wrong": [
+      "France",
+      "Japan",
+      "Sweden"
+    ],
+    "explanation": "Neapolitan pizza is associated with Naples in Italy.",
+    "id": "g35"
+  },
+  {
+    "prompt": "Paella is especially associated with Valencia in which country?",
+    "answer": "Spain",
+    "wrong": [
+      "Greece",
+      "Brazil",
+      "Thailand"
+    ],
+    "explanation": "Paella is a rice dish associated with the Valencia region of Spain.",
+    "id": "g36"
+  },
+  {
+    "prompt": "The baguette is especially associated with which country?",
+    "answer": "France",
+    "wrong": [
+      "India",
+      "Mexico",
+      "Japan"
+    ],
+    "explanation": "The baguette is a distinctive part of French bread-making culture.",
+    "id": "g37"
+  },
+  {
+    "prompt": "Kimchi is especially associated with which cuisine?",
+    "answer": "Korean",
+    "wrong": [
+      "Italian",
+      "Mexican",
+      "French"
+    ],
+    "explanation": "Kimchi is a Korean tradition of seasoned, fermented vegetables, with many regional recipes.",
+    "id": "g38"
+  },
+  {
+    "prompt": "Hāngi is a traditional earth-oven cooking method associated with which people?",
+    "answer": "Māori",
+    "wrong": [
+      "Sámi",
+      "Inuit",
+      "Ainu"
+    ],
+    "explanation": "Hāngi is a traditional Māori method of cooking using heated stones in a pit oven.",
+    "id": "g39"
+  },
+  {
+    "prompt": "Which ocean is the largest?",
+    "answer": "Pacific Ocean",
+    "wrong": [
+      "Indian Ocean",
+      "Atlantic Ocean",
+      "Arctic Ocean"
+    ],
+    "explanation": "The Pacific is the largest ocean basin on Earth.",
+    "id": "g40"
+  },
+  {
+    "prompt": "The Sahara Desert is on which continent?",
+    "answer": "Africa",
+    "wrong": [
+      "Asia",
+      "Australia",
+      "South America"
+    ],
+    "explanation": "The Sahara stretches across northern Africa.",
+    "id": "g41"
+  },
+  {
+    "prompt": "The Amazon rainforest is mainly on which continent?",
+    "answer": "South America",
+    "wrong": [
+      "Africa",
+      "Asia",
+      "Europe"
+    ],
+    "explanation": "The Amazon rainforest extends across several South American countries.",
+    "id": "g42"
+  },
+  {
+    "prompt": "Which biome is strongly associated with permafrost in the Arctic?",
+    "answer": "Tundra",
+    "wrong": [
+      "Tropical rainforest",
+      "Savanna",
+      "Temperate forest"
+    ],
+    "explanation": "Arctic tundra often has permanently frozen ground below the seasonally thawed surface.",
+    "id": "g43"
+  },
+  {
+    "prompt": "Which biome typically has scattered trees among grasses and distinct wet and dry seasons?",
+    "answer": "Tropical savanna",
+    "wrong": [
+      "Tundra",
+      "Hot desert",
+      "Boreal forest"
+    ],
+    "explanation": "Tropical savannas are grasslands with scattered trees and seasonal rainfall.",
+    "id": "g44"
+  },
+  {
+    "prompt": "Which imaginary line divides Earth into Northern and Southern Hemispheres?",
+    "answer": "Equator",
+    "wrong": [
+      "Prime Meridian",
+      "Tropic of Capricorn",
+      "International Date Line"
+    ],
+    "explanation": "The Equator is the line of zero degrees latitude.",
+    "id": "g45"
+  },
+  {
+    "prompt": "Which ocean is west of mainland Australia?",
+    "answer": "Indian Ocean",
+    "wrong": [
+      "Atlantic Ocean",
+      "Arctic Ocean",
+      "Pacific Ocean"
+    ],
+    "explanation": "The Indian Ocean lies west of mainland Australia.",
+    "id": "g46"
+  },
+  {
+    "prompt": "The Eiffel Tower is in which city?",
+    "answer": "Paris",
+    "wrong": [
+      "Rome",
+      "London",
+      "Madrid"
+    ],
+    "explanation": "The Eiffel Tower stands in Paris, France.",
+    "id": "g47"
+  },
+  {
+    "prompt": "The Taj Mahal is in which country?",
+    "answer": "India",
+    "wrong": [
+      "Japan",
+      "Egypt",
+      "Thailand"
+    ],
+    "explanation": "The Taj Mahal is in Agra, India.",
+    "id": "g48"
+  },
+  {
+    "prompt": "Machu Picchu is in which country?",
+    "answer": "Peru",
+    "wrong": [
+      "Brazil",
+      "Mexico",
+      "Chile"
+    ],
+    "explanation": "Machu Picchu is an Inca site in the Andes of Peru.",
+    "id": "g49"
+  },
+  {
+    "prompt": "The Great Barrier Reef lies off the coast of which Australian state?",
+    "answer": "Queensland",
+    "wrong": [
+      "Victoria",
+      "Western Australia",
+      "Tasmania"
+    ],
+    "explanation": "The Great Barrier Reef is off the Queensland coast.",
+    "id": "g50"
+  },
+  {
+    "prompt": "The ancient pyramids at Giza are in which country?",
+    "answer": "Egypt",
+    "wrong": [
+      "Greece",
+      "India",
+      "Mexico"
+    ],
+    "explanation": "The Giza pyramid complex is in Egypt, near Cairo.",
+    "id": "g51"
+  },
+  {
+    "prompt": "The Sydney Opera House is in which Australian state?",
+    "answer": "New South Wales",
+    "wrong": [
+      "Queensland",
+      "Victoria",
+      "South Australia"
+    ],
+    "explanation": "Sydney is the capital city of New South Wales.",
+    "id": "g52"
+  },
+  {
+    "prompt": "Which city is the capital of Australia?",
+    "answer": "Canberra",
+    "wrong": [
+      "Santiago",
+      "Windhoek",
+      "Tehran"
+    ],
+    "explanation": "Canberra is the capital of Australia.",
+    "id": "g53"
+  },
+  {
+    "prompt": "Canberra is the capital of which country?",
+    "answer": "Australia",
+    "wrong": [
+      "Kazakhstan",
+      "Indonesia",
+      "Germany"
+    ],
+    "explanation": "Canberra is in Australia.",
+    "id": "g54"
+  },
+  {
+    "prompt": "On which continent is Australia?",
+    "answer": "Oceania",
+    "wrong": [
+      "South America",
+      "North America",
+      "Asia"
+    ],
+    "explanation": "Australia is in Oceania.",
+    "id": "g55"
+  },
+  {
+    "prompt": "Which of these currencies is used in Australia?",
+    "answer": "Australian dollar",
+    "wrong": [
+      "Thai baht",
+      "Japanese yen",
+      "Congolese franc"
+    ],
+    "explanation": "Australia uses the Australian dollar.",
+    "id": "g56"
+  },
+  {
+    "prompt": "Which city is the capital of New Zealand?",
+    "answer": "Wellington",
+    "wrong": [
+      "Havana",
+      "Buenos Aires",
+      "Ottawa"
+    ],
+    "explanation": "Wellington is the capital of New Zealand.",
+    "id": "g57"
+  },
+  {
+    "prompt": "Wellington is the capital of which country?",
+    "answer": "New Zealand",
+    "wrong": [
+      "Ethiopia",
+      "South Africa",
+      "Spain"
+    ],
+    "explanation": "Wellington is in New Zealand.",
+    "id": "g58"
+  },
+  {
+    "prompt": "On which continent is New Zealand?",
+    "answer": "Oceania",
+    "wrong": [
+      "North America",
+      "Europe",
+      "Asia"
+    ],
+    "explanation": "New Zealand is in Oceania.",
+    "id": "g59"
+  },
+  {
+    "prompt": "Which of these currencies is used in New Zealand?",
+    "answer": "New Zealand dollar",
+    "wrong": [
+      "Kazakhstani tenge",
+      "Peruvian sol",
+      "United States dollar"
+    ],
+    "explanation": "New Zealand uses the New Zealand dollar.",
+    "id": "g60"
+  },
+  {
+    "prompt": "Which city is the capital of Papua New Guinea?",
+    "answer": "Port Moresby",
+    "wrong": [
+      "Buenos Aires",
+      "Madrid",
+      "Sucre"
+    ],
+    "explanation": "Port Moresby is the capital of Papua New Guinea.",
+    "id": "g61"
+  },
+  {
+    "prompt": "Port Moresby is the capital of which country?",
+    "answer": "Papua New Guinea",
+    "wrong": [
+      "Italy",
+      "Kazakhstan",
+      "Honduras"
+    ],
+    "explanation": "Port Moresby is in Papua New Guinea.",
+    "id": "g62"
+  },
+  {
+    "prompt": "On which continent is Papua New Guinea?",
+    "answer": "Oceania",
+    "wrong": [
+      "Africa",
+      "North America",
+      "Asia"
+    ],
+    "explanation": "Papua New Guinea is in Oceania.",
+    "id": "g63"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Papua New Guinea",
+    "wrong": [
+      "Tanzania",
+      "United Kingdom",
+      "Vietnam"
+    ],
+    "flag": "pg",
+    "explanation": "This is the national flag of Papua New Guinea.",
+    "id": "g64"
+  },
+  {
+    "prompt": "Which of these currencies is used in Papua New Guinea?",
+    "answer": "Papua New Guinean kina",
+    "wrong": [
+      "Uruguayan peso",
+      "Saudi riyal",
+      "Nigerian naira"
+    ],
+    "explanation": "Papua New Guinea uses the Papua New Guinean kina.",
+    "id": "g65"
+  },
+  {
+    "prompt": "Which city is the capital of Japan?",
+    "answer": "Tokyo",
+    "wrong": [
+      "Stockholm",
+      "Guatemala City",
+      "New Delhi"
+    ],
+    "explanation": "Tokyo is the capital of Japan.",
+    "id": "g66"
+  },
+  {
+    "prompt": "Tokyo is the capital of which country?",
+    "answer": "Japan",
+    "wrong": [
+      "Germany",
+      "Papua New Guinea",
+      "Finland"
+    ],
+    "explanation": "Tokyo is in Japan.",
+    "id": "g67"
+  },
+  {
+    "prompt": "On which continent is Japan?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "North America"
+    ],
+    "explanation": "Japan is in Asia.",
+    "id": "g68"
+  },
+  {
+    "prompt": "Which of these currencies is used in Japan?",
+    "answer": "Japanese yen",
+    "wrong": [
+      "Swedish krona",
+      "Canadian dollar",
+      "Congolese franc"
+    ],
+    "explanation": "Japan uses the Japanese yen.",
+    "id": "g69"
+  },
+  {
+    "prompt": "Which city is the capital of China?",
+    "answer": "Beijing",
+    "wrong": [
+      "Caracas",
+      "Tehran",
+      "Stockholm"
+    ],
+    "explanation": "Beijing is the capital of China.",
+    "id": "g70"
+  },
+  {
+    "prompt": "Beijing is the capital of which country?",
+    "answer": "China",
+    "wrong": [
+      "Venezuela",
+      "Ireland",
+      "Colombia"
+    ],
+    "explanation": "Beijing is in China.",
+    "id": "g71"
+  },
+  {
+    "prompt": "On which continent is China?",
+    "answer": "Asia",
+    "wrong": [
+      "Oceania",
+      "North America",
+      "Europe"
+    ],
+    "explanation": "China is in Asia.",
+    "id": "g72"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "China",
+    "wrong": [
+      "Saudi Arabia",
+      "Algeria",
+      "Kazakhstan"
+    ],
+    "flag": "cn",
+    "explanation": "This is the national flag of China.",
+    "id": "g73"
+  },
+  {
+    "prompt": "Which of these currencies is used in China?",
+    "answer": "Chinese yuan",
+    "wrong": [
+      "Kenyan shilling",
+      "British pound",
+      "Indonesian rupiah"
+    ],
+    "explanation": "China uses the Chinese yuan.",
+    "id": "g74"
+  },
+  {
+    "prompt": "Which city is the capital of India?",
+    "answer": "New Delhi",
+    "wrong": [
+      "Dodoma",
+      "Ulan Bator",
+      "Wellington"
+    ],
+    "explanation": "New Delhi is the capital of India.",
+    "id": "g75"
+  },
+  {
+    "prompt": "New Delhi is the capital of which country?",
+    "answer": "India",
+    "wrong": [
+      "Thailand",
+      "Greece",
+      "Finland"
+    ],
+    "explanation": "New Delhi is in India.",
+    "id": "g76"
+  },
+  {
+    "prompt": "On which continent is India?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "North America",
+      "Oceania"
+    ],
+    "explanation": "India is in Asia.",
+    "id": "g77"
+  },
+  {
+    "prompt": "Which of these currencies is used in India?",
+    "answer": "Indian rupee",
+    "wrong": [
+      "Swedish krona",
+      "New Zealand dollar",
+      "Tanzanian shilling"
+    ],
+    "explanation": "India uses the Indian rupee.",
+    "id": "g78"
+  },
+  {
+    "prompt": "Which ocean lies between eastern Africa and western Australia?",
+    "answer": "Indian Ocean",
+    "wrong": [
+      "Arctic Ocean",
+      "Atlantic Ocean",
+      "Southern Ocean"
+    ],
+    "explanation": "The Indian Ocean lies between Africa, Asia and Australia.",
+    "id": "g79"
+  },
+  {
+    "prompt": "Which country contains the island of Bali?",
+    "answer": "Indonesia",
+    "wrong": [
+      "Japan",
+      "Canada",
+      "Norway"
+    ],
+    "explanation": "Bali is an island and province of Indonesia.",
+    "id": "g80"
+  },
+  {
+    "prompt": "On which continent is Indonesia?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "North America"
+    ],
+    "explanation": "Indonesia is in Asia.",
+    "id": "g81"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Indonesia",
+    "wrong": [
+      "Greece",
+      "Uruguay",
+      "Kenya"
+    ],
+    "flag": "id",
+    "explanation": "This is the national flag of Indonesia.",
+    "id": "g82"
+  },
+  {
+    "prompt": "Which of these currencies is used in Indonesia?",
+    "answer": "Indonesian rupiah",
+    "wrong": [
+      "Chinese yuan",
+      "Peruvian sol",
+      "British pound"
+    ],
+    "explanation": "Indonesia uses the Indonesian rupiah.",
+    "id": "g83"
+  },
+  {
+    "prompt": "Which city is the capital of Thailand?",
+    "answer": "Bangkok",
+    "wrong": [
+      "London",
+      "Montevideo",
+      "Madrid"
+    ],
+    "explanation": "Bangkok is the capital of Thailand.",
+    "id": "g84"
+  },
+  {
+    "prompt": "Bangkok is the capital of which country?",
+    "answer": "Thailand",
+    "wrong": [
+      "Saudi Arabia",
+      "Norway",
+      "Madagascar"
+    ],
+    "explanation": "Bangkok is in Thailand.",
+    "id": "g85"
+  },
+  {
+    "prompt": "On which continent is Thailand?",
+    "answer": "Asia",
+    "wrong": [
+      "North America",
+      "Europe",
+      "South America"
+    ],
+    "explanation": "Thailand is in Asia.",
+    "id": "g86"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Thailand",
+    "wrong": [
+      "Portugal",
+      "Australia",
+      "Brazil"
+    ],
+    "flag": "th",
+    "explanation": "This is the national flag of Thailand.",
+    "id": "g87"
+  },
+  {
+    "prompt": "Which of these currencies is used in Thailand?",
+    "answer": "Thai baht",
+    "wrong": [
+      "Norwegian krone",
+      "Polish złoty",
+      "South African rand"
+    ],
+    "explanation": "Thailand uses the Thai baht.",
+    "id": "g88"
+  },
+  {
+    "prompt": "Which city is the capital of Vietnam?",
+    "answer": "Hanoi",
+    "wrong": [
+      "Windhoek",
+      "Antananarivo",
+      "Warsaw"
+    ],
+    "explanation": "Hanoi is the capital of Vietnam.",
+    "id": "g89"
+  },
+  {
+    "prompt": "Hanoi is the capital of which country?",
+    "answer": "Vietnam",
+    "wrong": [
+      "Morocco",
+      "United Kingdom",
+      "Ecuador"
+    ],
+    "explanation": "Hanoi is in Vietnam.",
+    "id": "g90"
+  },
+  {
+    "prompt": "On which continent is Vietnam?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "North America"
+    ],
+    "explanation": "Vietnam is in Asia.",
+    "id": "g91"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Vietnam",
+    "wrong": [
+      "South Africa",
+      "Spain",
+      "Algeria"
+    ],
+    "flag": "vn",
+    "explanation": "This is the national flag of Vietnam.",
+    "id": "g92"
+  },
+  {
+    "prompt": "Which of these currencies is used in Vietnam?",
+    "answer": "Vietnamese đồng",
+    "wrong": [
+      "Kazakhstani tenge",
+      "Pakistani rupee",
+      "Papua New Guinean kina"
+    ],
+    "explanation": "Vietnam uses the Vietnamese đồng.",
+    "id": "g93"
+  },
+  {
+    "prompt": "Which city is the capital of Mongolia?",
+    "answer": "Ulan Bator",
+    "wrong": [
+      "Berlin",
+      "Canberra",
+      "Pretoria"
+    ],
+    "explanation": "Ulan Bator is the capital of Mongolia.",
+    "id": "g94"
+  },
+  {
+    "prompt": "Ulan Bator is the capital of which country?",
+    "answer": "Mongolia",
+    "wrong": [
+      "Angola",
+      "Argentina",
+      "India"
+    ],
+    "explanation": "Ulan Bator is in Mongolia.",
+    "id": "g95"
+  },
+  {
+    "prompt": "On which continent is Mongolia?",
+    "answer": "Asia",
+    "wrong": [
+      "South America",
+      "Africa",
+      "Oceania"
+    ],
+    "explanation": "Mongolia is in Asia.",
+    "id": "g96"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Mongolia",
+    "wrong": [
+      "Greece",
+      "United States",
+      "South Korea"
+    ],
+    "flag": "mn",
+    "explanation": "This is the national flag of Mongolia.",
+    "id": "g97"
+  },
+  {
+    "prompt": "Which of these currencies is used in Mongolia?",
+    "answer": "Mongolian tögrög",
+    "wrong": [
+      "Algerian dinar",
+      "Swedish krona",
+      "Papua New Guinean kina"
+    ],
+    "explanation": "Mongolia uses the Mongolian tögrög.",
+    "id": "g98"
+  },
+  {
+    "prompt": "Which city is the capital of Saudi Arabia?",
+    "answer": "Riyadh",
+    "wrong": [
+      "Caracas",
+      "Algiers",
+      "Tokyo"
+    ],
+    "explanation": "Riyadh is the capital of Saudi Arabia.",
+    "id": "g99"
+  },
+  {
+    "prompt": "Riyadh is the capital of which country?",
+    "answer": "Saudi Arabia",
+    "wrong": [
+      "Guatemala",
+      "Ethiopia",
+      "Algeria"
+    ],
+    "explanation": "Riyadh is in Saudi Arabia.",
+    "id": "g100"
+  },
+  {
+    "prompt": "On which continent is Saudi Arabia?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Saudi Arabia is in Asia.",
+    "id": "g101"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Saudi Arabia",
+    "wrong": [
+      "Nigeria",
+      "Papua New Guinea",
+      "Tanzania"
+    ],
+    "flag": "sa",
+    "explanation": "This is the national flag of Saudi Arabia.",
+    "id": "g102"
+  },
+  {
+    "prompt": "Which of these currencies is used in Saudi Arabia?",
+    "answer": "Saudi riyal",
+    "wrong": [
+      "Kenyan shilling",
+      "Nigerian naira",
+      "Argentine peso"
+    ],
+    "explanation": "Saudi Arabia uses the Saudi riyal.",
+    "id": "g103"
+  },
+  {
+    "prompt": "Which city is the capital of Kazakhstan?",
+    "answer": "Astana",
+    "wrong": [
+      "Tokyo",
+      "Beijing",
+      "Tehran"
+    ],
+    "explanation": "Astana is the capital of Kazakhstan.",
+    "id": "g104"
+  },
+  {
+    "prompt": "Astana is the capital of which country?",
+    "answer": "Kazakhstan",
+    "wrong": [
+      "Greece",
+      "Australia",
+      "Uruguay"
+    ],
+    "explanation": "Astana is in Kazakhstan.",
+    "id": "g105"
+  },
+  {
+    "prompt": "On which continent is most of Kazakhstan?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Kazakhstan is in Asia.",
+    "id": "g106"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Kazakhstan",
+    "wrong": [
+      "United States",
+      "Australia",
+      "Angola"
+    ],
+    "flag": "kz",
+    "explanation": "This is the national flag of Kazakhstan.",
+    "id": "g107"
+  },
+  {
+    "prompt": "Which of these currencies is used in Kazakhstan?",
+    "answer": "Kazakhstani tenge",
+    "wrong": [
+      "Thai baht",
+      "British pound",
+      "Euro"
+    ],
+    "explanation": "Kazakhstan uses the Kazakhstani tenge.",
+    "id": "g108"
+  },
+  {
+    "prompt": "Which city is the capital of Pakistan?",
+    "answer": "Islamabad",
+    "wrong": [
+      "Santiago",
+      "Canberra",
+      "Rabat"
+    ],
+    "explanation": "Islamabad is the capital of Pakistan.",
+    "id": "g109"
+  },
+  {
+    "prompt": "Islamabad is the capital of which country?",
+    "answer": "Pakistan",
+    "wrong": [
+      "Colombia",
+      "Uruguay",
+      "Peru"
+    ],
+    "explanation": "Islamabad is in Pakistan.",
+    "id": "g110"
+  },
+  {
+    "prompt": "On which continent is Pakistan?",
+    "answer": "Asia",
+    "wrong": [
+      "Oceania",
+      "North America",
+      "South America"
+    ],
+    "explanation": "Pakistan is in Asia.",
+    "id": "g111"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Pakistan",
+    "wrong": [
+      "Canada",
+      "France",
+      "Japan"
+    ],
+    "flag": "pk",
+    "explanation": "This is the national flag of Pakistan.",
+    "id": "g112"
+  },
+  {
+    "prompt": "Which of these currencies is used in Pakistan?",
+    "answer": "Pakistani rupee",
+    "wrong": [
+      "Vietnamese đồng",
+      "Australian dollar",
+      "Cuban peso"
+    ],
+    "explanation": "Pakistan uses the Pakistani rupee.",
+    "id": "g113"
+  },
+  {
+    "prompt": "Which city is the capital of Iran?",
+    "answer": "Tehran",
+    "wrong": [
+      "Santiago",
+      "Astana",
+      "Mexico City"
+    ],
+    "explanation": "Tehran is the capital of Iran.",
+    "id": "g114"
+  },
+  {
+    "prompt": "Tehran is the capital of which country?",
+    "answer": "Iran",
+    "wrong": [
+      "Saudi Arabia",
+      "Mongolia",
+      "Nicaragua"
+    ],
+    "explanation": "Tehran is in Iran.",
+    "id": "g115"
+  },
+  {
+    "prompt": "On which continent is Iran?",
+    "answer": "Asia",
+    "wrong": [
+      "South America",
+      "Oceania",
+      "North America"
+    ],
+    "explanation": "Iran is in Asia.",
+    "id": "g116"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Iran",
+    "wrong": [
+      "Bolivia",
+      "Kazakhstan",
+      "Democratic Republic of the Congo"
+    ],
+    "flag": "ir",
+    "explanation": "This is the national flag of Iran.",
+    "id": "g117"
+  },
+  {
+    "prompt": "Which of these currencies is used in Iran?",
+    "answer": "Iranian rial",
+    "wrong": [
+      "South African rand",
+      "Australian dollar",
+      "Mexican peso"
+    ],
+    "explanation": "Iran uses the Iranian rial.",
+    "id": "g118"
+  },
+  {
+    "prompt": "Which city is the capital of South Korea?",
+    "answer": "Seoul",
+    "wrong": [
+      "Ottawa",
+      "Wellington",
+      "Panama City"
+    ],
+    "explanation": "Seoul is the capital of South Korea.",
+    "id": "g119"
+  },
+  {
+    "prompt": "Seoul is the capital of which country?",
+    "answer": "South Korea",
+    "wrong": [
+      "Peru",
+      "Madagascar",
+      "Norway"
+    ],
+    "explanation": "Seoul is in South Korea.",
+    "id": "g120"
+  },
+  {
+    "prompt": "On which continent is South Korea?",
+    "answer": "Asia",
+    "wrong": [
+      "Africa",
+      "Europe",
+      "North America"
+    ],
+    "explanation": "South Korea is in Asia.",
+    "id": "g121"
+  },
+  {
+    "prompt": "Which of these currencies is used in South Korea?",
+    "answer": "South Korean won",
+    "wrong": [
+      "Polish złoty",
+      "Euro",
+      "Colombian peso"
+    ],
+    "explanation": "South Korea uses the South Korean won.",
+    "id": "g122"
+  },
+  {
+    "prompt": "Which city is the capital of France?",
+    "answer": "Paris",
+    "wrong": [
+      "Canberra",
+      "Sucre",
+      "Washington D.C."
+    ],
+    "explanation": "Paris is the capital of France.",
+    "id": "g123"
+  },
+  {
+    "prompt": "Paris is the capital of which country?",
+    "answer": "France",
+    "wrong": [
+      "Kazakhstan",
+      "Panama",
+      "Pakistan"
+    ],
+    "explanation": "Paris is in France.",
+    "id": "g124"
+  },
+  {
+    "prompt": "On which continent is France?",
+    "answer": "Europe",
+    "wrong": [
+      "North America",
+      "Africa",
+      "Oceania"
+    ],
+    "explanation": "France is in Europe.",
+    "id": "g125"
+  },
+  {
+    "prompt": "Which of these currencies is used in France?",
+    "answer": "Euro",
+    "wrong": [
+      "British pound",
+      "Panamanian balboa",
+      "Chinese yuan"
+    ],
+    "explanation": "France uses the Euro.",
+    "id": "g126"
+  },
+  {
+    "prompt": "Which city is the capital of Spain?",
+    "answer": "Madrid",
+    "wrong": [
+      "Ulan Bator",
+      "Bogotá",
+      "Nairobi"
+    ],
+    "explanation": "Madrid is the capital of Spain.",
+    "id": "g127"
+  },
+  {
+    "prompt": "Madrid is the capital of which country?",
+    "answer": "Spain",
+    "wrong": [
+      "Colombia",
+      "Papua New Guinea",
+      "Finland"
+    ],
+    "explanation": "Madrid is in Spain.",
+    "id": "g128"
+  },
+  {
+    "prompt": "On which continent is Spain?",
+    "answer": "Europe",
+    "wrong": [
+      "Asia",
+      "North America",
+      "Africa"
+    ],
+    "explanation": "Spain is in Europe.",
+    "id": "g129"
+  },
+  {
+    "prompt": "Which of these currencies is used in Spain?",
+    "answer": "Euro",
+    "wrong": [
+      "British pound",
+      "Iranian rial",
+      "United States dollar"
+    ],
+    "explanation": "Spain uses the Euro.",
+    "id": "g130"
+  },
+  {
+    "prompt": "Which city is the capital of Italy?",
+    "answer": "Rome",
+    "wrong": [
+      "Hanoi",
+      "Bangkok",
+      "Rabat"
+    ],
+    "explanation": "Rome is the capital of Italy.",
+    "id": "g131"
+  },
+  {
+    "prompt": "Rome is the capital of which country?",
+    "answer": "Italy",
+    "wrong": [
+      "Kenya",
+      "Iran",
+      "France"
+    ],
+    "explanation": "Rome is in Italy.",
+    "id": "g132"
+  },
+  {
+    "prompt": "On which continent is Italy?",
+    "answer": "Europe",
+    "wrong": [
+      "Africa",
+      "Oceania",
+      "South America"
+    ],
+    "explanation": "Italy is in Europe.",
+    "id": "g133"
+  },
+  {
+    "prompt": "Which of these currencies is used in Italy?",
+    "answer": "Euro",
+    "wrong": [
+      "Kenyan shilling",
+      "Swedish krona",
+      "British pound"
+    ],
+    "explanation": "Italy uses the Euro.",
+    "id": "g134"
+  },
+  {
+    "prompt": "Which city is the capital of Germany?",
+    "answer": "Berlin",
+    "wrong": [
+      "Dublin",
+      "Paris",
+      "Tegucigalpa"
+    ],
+    "explanation": "Berlin is the capital of Germany.",
+    "id": "g135"
+  },
+  {
+    "prompt": "Berlin is the capital of which country?",
+    "answer": "Germany",
+    "wrong": [
+      "Cuba",
+      "Thailand",
+      "Namibia"
+    ],
+    "explanation": "Berlin is in Germany.",
+    "id": "g136"
+  },
+  {
+    "prompt": "On which continent is Germany?",
+    "answer": "Europe",
+    "wrong": [
+      "Oceania",
+      "Africa",
+      "Asia"
+    ],
+    "explanation": "Germany is in Europe.",
+    "id": "g137"
+  },
+  {
+    "prompt": "Which of these currencies is used in Germany?",
+    "answer": "Euro",
+    "wrong": [
+      "Kazakhstani tenge",
+      "South Korean won",
+      "Kenyan shilling"
+    ],
+    "explanation": "Germany uses the Euro.",
+    "id": "g138"
+  },
+  {
+    "prompt": "Which city is the capital of United Kingdom?",
+    "answer": "London",
+    "wrong": [
+      "Montevideo",
+      "Buenos Aires",
+      "Mexico City"
+    ],
+    "explanation": "London is the capital of United Kingdom.",
+    "id": "g139"
+  },
+  {
+    "prompt": "London is the capital of which country?",
+    "answer": "United Kingdom",
+    "wrong": [
+      "Honduras",
+      "Uruguay",
+      "Mongolia"
+    ],
+    "explanation": "London is in United Kingdom.",
+    "id": "g140"
+  },
+  {
+    "prompt": "On which continent is United Kingdom?",
+    "answer": "Europe",
+    "wrong": [
+      "Oceania",
+      "Asia",
+      "Africa"
+    ],
+    "explanation": "United Kingdom is in Europe.",
+    "id": "g141"
+  },
+  {
+    "prompt": "Which of these currencies is used in United Kingdom?",
+    "answer": "British pound",
+    "wrong": [
+      "Panamanian balboa",
+      "New Zealand dollar",
+      "Ethiopian birr"
+    ],
+    "explanation": "United Kingdom uses the British pound.",
+    "id": "g142"
+  },
+  {
+    "prompt": "Which city is the capital of Norway?",
+    "answer": "Oslo",
+    "wrong": [
+      "Port Moresby",
+      "Lima",
+      "Seoul"
+    ],
+    "explanation": "Oslo is the capital of Norway.",
+    "id": "g143"
+  },
+  {
+    "prompt": "Oslo is the capital of which country?",
+    "answer": "Norway",
+    "wrong": [
+      "Pakistan",
+      "Australia",
+      "New Zealand"
+    ],
+    "explanation": "Oslo is in Norway.",
+    "id": "g144"
+  },
+  {
+    "prompt": "On which continent is Norway?",
+    "answer": "Europe",
+    "wrong": [
+      "North America",
+      "Asia",
+      "Africa"
+    ],
+    "explanation": "Norway is in Europe.",
+    "id": "g145"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Norway",
+    "wrong": [
+      "Brazil",
+      "Madagascar",
+      "Argentina"
+    ],
+    "flag": "no",
+    "explanation": "This is the national flag of Norway.",
+    "id": "g146"
+  },
+  {
+    "prompt": "Which of these currencies is used in Norway?",
+    "answer": "Norwegian krone",
+    "wrong": [
+      "Euro",
+      "Australian dollar",
+      "Canadian dollar"
+    ],
+    "explanation": "Norway uses the Norwegian krone.",
+    "id": "g147"
+  },
+  {
+    "prompt": "Which city is the capital of Sweden?",
+    "answer": "Stockholm",
+    "wrong": [
+      "New Delhi",
+      "Mexico City",
+      "Beijing"
+    ],
+    "explanation": "Stockholm is the capital of Sweden.",
+    "id": "g148"
+  },
+  {
+    "prompt": "Stockholm is the capital of which country?",
+    "answer": "Sweden",
+    "wrong": [
+      "United Kingdom",
+      "Uruguay",
+      "Thailand"
+    ],
+    "explanation": "Stockholm is in Sweden.",
+    "id": "g149"
+  },
+  {
+    "prompt": "On which continent is Sweden?",
+    "answer": "Europe",
+    "wrong": [
+      "Africa",
+      "Asia",
+      "North America"
+    ],
+    "explanation": "Sweden is in Europe.",
+    "id": "g150"
+  },
+  {
+    "prompt": "Which of these currencies is used in Sweden?",
+    "answer": "Swedish krona",
+    "wrong": [
+      "Colombian peso",
+      "Nicaraguan córdoba",
+      "Indian rupee"
+    ],
+    "explanation": "Sweden uses the Swedish krona.",
+    "id": "g151"
+  },
+  {
+    "prompt": "Which city is the capital of Finland?",
+    "answer": "Helsinki",
+    "wrong": [
+      "New Delhi",
+      "Athens",
+      "Rabat"
+    ],
+    "explanation": "Helsinki is the capital of Finland.",
+    "id": "g152"
+  },
+  {
+    "prompt": "Helsinki is the capital of which country?",
+    "answer": "Finland",
+    "wrong": [
+      "South Korea",
+      "Uruguay",
+      "Venezuela"
+    ],
+    "explanation": "Helsinki is in Finland.",
+    "id": "g153"
+  },
+  {
+    "prompt": "On which continent is Finland?",
+    "answer": "Europe",
+    "wrong": [
+      "South America",
+      "North America",
+      "Oceania"
+    ],
+    "explanation": "Finland is in Europe.",
+    "id": "g154"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Finland",
+    "wrong": [
+      "Japan",
+      "Kenya",
+      "Sweden"
+    ],
+    "flag": "fi",
+    "explanation": "This is the national flag of Finland.",
+    "id": "g155"
+  },
+  {
+    "prompt": "Which of these currencies is used in Finland?",
+    "answer": "Euro",
+    "wrong": [
+      "Chilean peso",
+      "Norwegian krone",
+      "Vietnamese đồng"
+    ],
+    "explanation": "Finland uses the Euro.",
+    "id": "g156"
+  },
+  {
+    "prompt": "Which city is the capital of Poland?",
+    "answer": "Warsaw",
+    "wrong": [
+      "Astana",
+      "Riyadh",
+      "Buenos Aires"
+    ],
+    "explanation": "Warsaw is the capital of Poland.",
+    "id": "g157"
+  },
+  {
+    "prompt": "Warsaw is the capital of which country?",
+    "answer": "Poland",
+    "wrong": [
+      "Panama",
+      "United Kingdom",
+      "Nigeria"
+    ],
+    "explanation": "Warsaw is in Poland.",
+    "id": "g158"
+  },
+  {
+    "prompt": "On which continent is Poland?",
+    "answer": "Europe",
+    "wrong": [
+      "North America",
+      "Asia",
+      "Oceania"
+    ],
+    "explanation": "Poland is in Europe.",
+    "id": "g159"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Poland",
+    "wrong": [
+      "Guatemala",
+      "Finland",
+      "China"
+    ],
+    "flag": "pl",
+    "explanation": "This is the national flag of Poland.",
+    "id": "g160"
+  },
+  {
+    "prompt": "Which of these currencies is used in Poland?",
+    "answer": "Polish złoty",
+    "wrong": [
+      "Norwegian krone",
+      "Kenyan shilling",
+      "Papua New Guinean kina"
+    ],
+    "explanation": "Poland uses the Polish złoty.",
+    "id": "g161"
+  },
+  {
+    "prompt": "Which city is the capital of Greece?",
+    "answer": "Athens",
+    "wrong": [
+      "Oslo",
+      "Panama City",
+      "Astana"
+    ],
+    "explanation": "Athens is the capital of Greece.",
+    "id": "g162"
+  },
+  {
+    "prompt": "Athens is the capital of which country?",
+    "answer": "Greece",
+    "wrong": [
+      "United States",
+      "Thailand",
+      "Tanzania"
+    ],
+    "explanation": "Athens is in Greece.",
+    "id": "g163"
+  },
+  {
+    "prompt": "On which continent is Greece?",
+    "answer": "Europe",
+    "wrong": [
+      "Asia",
+      "Africa",
+      "North America"
+    ],
+    "explanation": "Greece is in Europe.",
+    "id": "g164"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Greece",
+    "wrong": [
+      "Morocco",
+      "Japan",
+      "United States"
+    ],
+    "flag": "gr",
+    "explanation": "This is the national flag of Greece.",
+    "id": "g165"
+  },
+  {
+    "prompt": "Which of these currencies is used in Greece?",
+    "answer": "Euro",
+    "wrong": [
+      "Angolan kwanza",
+      "Saudi riyal",
+      "Guatemalan quetzal"
+    ],
+    "explanation": "Greece uses the Euro.",
+    "id": "g166"
+  },
+  {
+    "prompt": "Which city is the capital of Portugal?",
+    "answer": "Lisbon",
+    "wrong": [
+      "Riyadh",
+      "Quito",
+      "Madrid"
+    ],
+    "explanation": "Lisbon is the capital of Portugal.",
+    "id": "g167"
+  },
+  {
+    "prompt": "Lisbon is the capital of which country?",
+    "answer": "Portugal",
+    "wrong": [
+      "South Africa",
+      "Kazakhstan",
+      "Colombia"
+    ],
+    "explanation": "Lisbon is in Portugal.",
+    "id": "g168"
+  },
+  {
+    "prompt": "On which continent is Portugal?",
+    "answer": "Europe",
+    "wrong": [
+      "North America",
+      "Asia",
+      "South America"
+    ],
+    "explanation": "Portugal is in Europe.",
+    "id": "g169"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Portugal",
+    "wrong": [
+      "Thailand",
+      "Democratic Republic of the Congo",
+      "Chile"
+    ],
+    "flag": "pt",
+    "explanation": "This is the national flag of Portugal.",
+    "id": "g170"
+  },
+  {
+    "prompt": "Which of these currencies is used in Portugal?",
+    "answer": "Euro",
+    "wrong": [
+      "Indian rupee",
+      "Vietnamese đồng",
+      "Australian dollar"
+    ],
+    "explanation": "Portugal uses the Euro.",
+    "id": "g171"
+  },
+  {
+    "prompt": "Which city is the capital of Ireland?",
+    "answer": "Dublin",
+    "wrong": [
+      "Islamabad",
+      "Tegucigalpa",
+      "Caracas"
+    ],
+    "explanation": "Dublin is the capital of Ireland.",
+    "id": "g172"
+  },
+  {
+    "prompt": "Dublin is the capital of which country?",
+    "answer": "Ireland",
+    "wrong": [
+      "Australia",
+      "Canada",
+      "Papua New Guinea"
+    ],
+    "explanation": "Dublin is in Ireland.",
+    "id": "g173"
+  },
+  {
+    "prompt": "On which continent is Ireland?",
+    "answer": "Europe",
+    "wrong": [
+      "North America",
+      "South America",
+      "Asia"
+    ],
+    "explanation": "Ireland is in Europe.",
+    "id": "g174"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Ireland",
+    "wrong": [
+      "South Korea",
+      "Pakistan",
+      "Panama"
+    ],
+    "flag": "ie",
+    "explanation": "This is the national flag of Ireland.",
+    "id": "g175"
+  },
+  {
+    "prompt": "Which of these currencies is used in Ireland?",
+    "answer": "Euro",
+    "wrong": [
+      "Australian dollar",
+      "South Korean won",
+      "New Zealand dollar"
+    ],
+    "explanation": "Ireland uses the Euro.",
+    "id": "g176"
+  },
+  {
+    "prompt": "Which city is the capital of Canada?",
+    "answer": "Ottawa",
+    "wrong": [
+      "Luanda",
+      "Sucre",
+      "Athens"
+    ],
+    "explanation": "Ottawa is the capital of Canada.",
+    "id": "g177"
+  },
+  {
+    "prompt": "Ottawa is the capital of which country?",
+    "answer": "Canada",
+    "wrong": [
+      "Angola",
+      "Uruguay",
+      "India"
+    ],
+    "explanation": "Ottawa is in Canada.",
+    "id": "g178"
+  },
+  {
+    "prompt": "On which continent is Canada?",
+    "answer": "North America",
+    "wrong": [
+      "Europe",
+      "South America",
+      "Asia"
+    ],
+    "explanation": "Canada is in North America.",
+    "id": "g179"
+  },
+  {
+    "prompt": "Which of these currencies is used in Canada?",
+    "answer": "Canadian dollar",
+    "wrong": [
+      "Chinese yuan",
+      "Algerian dinar",
+      "Norwegian krone"
+    ],
+    "explanation": "Canada uses the Canadian dollar.",
+    "id": "g180"
+  },
+  {
+    "prompt": "Which city is the capital of United States?",
+    "answer": "Washington D.C.",
+    "wrong": [
+      "Canberra",
+      "Wellington",
+      "Abuja"
+    ],
+    "explanation": "Washington D.C. is the capital of United States.",
+    "id": "g181"
+  },
+  {
+    "prompt": "Washington D.C. is the capital of which country?",
+    "answer": "United States",
+    "wrong": [
+      "Namibia",
+      "Finland",
+      "Chile"
+    ],
+    "explanation": "Washington D.C. is in United States.",
+    "id": "g182"
+  },
+  {
+    "prompt": "On which continent is United States?",
+    "answer": "North America",
+    "wrong": [
+      "South America",
+      "Asia",
+      "Africa"
+    ],
+    "explanation": "United States is in North America.",
+    "id": "g183"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "United States",
+    "wrong": [
+      "Egypt",
+      "Argentina",
+      "Vietnam"
+    ],
+    "flag": "us",
+    "explanation": "This is the national flag of United States.",
+    "id": "g184"
+  },
+  {
+    "prompt": "Which of these currencies is used in United States?",
+    "answer": "United States dollar",
+    "wrong": [
+      "Panamanian balboa",
+      "Tanzanian shilling",
+      "Indonesian rupiah"
+    ],
+    "explanation": "United States uses the United States dollar.",
+    "id": "g185"
+  },
+  {
+    "prompt": "Which city is the capital of Mexico?",
+    "answer": "Mexico City",
+    "wrong": [
+      "Dodoma",
+      "Port Moresby",
+      "Lisbon"
+    ],
+    "explanation": "Mexico City is the capital of Mexico.",
+    "id": "g186"
+  },
+  {
+    "prompt": "Mexico City is the capital of which country?",
+    "answer": "Mexico",
+    "wrong": [
+      "United States",
+      "Kazakhstan",
+      "Portugal"
+    ],
+    "explanation": "Mexico City is in Mexico.",
+    "id": "g187"
+  },
+  {
+    "prompt": "On which continent is Mexico?",
+    "answer": "North America",
+    "wrong": [
+      "South America",
+      "Asia",
+      "Oceania"
+    ],
+    "explanation": "Mexico is in North America.",
+    "id": "g188"
+  },
+  {
+    "prompt": "Which of these currencies is used in Mexico?",
+    "answer": "Mexican peso",
+    "wrong": [
+      "Saudi riyal",
+      "Namibian dollar",
+      "Vietnamese đồng"
+    ],
+    "explanation": "Mexico uses the Mexican peso.",
+    "id": "g189"
+  },
+  {
+    "prompt": "Which city is the capital of Cuba?",
+    "answer": "Havana",
+    "wrong": [
+      "Buenos Aires",
+      "Paris",
+      "Caracas"
+    ],
+    "explanation": "Havana is the capital of Cuba.",
+    "id": "g190"
+  },
+  {
+    "prompt": "Havana is the capital of which country?",
+    "answer": "Cuba",
+    "wrong": [
+      "Mexico",
+      "Ethiopia",
+      "Algeria"
+    ],
+    "explanation": "Havana is in Cuba.",
+    "id": "g191"
+  },
+  {
+    "prompt": "On which continent is Cuba?",
+    "answer": "North America",
+    "wrong": [
+      "Europe",
+      "Africa",
+      "Oceania"
+    ],
+    "explanation": "Cuba is in North America.",
+    "id": "g192"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Cuba",
+    "wrong": [
+      "Nicaragua",
+      "Vietnam",
+      "Pakistan"
+    ],
+    "flag": "cu",
+    "explanation": "This is the national flag of Cuba.",
+    "id": "g193"
+  },
+  {
+    "prompt": "Which of these currencies is used in Cuba?",
+    "answer": "Cuban peso",
+    "wrong": [
+      "Pakistani rupee",
+      "Panamanian balboa",
+      "Kenyan shilling"
+    ],
+    "explanation": "Cuba uses the Cuban peso.",
+    "id": "g194"
+  },
+  {
+    "prompt": "Which city is the capital of Guatemala?",
+    "answer": "Guatemala City",
+    "wrong": [
+      "Bangkok",
+      "Rabat",
+      "Paris"
+    ],
+    "explanation": "Guatemala City is the capital of Guatemala.",
+    "id": "g195"
+  },
+  {
+    "prompt": "Guatemala City is the capital of which country?",
+    "answer": "Guatemala",
+    "wrong": [
+      "India",
+      "Nigeria",
+      "Peru"
+    ],
+    "explanation": "Guatemala City is in Guatemala.",
+    "id": "g196"
+  },
+  {
+    "prompt": "On which continent is Guatemala?",
+    "answer": "North America",
+    "wrong": [
+      "Asia",
+      "Africa",
+      "South America"
+    ],
+    "explanation": "Guatemala is in North America.",
+    "id": "g197"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Guatemala",
+    "wrong": [
+      "Egypt",
+      "Poland",
+      "United Kingdom"
+    ],
+    "flag": "gt",
+    "explanation": "This is the national flag of Guatemala.",
+    "id": "g198"
+  },
+  {
+    "prompt": "Which of these currencies is used in Guatemala?",
+    "answer": "Guatemalan quetzal",
+    "wrong": [
+      "Polish złoty",
+      "Kenyan shilling",
+      "Uruguayan peso"
+    ],
+    "explanation": "Guatemala uses the Guatemalan quetzal.",
+    "id": "g199"
+  },
+  {
+    "prompt": "Which city is the capital of Panama?",
+    "answer": "Panama City",
+    "wrong": [
+      "Canberra",
+      "Tokyo",
+      "Paris"
+    ],
+    "explanation": "Panama City is the capital of Panama.",
+    "id": "g200"
+  },
+  {
+    "prompt": "Panama City is the capital of which country?",
+    "answer": "Panama",
+    "wrong": [
+      "Algeria",
+      "Spain",
+      "Kenya"
+    ],
+    "explanation": "Panama City is in Panama.",
+    "id": "g201"
+  },
+  {
+    "prompt": "On which continent is Panama?",
+    "answer": "North America",
+    "wrong": [
+      "Asia",
+      "Oceania",
+      "Europe"
+    ],
+    "explanation": "Panama is in North America.",
+    "id": "g202"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Panama",
+    "wrong": [
+      "Ethiopia",
+      "Australia",
+      "Namibia"
+    ],
+    "flag": "pa",
+    "explanation": "This is the national flag of Panama.",
+    "id": "g203"
+  },
+  {
+    "prompt": "What is Panama’s national currency, alongside the US dollar?",
+    "answer": "Panamanian balboa",
+    "wrong": [
+      "Euro",
+      "Japanese yen",
+      "Indian rupee"
+    ],
+    "explanation": "Panama uses the balboa and the US dollar.",
+    "id": "g204"
+  },
+  {
+    "prompt": "Which city is the capital of Honduras?",
+    "answer": "Tegucigalpa",
+    "wrong": [
+      "Buenos Aires",
+      "Canberra",
+      "Riyadh"
+    ],
+    "explanation": "Tegucigalpa is the capital of Honduras.",
+    "id": "g205"
+  },
+  {
+    "prompt": "Tegucigalpa is the capital of which country?",
+    "answer": "Honduras",
+    "wrong": [
+      "Mongolia",
+      "Iran",
+      "France"
+    ],
+    "explanation": "Tegucigalpa is in Honduras.",
+    "id": "g206"
+  },
+  {
+    "prompt": "On which continent is Honduras?",
+    "answer": "North America",
+    "wrong": [
+      "Asia",
+      "Europe",
+      "Africa"
+    ],
+    "explanation": "Honduras is in North America.",
+    "id": "g207"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Honduras",
+    "wrong": [
+      "Mexico",
+      "India",
+      "Madagascar"
+    ],
+    "flag": "hn",
+    "explanation": "This is the national flag of Honduras.",
+    "id": "g208"
+  },
+  {
+    "prompt": "Which of these currencies is used in Honduras?",
+    "answer": "Honduran lempira",
+    "wrong": [
+      "Mongolian tögrög",
+      "Pakistani rupee",
+      "Tanzanian shilling"
+    ],
+    "explanation": "Honduras uses the Honduran lempira.",
+    "id": "g209"
+  },
+  {
+    "prompt": "Which city is the capital of Nicaragua?",
+    "answer": "Managua",
+    "wrong": [
+      "Tokyo",
+      "Abuja",
+      "Caracas"
+    ],
+    "explanation": "Managua is the capital of Nicaragua.",
+    "id": "g210"
+  },
+  {
+    "prompt": "Managua is the capital of which country?",
+    "answer": "Nicaragua",
+    "wrong": [
+      "Papua New Guinea",
+      "Ireland",
+      "South Korea"
+    ],
+    "explanation": "Managua is in Nicaragua.",
+    "id": "g211"
+  },
+  {
+    "prompt": "On which continent is Nicaragua?",
+    "answer": "North America",
+    "wrong": [
+      "Asia",
+      "Europe",
+      "Africa"
+    ],
+    "explanation": "Nicaragua is in North America.",
+    "id": "g212"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Nicaragua",
+    "wrong": [
+      "South Korea",
+      "Ecuador",
+      "Portugal"
+    ],
+    "flag": "ni",
+    "explanation": "This is the national flag of Nicaragua.",
+    "id": "g213"
+  },
+  {
+    "prompt": "Which of these currencies is used in Nicaragua?",
+    "answer": "Nicaraguan córdoba",
+    "wrong": [
+      "Angolan kwanza",
+      "Mongolian tögrög",
+      "Chinese yuan"
+    ],
+    "explanation": "Nicaragua uses the Nicaraguan córdoba.",
+    "id": "g214"
+  },
+  {
+    "prompt": "Which city is the capital of Brazil?",
+    "answer": "Brasília",
+    "wrong": [
+      "Guatemala City",
+      "Port Moresby",
+      "Quito"
+    ],
+    "explanation": "Brasília is the capital of Brazil.",
+    "id": "g215"
+  },
+  {
+    "prompt": "Brasília is the capital of which country?",
+    "answer": "Brazil",
+    "wrong": [
+      "Mexico",
+      "Nicaragua",
+      "Japan"
+    ],
+    "explanation": "Brasília is in Brazil.",
+    "id": "g216"
+  },
+  {
+    "prompt": "On which continent is Brazil?",
+    "answer": "South America",
+    "wrong": [
+      "Oceania",
+      "Asia",
+      "Europe"
+    ],
+    "explanation": "Brazil is in South America.",
+    "id": "g217"
+  },
+  {
+    "prompt": "Which of these currencies is used in Brazil?",
+    "answer": "Brazilian real",
+    "wrong": [
+      "Kazakhstani tenge",
+      "Euro",
+      "Bolivian boliviano"
+    ],
+    "explanation": "Brazil uses the Brazilian real.",
+    "id": "g218"
+  },
+  {
+    "prompt": "Which city is the capital of Argentina?",
+    "answer": "Buenos Aires",
+    "wrong": [
+      "Abuja",
+      "Astana",
+      "Canberra"
+    ],
+    "explanation": "Buenos Aires is the capital of Argentina.",
+    "id": "g219"
+  },
+  {
+    "prompt": "Buenos Aires is the capital of which country?",
+    "answer": "Argentina",
+    "wrong": [
+      "South Korea",
+      "Papua New Guinea",
+      "Indonesia"
+    ],
+    "explanation": "Buenos Aires is in Argentina.",
+    "id": "g220"
+  },
+  {
+    "prompt": "On which continent is Argentina?",
+    "answer": "South America",
+    "wrong": [
+      "Africa",
+      "Asia",
+      "Europe"
+    ],
+    "explanation": "Argentina is in South America.",
+    "id": "g221"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Argentina",
+    "wrong": [
+      "Mexico",
+      "Saudi Arabia",
+      "Peru"
+    ],
+    "flag": "ar",
+    "explanation": "This is the national flag of Argentina.",
+    "id": "g222"
+  },
+  {
+    "prompt": "Which of these currencies is used in Argentina?",
+    "answer": "Argentine peso",
+    "wrong": [
+      "Thai baht",
+      "Algerian dinar",
+      "Indian rupee"
+    ],
+    "explanation": "Argentina uses the Argentine peso.",
+    "id": "g223"
+  },
+  {
+    "prompt": "Which city is the capital of Chile?",
+    "answer": "Santiago",
+    "wrong": [
+      "Nairobi",
+      "Jakarta",
+      "Tehran"
+    ],
+    "explanation": "Santiago is the capital of Chile.",
+    "id": "g224"
+  },
+  {
+    "prompt": "Santiago is the capital of which country?",
+    "answer": "Chile",
+    "wrong": [
+      "Guatemala",
+      "United States",
+      "Peru"
+    ],
+    "explanation": "Santiago is in Chile.",
+    "id": "g225"
+  },
+  {
+    "prompt": "On which continent is Chile?",
+    "answer": "South America",
+    "wrong": [
+      "North America",
+      "Asia",
+      "Europe"
+    ],
+    "explanation": "Chile is in South America.",
+    "id": "g226"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Chile",
+    "wrong": [
+      "Cuba",
+      "Portugal",
+      "Pakistan"
+    ],
+    "flag": "cl",
+    "explanation": "This is the national flag of Chile.",
+    "id": "g227"
+  },
+  {
+    "prompt": "Which of these currencies is used in Chile?",
+    "answer": "Chilean peso",
+    "wrong": [
+      "Algerian dinar",
+      "Canadian dollar",
+      "Euro"
+    ],
+    "explanation": "Chile uses the Chilean peso.",
+    "id": "g228"
+  },
+  {
+    "prompt": "Which city is the capital of Peru?",
+    "answer": "Lima",
+    "wrong": [
+      "Canberra",
+      "Islamabad",
+      "Addis Ababa"
+    ],
+    "explanation": "Lima is the capital of Peru.",
+    "id": "g229"
+  },
+  {
+    "prompt": "Lima is the capital of which country?",
+    "answer": "Peru",
+    "wrong": [
+      "United Kingdom",
+      "Indonesia",
+      "Chile"
+    ],
+    "explanation": "Lima is in Peru.",
+    "id": "g230"
+  },
+  {
+    "prompt": "On which continent is Peru?",
+    "answer": "South America",
+    "wrong": [
+      "Africa",
+      "Asia",
+      "Oceania"
+    ],
+    "explanation": "Peru is in South America.",
+    "id": "g231"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Peru",
+    "wrong": [
+      "Italy",
+      "Thailand",
+      "South Korea"
+    ],
+    "flag": "pe",
+    "explanation": "This is the national flag of Peru.",
+    "id": "g232"
+  },
+  {
+    "prompt": "Which of these currencies is used in Peru?",
+    "answer": "Peruvian sol",
+    "wrong": [
+      "Vietnamese đồng",
+      "Indian rupee",
+      "Honduran lempira"
+    ],
+    "explanation": "Peru uses the Peruvian sol.",
+    "id": "g233"
+  },
+  {
+    "prompt": "Which city is the capital of Colombia?",
+    "answer": "Bogotá",
+    "wrong": [
+      "Caracas",
+      "Tokyo",
+      "Helsinki"
+    ],
+    "explanation": "Bogotá is the capital of Colombia.",
+    "id": "g234"
+  },
+  {
+    "prompt": "Bogotá is the capital of which country?",
+    "answer": "Colombia",
+    "wrong": [
+      "Japan",
+      "Saudi Arabia",
+      "Pakistan"
+    ],
+    "explanation": "Bogotá is in Colombia.",
+    "id": "g235"
+  },
+  {
+    "prompt": "On which continent is Colombia?",
+    "answer": "South America",
+    "wrong": [
+      "North America",
+      "Africa",
+      "Asia"
+    ],
+    "explanation": "Colombia is in South America.",
+    "id": "g236"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Colombia",
+    "wrong": [
+      "Italy",
+      "Australia",
+      "Indonesia"
+    ],
+    "flag": "co",
+    "explanation": "This is the national flag of Colombia.",
+    "id": "g237"
+  },
+  {
+    "prompt": "Which of these currencies is used in Colombia?",
+    "answer": "Colombian peso",
+    "wrong": [
+      "Norwegian krone",
+      "Argentine peso",
+      "Polish złoty"
+    ],
+    "explanation": "Colombia uses the Colombian peso.",
+    "id": "g238"
+  },
+  {
+    "prompt": "On which continent is Bolivia?",
+    "answer": "South America",
+    "wrong": [
+      "North America",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Bolivia is in South America.",
+    "id": "g239"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Bolivia",
+    "wrong": [
+      "Thailand",
+      "Argentina",
+      "Uruguay"
+    ],
+    "flag": "bo",
+    "explanation": "This is the national flag of Bolivia.",
+    "id": "g240"
+  },
+  {
+    "prompt": "Which of these currencies is used in Bolivia?",
+    "answer": "Bolivian boliviano",
+    "wrong": [
+      "British pound",
+      "Japanese yen",
+      "Venezuelan bolívar soberano"
+    ],
+    "explanation": "Bolivia uses the Bolivian boliviano.",
+    "id": "g241"
+  },
+  {
+    "prompt": "Which city is the capital of Venezuela?",
+    "answer": "Caracas",
+    "wrong": [
+      "Beijing",
+      "Dodoma",
+      "Canberra"
+    ],
+    "explanation": "Caracas is the capital of Venezuela.",
+    "id": "g242"
+  },
+  {
+    "prompt": "Caracas is the capital of which country?",
+    "answer": "Venezuela",
+    "wrong": [
+      "Chile",
+      "Greece",
+      "Morocco"
+    ],
+    "explanation": "Caracas is in Venezuela.",
+    "id": "g243"
+  },
+  {
+    "prompt": "On which continent is Venezuela?",
+    "answer": "South America",
+    "wrong": [
+      "Oceania",
+      "Europe",
+      "Asia"
+    ],
+    "explanation": "Venezuela is in South America.",
+    "id": "g244"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Venezuela",
+    "wrong": [
+      "Thailand",
+      "Kazakhstan",
+      "Angola"
+    ],
+    "flag": "ve",
+    "explanation": "This is the national flag of Venezuela.",
+    "id": "g245"
+  },
+  {
+    "prompt": "Which of these currencies is used in Venezuela?",
+    "answer": "Venezuelan bolívar soberano",
+    "wrong": [
+      "Algerian dinar",
+      "Papua New Guinean kina",
+      "Japanese yen"
+    ],
+    "explanation": "Venezuela uses the Venezuelan bolívar soberano.",
+    "id": "g246"
+  },
+  {
+    "prompt": "Which city is the capital of Uruguay?",
+    "answer": "Montevideo",
+    "wrong": [
+      "Tehran",
+      "Tokyo",
+      "Managua"
+    ],
+    "explanation": "Montevideo is the capital of Uruguay.",
+    "id": "g247"
+  },
+  {
+    "prompt": "Montevideo is the capital of which country?",
+    "answer": "Uruguay",
+    "wrong": [
+      "Indonesia",
+      "New Zealand",
+      "Pakistan"
+    ],
+    "explanation": "Montevideo is in Uruguay.",
+    "id": "g248"
+  },
+  {
+    "prompt": "On which continent is Uruguay?",
+    "answer": "South America",
+    "wrong": [
+      "North America",
+      "Europe",
+      "Asia"
+    ],
+    "explanation": "Uruguay is in South America.",
+    "id": "g249"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Uruguay",
+    "wrong": [
+      "Papua New Guinea",
+      "India",
+      "Norway"
+    ],
+    "flag": "uy",
+    "explanation": "This is the national flag of Uruguay.",
+    "id": "g250"
+  },
+  {
+    "prompt": "Which of these currencies is used in Uruguay?",
+    "answer": "Uruguayan peso",
+    "wrong": [
+      "Kazakhstani tenge",
+      "United States dollar",
+      "Honduran lempira"
+    ],
+    "explanation": "Uruguay uses the Uruguayan peso.",
+    "id": "g251"
+  },
+  {
+    "prompt": "Which city is the capital of Ecuador?",
+    "answer": "Quito",
+    "wrong": [
+      "Mexico City",
+      "Athens",
+      "Nairobi"
+    ],
+    "explanation": "Quito is the capital of Ecuador.",
+    "id": "g252"
+  },
+  {
+    "prompt": "Quito is the capital of which country?",
+    "answer": "Ecuador",
+    "wrong": [
+      "Uruguay",
+      "Japan",
+      "India"
+    ],
+    "explanation": "Quito is in Ecuador.",
+    "id": "g253"
+  },
+  {
+    "prompt": "On which continent is Ecuador?",
+    "answer": "South America",
+    "wrong": [
+      "Asia",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Ecuador is in South America.",
+    "id": "g254"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Ecuador",
+    "wrong": [
+      "Algeria",
+      "Iran",
+      "India"
+    ],
+    "flag": "ec",
+    "explanation": "This is the national flag of Ecuador.",
+    "id": "g255"
+  },
+  {
+    "prompt": "Which of these currencies is used in Ecuador?",
+    "answer": "United States dollar",
+    "wrong": [
+      "Australian dollar",
+      "Swedish krona",
+      "New Zealand dollar"
+    ],
+    "explanation": "Ecuador uses the United States dollar.",
+    "id": "g256"
+  },
+  {
+    "prompt": "Which city is the capital of Egypt?",
+    "answer": "Cairo",
+    "wrong": [
+      "Hanoi",
+      "Guatemala City",
+      "Caracas"
+    ],
+    "explanation": "Cairo is the capital of Egypt.",
+    "id": "g257"
+  },
+  {
+    "prompt": "Cairo is the capital of which country?",
+    "answer": "Egypt",
+    "wrong": [
+      "Kenya",
+      "Morocco",
+      "Saudi Arabia"
+    ],
+    "explanation": "Cairo is in Egypt.",
+    "id": "g258"
+  },
+  {
+    "prompt": "On which continent is most of Egypt?",
+    "answer": "Africa",
+    "wrong": [
+      "Asia",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Egypt is in Africa.",
+    "id": "g259"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Egypt",
+    "wrong": [
+      "Democratic Republic of the Congo",
+      "Canada",
+      "Australia"
+    ],
+    "flag": "eg",
+    "explanation": "This is the national flag of Egypt.",
+    "id": "g260"
+  },
+  {
+    "prompt": "Which of these currencies is used in Egypt?",
+    "answer": "Egyptian pound",
+    "wrong": [
+      "Brazilian real",
+      "Norwegian krone",
+      "Indian rupee"
+    ],
+    "explanation": "Egypt uses the Egyptian pound.",
+    "id": "g261"
+  },
+  {
+    "prompt": "On which continent is South Africa?",
+    "answer": "Africa",
+    "wrong": [
+      "Oceania",
+      "South America",
+      "North America"
+    ],
+    "explanation": "South Africa is in Africa.",
+    "id": "g262"
+  },
+  {
+    "prompt": "Which of these currencies is used in South Africa?",
+    "answer": "South African rand",
+    "wrong": [
+      "Peruvian sol",
+      "Nicaraguan córdoba",
+      "Honduran lempira"
+    ],
+    "explanation": "South Africa uses the South African rand.",
+    "id": "g263"
+  },
+  {
+    "prompt": "Which city is the capital of Kenya?",
+    "answer": "Nairobi",
+    "wrong": [
+      "Santiago",
+      "Antananarivo",
+      "Managua"
+    ],
+    "explanation": "Nairobi is the capital of Kenya.",
+    "id": "g264"
+  },
+  {
+    "prompt": "Nairobi is the capital of which country?",
+    "answer": "Kenya",
+    "wrong": [
+      "Indonesia",
+      "Papua New Guinea",
+      "Uruguay"
+    ],
+    "explanation": "Nairobi is in Kenya.",
+    "id": "g265"
+  },
+  {
+    "prompt": "On which continent is Kenya?",
+    "answer": "Africa",
+    "wrong": [
+      "South America",
+      "North America",
+      "Europe"
+    ],
+    "explanation": "Kenya is in Africa.",
+    "id": "g266"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Kenya",
+    "wrong": [
+      "Chile",
+      "United States",
+      "Spain"
+    ],
+    "flag": "ke",
+    "explanation": "This is the national flag of Kenya.",
+    "id": "g267"
+  },
+  {
+    "prompt": "Which of these currencies is used in Kenya?",
+    "answer": "Kenyan shilling",
+    "wrong": [
+      "Algerian dinar",
+      "Indonesian rupiah",
+      "Nicaraguan córdoba"
+    ],
+    "explanation": "Kenya uses the Kenyan shilling.",
+    "id": "g268"
+  },
+  {
+    "prompt": "Which city is the capital of Nigeria?",
+    "answer": "Abuja",
+    "wrong": [
+      "Port Moresby",
+      "Jakarta",
+      "Washington D.C."
+    ],
+    "explanation": "Abuja is the capital of Nigeria.",
+    "id": "g269"
+  },
+  {
+    "prompt": "Abuja is the capital of which country?",
+    "answer": "Nigeria",
+    "wrong": [
+      "Germany",
+      "Colombia",
+      "Ecuador"
+    ],
+    "explanation": "Abuja is in Nigeria.",
+    "id": "g270"
+  },
+  {
+    "prompt": "On which continent is Nigeria?",
+    "answer": "Africa",
+    "wrong": [
+      "North America",
+      "Asia",
+      "Oceania"
+    ],
+    "explanation": "Nigeria is in Africa.",
+    "id": "g271"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Nigeria",
+    "wrong": [
+      "Namibia",
+      "India",
+      "Mongolia"
+    ],
+    "flag": "ng",
+    "explanation": "This is the national flag of Nigeria.",
+    "id": "g272"
+  },
+  {
+    "prompt": "Which of these currencies is used in Nigeria?",
+    "answer": "Nigerian naira",
+    "wrong": [
+      "Vietnamese đồng",
+      "Peruvian sol",
+      "Indian rupee"
+    ],
+    "explanation": "Nigeria uses the Nigerian naira.",
+    "id": "g273"
+  },
+  {
+    "prompt": "Which city is the capital of Morocco?",
+    "answer": "Rabat",
+    "wrong": [
+      "Beijing",
+      "Wellington",
+      "London"
+    ],
+    "explanation": "Rabat is the capital of Morocco.",
+    "id": "g274"
+  },
+  {
+    "prompt": "Rabat is the capital of which country?",
+    "answer": "Morocco",
+    "wrong": [
+      "Papua New Guinea",
+      "Sweden",
+      "Saudi Arabia"
+    ],
+    "explanation": "Rabat is in Morocco.",
+    "id": "g275"
+  },
+  {
+    "prompt": "On which continent is Morocco?",
+    "answer": "Africa",
+    "wrong": [
+      "Europe",
+      "Oceania",
+      "South America"
+    ],
+    "explanation": "Morocco is in Africa.",
+    "id": "g276"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Morocco",
+    "wrong": [
+      "Algeria",
+      "Thailand",
+      "Nigeria"
+    ],
+    "flag": "ma",
+    "explanation": "This is the national flag of Morocco.",
+    "id": "g277"
+  },
+  {
+    "prompt": "Which of these currencies is used in Morocco?",
+    "answer": "Moroccan dirham",
+    "wrong": [
+      "Indonesian rupiah",
+      "Uruguayan peso",
+      "Indian rupee"
+    ],
+    "explanation": "Morocco uses the Moroccan dirham.",
+    "id": "g278"
+  },
+  {
+    "prompt": "Which city is the capital of Algeria?",
+    "answer": "Algiers",
+    "wrong": [
+      "Canberra",
+      "Cairo",
+      "Islamabad"
+    ],
+    "explanation": "Algiers is the capital of Algeria.",
+    "id": "g279"
+  },
+  {
+    "prompt": "Algiers is the capital of which country?",
+    "answer": "Algeria",
+    "wrong": [
+      "Australia",
+      "Mongolia",
+      "Nicaragua"
+    ],
+    "explanation": "Algiers is in Algeria.",
+    "id": "g280"
+  },
+  {
+    "prompt": "On which continent is Algeria?",
+    "answer": "Africa",
+    "wrong": [
+      "Oceania",
+      "North America",
+      "South America"
+    ],
+    "explanation": "Algeria is in Africa.",
+    "id": "g281"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Algeria",
+    "wrong": [
+      "Australia",
+      "Pakistan",
+      "South Korea"
+    ],
+    "flag": "dz",
+    "explanation": "This is the national flag of Algeria.",
+    "id": "g282"
+  },
+  {
+    "prompt": "Which of these currencies is used in Algeria?",
+    "answer": "Algerian dinar",
+    "wrong": [
+      "Nicaraguan córdoba",
+      "Honduran lempira",
+      "Malagasy ariary"
+    ],
+    "explanation": "Algeria uses the Algerian dinar.",
+    "id": "g283"
+  },
+  {
+    "prompt": "Which city is the capital of Madagascar?",
+    "answer": "Antananarivo",
+    "wrong": [
+      "Dublin",
+      "Jakarta",
+      "Stockholm"
+    ],
+    "explanation": "Antananarivo is the capital of Madagascar.",
+    "id": "g284"
+  },
+  {
+    "prompt": "Antananarivo is the capital of which country?",
+    "answer": "Madagascar",
+    "wrong": [
+      "Iran",
+      "Thailand",
+      "Greece"
+    ],
+    "explanation": "Antananarivo is in Madagascar.",
+    "id": "g285"
+  },
+  {
+    "prompt": "On which continent is Madagascar?",
+    "answer": "Africa",
+    "wrong": [
+      "Europe",
+      "South America",
+      "Asia"
+    ],
+    "explanation": "Madagascar is in Africa.",
+    "id": "g286"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Madagascar",
+    "wrong": [
+      "Kazakhstan",
+      "Morocco",
+      "Peru"
+    ],
+    "flag": "mg",
+    "explanation": "This is the national flag of Madagascar.",
+    "id": "g287"
+  },
+  {
+    "prompt": "Which of these currencies is used in Madagascar?",
+    "answer": "Malagasy ariary",
+    "wrong": [
+      "Chinese yuan",
+      "United States dollar",
+      "Mongolian tögrög"
+    ],
+    "explanation": "Madagascar uses the Malagasy ariary.",
+    "id": "g288"
+  },
+  {
+    "prompt": "Which city is the capital of Ethiopia?",
+    "answer": "Addis Ababa",
+    "wrong": [
+      "Islamabad",
+      "Washington D.C.",
+      "Tokyo"
+    ],
+    "explanation": "Addis Ababa is the capital of Ethiopia.",
+    "id": "g289"
+  },
+  {
+    "prompt": "Addis Ababa is the capital of which country?",
+    "answer": "Ethiopia",
+    "wrong": [
+      "South Korea",
+      "Uruguay",
+      "Namibia"
+    ],
+    "explanation": "Addis Ababa is in Ethiopia.",
+    "id": "g290"
+  },
+  {
+    "prompt": "On which continent is Ethiopia?",
+    "answer": "Africa",
+    "wrong": [
+      "North America",
+      "Europe",
+      "Oceania"
+    ],
+    "explanation": "Ethiopia is in Africa.",
+    "id": "g291"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Ethiopia",
+    "wrong": [
+      "Sweden",
+      "New Zealand",
+      "Uruguay"
+    ],
+    "flag": "et",
+    "explanation": "This is the national flag of Ethiopia.",
+    "id": "g292"
+  },
+  {
+    "prompt": "Which of these currencies is used in Ethiopia?",
+    "answer": "Ethiopian birr",
+    "wrong": [
+      "Vietnamese đồng",
+      "Pakistani rupee",
+      "United States dollar"
+    ],
+    "explanation": "Ethiopia uses the Ethiopian birr.",
+    "id": "g293"
+  },
+  {
+    "prompt": "Which city is the capital of Tanzania?",
+    "answer": "Dodoma",
+    "wrong": [
+      "Lisbon",
+      "Beijing",
+      "Tehran"
+    ],
+    "explanation": "Dodoma is the capital of Tanzania.",
+    "id": "g294"
+  },
+  {
+    "prompt": "Dodoma is the capital of which country?",
+    "answer": "Tanzania",
+    "wrong": [
+      "Mongolia",
+      "Australia",
+      "Kazakhstan"
+    ],
+    "explanation": "Dodoma is in Tanzania.",
+    "id": "g295"
+  },
+  {
+    "prompt": "On which continent is Tanzania?",
+    "answer": "Africa",
+    "wrong": [
+      "South America",
+      "Asia",
+      "Oceania"
+    ],
+    "explanation": "Tanzania is in Africa.",
+    "id": "g296"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Tanzania",
+    "wrong": [
+      "Ireland",
+      "Iran",
+      "Bolivia"
+    ],
+    "flag": "tz",
+    "explanation": "This is the national flag of Tanzania.",
+    "id": "g297"
+  },
+  {
+    "prompt": "Which of these currencies is used in Tanzania?",
+    "answer": "Tanzanian shilling",
+    "wrong": [
+      "South Korean won",
+      "Papua New Guinean kina",
+      "Canadian dollar"
+    ],
+    "explanation": "Tanzania uses the Tanzanian shilling.",
+    "id": "g298"
+  },
+  {
+    "prompt": "Which city is the capital of Namibia?",
+    "answer": "Windhoek",
+    "wrong": [
+      "Pretoria",
+      "Sucre",
+      "Dodoma"
+    ],
+    "explanation": "Windhoek is the capital of Namibia.",
+    "id": "g299"
+  },
+  {
+    "prompt": "Windhoek is the capital of which country?",
+    "answer": "Namibia",
+    "wrong": [
+      "Mexico",
+      "Kenya",
+      "Greece"
+    ],
+    "explanation": "Windhoek is in Namibia.",
+    "id": "g300"
+  },
+  {
+    "prompt": "On which continent is Namibia?",
+    "answer": "Africa",
+    "wrong": [
+      "North America",
+      "Europe",
+      "South America"
+    ],
+    "explanation": "Namibia is in Africa.",
+    "id": "g301"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Namibia",
+    "wrong": [
+      "Argentina",
+      "Peru",
+      "Guatemala"
+    ],
+    "flag": "na",
+    "explanation": "This is the national flag of Namibia.",
+    "id": "g302"
+  },
+  {
+    "prompt": "What is Namibia’s own national currency?",
+    "answer": "Namibian dollar",
+    "wrong": [
+      "Euro",
+      "Japanese yen",
+      "Indian rupee"
+    ],
+    "explanation": "Namibia uses the Namibian dollar.",
+    "id": "g303"
+  },
+  {
+    "prompt": "Which city is the capital of Democratic Republic of the Congo?",
+    "answer": "Kinshasa",
+    "wrong": [
+      "Buenos Aires",
+      "New Delhi",
+      "Managua"
+    ],
+    "explanation": "Kinshasa is the capital of Democratic Republic of the Congo.",
+    "id": "g304"
+  },
+  {
+    "prompt": "Kinshasa is the capital of which country?",
+    "answer": "Democratic Republic of the Congo",
+    "wrong": [
+      "Saudi Arabia",
+      "Thailand",
+      "Argentina"
+    ],
+    "explanation": "Kinshasa is in Democratic Republic of the Congo.",
+    "id": "g305"
+  },
+  {
+    "prompt": "On which continent is Democratic Republic of the Congo?",
+    "answer": "Africa",
+    "wrong": [
+      "North America",
+      "Europe",
+      "South America"
+    ],
+    "explanation": "Democratic Republic of the Congo is in Africa.",
+    "id": "g306"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Democratic Republic of the Congo",
+    "wrong": [
+      "Mongolia",
+      "Angola",
+      "France"
+    ],
+    "flag": "cd",
+    "explanation": "This is the national flag of Democratic Republic of the Congo.",
+    "id": "g307"
+  },
+  {
+    "prompt": "Which of these currencies is used in Democratic Republic of the Congo?",
+    "answer": "Congolese franc",
+    "wrong": [
+      "Egyptian pound",
+      "Namibian dollar",
+      "Ethiopian birr"
+    ],
+    "explanation": "Democratic Republic of the Congo uses the Congolese franc.",
+    "id": "g308"
+  },
+  {
+    "prompt": "Which city is the capital of Angola?",
+    "answer": "Luanda",
+    "wrong": [
+      "Nairobi",
+      "Lima",
+      "Guatemala City"
+    ],
+    "explanation": "Luanda is the capital of Angola.",
+    "id": "g309"
+  },
+  {
+    "prompt": "Luanda is the capital of which country?",
+    "answer": "Angola",
+    "wrong": [
+      "Canada",
+      "Brazil",
+      "Guatemala"
+    ],
+    "explanation": "Luanda is in Angola.",
+    "id": "g310"
+  },
+  {
+    "prompt": "On which continent is Angola?",
+    "answer": "Africa",
+    "wrong": [
+      "Asia",
+      "Oceania",
+      "Europe"
+    ],
+    "explanation": "Angola is in Africa.",
+    "id": "g311"
+  },
+  {
+    "prompt": "Which country does this flag represent?",
+    "answer": "Angola",
+    "wrong": [
+      "Morocco",
+      "Mexico",
+      "China"
+    ],
+    "flag": "ao",
+    "explanation": "This is the national flag of Angola.",
+    "id": "g312"
+  },
+  {
+    "prompt": "Which of these currencies is used in Angola?",
+    "answer": "Angolan kwanza",
+    "wrong": [
+      "Japanese yen",
+      "Australian dollar",
+      "Indonesian rupiah"
+    ],
+    "explanation": "Angola uses the Angolan kwanza.",
+    "id": "g313"
+  },
+  {
+    "prompt": "In geography, what is a peninsula?",
+    "answer": "Land surrounded by water on three sides",
+    "wrong": [
+      "The change of water vapour into liquid water",
+      "Distance east or west of the Prime Meridian, measured in degrees",
+      "A group of islands"
+    ],
+    "explanation": "A peninsula: land surrounded by water on three sides.",
+    "id": "g314"
+  },
+  {
+    "prompt": "In geography, what is an island?",
+    "answer": "Land surrounded by water on all sides",
+    "wrong": [
+      "A cold biome with low vegetation and often permafrost",
+      "Distance north or south of the Equator, measured in degrees",
+      "Sediment deposited where a river enters a larger water body"
+    ],
+    "explanation": "An island: land surrounded by water on all sides.",
+    "id": "g315"
+  },
+  {
+    "prompt": "In geography, what is an archipelago?",
+    "answer": "A group of islands",
+    "wrong": [
+      "An organism that makes its own food",
+      "The breakdown of rock in place",
+      "Map lines joining places of equal elevation"
+    ],
+    "explanation": "An archipelago: a group of islands.",
+    "id": "g316"
+  },
+  {
+    "prompt": "In geography, what is a delta?",
+    "answer": "Sediment deposited where a river enters a larger water body",
+    "wrong": [
+      "The breakdown of rock in place",
+      "The removal and transport of rock or soil",
+      "Water falling from the atmosphere, such as rain or snow"
+    ],
+    "explanation": "A delta: sediment deposited where a river enters a larger water body.",
+    "id": "g317"
+  },
+  {
+    "prompt": "In geography, what is an estuary?",
+    "answer": "Where river water meets and mixes with seawater",
+    "wrong": [
+      "Movement of people from one place to another to live",
+      "The breakdown of rock in place",
+      "A group of islands"
+    ],
+    "explanation": "An estuary: where river water meets and mixes with seawater.",
+    "id": "g318"
+  },
+  {
+    "prompt": "In geography, what is a tributary?",
+    "answer": "A smaller river that flows into a larger river",
+    "wrong": [
+      "A group of islands",
+      "A large mass of ice that moves slowly over land",
+      "A characteristic that helps an organism survive and reproduce"
+    ],
+    "explanation": "A tributary: a smaller river that flows into a larger river.",
+    "id": "g319"
+  },
+  {
+    "prompt": "In geography, what is a river source?",
+    "answer": "The place where a river begins",
+    "wrong": [
+      "A smaller river that flows into a larger river",
+      "A cold-region forest dominated by coniferous trees",
+      "Distance east or west of the Prime Meridian, measured in degrees"
+    ],
+    "explanation": "A river source: the place where a river begins.",
+    "id": "g320"
+  },
+  {
+    "prompt": "In geography, what is a river mouth?",
+    "answer": "The place where a river enters another body of water",
+    "wrong": [
+      "Water vapour released by plants",
+      "A cold biome with low vegetation and often permafrost",
+      "The relationship between map distance and real distance"
+    ],
+    "explanation": "A river mouth: the place where a river enters another body of water.",
+    "id": "g321"
+  },
+  {
+    "prompt": "In geography, what is erosion?",
+    "answer": "The removal and transport of rock or soil",
+    "wrong": [
+      "The line of zero degrees latitude",
+      "The breakdown of rock in place",
+      "A sequence showing energy passing as organisms eat others"
+    ],
+    "explanation": "Erosion: the removal and transport of rock or soil.",
+    "id": "g322"
+  },
+  {
+    "prompt": "In geography, what is weathering?",
+    "answer": "The breakdown of rock in place",
+    "wrong": [
+      "A large mass of ice that moves slowly over land",
+      "Map lines joining places of equal elevation",
+      "Tropical grassland with scattered trees"
+    ],
+    "explanation": "Weathering: the breakdown of rock in place.",
+    "id": "g323"
+  },
+  {
+    "prompt": "In geography, what is deposition?",
+    "answer": "The settling of transported sediment",
+    "wrong": [
+      "Land surrounded by water on all sides",
+      "A map symbol showing directions",
+      "Land surrounded by water on three sides"
+    ],
+    "explanation": "Deposition: the settling of transported sediment.",
+    "id": "g324"
+  },
+  {
+    "prompt": "In geography, what is a watershed?",
+    "answer": "An area of land that drains to a common outlet",
+    "wrong": [
+      "Where river water meets and mixes with seawater",
+      "An organism that makes its own food",
+      "Water stored beneath the ground in pores and cracks"
+    ],
+    "explanation": "A watershed: an area of land that drains to a common outlet.",
+    "id": "g325"
+  },
+  {
+    "prompt": "In geography, what is a glacier?",
+    "answer": "A large mass of ice that moves slowly over land",
+    "wrong": [
+      "A group of islands",
+      "Land surrounded by water on all sides",
+      "Water vapour released by plants"
+    ],
+    "explanation": "A glacier: a large mass of ice that moves slowly over land.",
+    "id": "g326"
+  },
+  {
+    "prompt": "In geography, what is a volcano?",
+    "answer": "An opening where magma can reach the surface",
+    "wrong": [
+      "Distance east or west of the Prime Meridian, measured in degrees",
+      "A region with very low precipitation",
+      "An organism that makes its own food"
+    ],
+    "explanation": "A volcano: an opening where magma can reach the surface.",
+    "id": "g327"
+  },
+  {
+    "prompt": "In geography, what is an earthquake?",
+    "answer": "Shaking caused by sudden movement in Earth’s crust",
+    "wrong": [
+      "The place where a river begins",
+      "Tropical grassland with scattered trees",
+      "An area of land that drains to a common outlet"
+    ],
+    "explanation": "An earthquake: shaking caused by sudden movement in earth’s crust.",
+    "id": "g328"
+  },
+  {
+    "prompt": "In geography, what is latitude?",
+    "answer": "Distance north or south of the Equator, measured in degrees",
+    "wrong": [
+      "The place where a river enters another body of water",
+      "An introduced species that spreads and causes harm",
+      "Protection and careful management of nature"
+    ],
+    "explanation": "Latitude: distance north or south of the equator, measured in degrees.",
+    "id": "g329"
+  },
+  {
+    "prompt": "In geography, what is longitude?",
+    "answer": "Distance east or west of the Prime Meridian, measured in degrees",
+    "wrong": [
+      "Water stored beneath the ground in pores and cracks",
+      "The place where a river begins",
+      "Sediment deposited where a river enters a larger water body"
+    ],
+    "explanation": "Longitude: distance east or west of the prime meridian, measured in degrees.",
+    "id": "g330"
+  },
+  {
+    "prompt": "In geography, what is the Equator?",
+    "answer": "The line of zero degrees latitude",
+    "wrong": [
+      "Water vapour released by plants",
+      "An opening where magma can reach the surface",
+      "The settling of transported sediment"
+    ],
+    "explanation": "The Equator: the line of zero degrees latitude.",
+    "id": "g331"
+  },
+  {
+    "prompt": "In geography, what is the Prime Meridian?",
+    "answer": "The line of zero degrees longitude",
+    "wrong": [
+      "Land surrounded by water on three sides",
+      "A warm forest with abundant rainfall throughout the year",
+      "The removal and transport of rock or soil"
+    ],
+    "explanation": "The Prime Meridian: the line of zero degrees longitude.",
+    "id": "g332"
+  },
+  {
+    "prompt": "In geography, what is a compass rose?",
+    "answer": "A map symbol showing directions",
+    "wrong": [
+      "A warm forest with abundant rainfall throughout the year",
+      "A region with very low precipitation",
+      "Water vapour released by plants"
+    ],
+    "explanation": "A compass rose: a map symbol showing directions.",
+    "id": "g333"
+  },
+  {
+    "prompt": "In geography, what is a map legend?",
+    "answer": "A key explaining the symbols on a map",
+    "wrong": [
+      "Distance east or west of the Prime Meridian, measured in degrees",
+      "Distance north or south of the Equator, measured in degrees",
+      "An opening where magma can reach the surface"
+    ],
+    "explanation": "A map legend: a key explaining the symbols on a map.",
+    "id": "g334"
+  },
+  {
+    "prompt": "In geography, what is map scale?",
+    "answer": "The relationship between map distance and real distance",
+    "wrong": [
+      "Land surrounded by water on three sides",
+      "A resource replenished naturally on human timescales",
+      "Protection and careful management of nature"
+    ],
+    "explanation": "Map scale: the relationship between map distance and real distance.",
+    "id": "g335"
+  },
+  {
+    "prompt": "In geography, what is contour lines?",
+    "answer": "Map lines joining places of equal elevation",
+    "wrong": [
+      "An opening where magma can reach the surface",
+      "Distance east or west of the Prime Meridian, measured in degrees",
+      "A key explaining the symbols on a map"
+    ],
+    "explanation": "Contour lines: map lines joining places of equal elevation.",
+    "id": "g336"
+  },
+  {
+    "prompt": "In geography, what is population density?",
+    "answer": "The number of people per unit of area",
+    "wrong": [
+      "A cold biome with low vegetation and often permafrost",
+      "The place where a river begins",
+      "An unusually long period with insufficient precipitation"
+    ],
+    "explanation": "Population density: the number of people per unit of area.",
+    "id": "g337"
+  },
+  {
+    "prompt": "In geography, what is urbanisation?",
+    "answer": "An increasing proportion of people living in towns and cities",
+    "wrong": [
+      "Distance north or south of the Equator, measured in degrees",
+      "A large ecological region characterised by its climate and life",
+      "Land surrounded by water on three sides"
+    ],
+    "explanation": "Urbanisation: an increasing proportion of people living in towns and cities.",
+    "id": "g338"
+  },
+  {
+    "prompt": "In geography, what is migration?",
+    "answer": "Movement of people from one place to another to live",
+    "wrong": [
+      "A map symbol showing directions",
+      "A smaller river that flows into a larger river",
+      "The variety of living things"
+    ],
+    "explanation": "Migration: movement of people from one place to another to live.",
+    "id": "g339"
+  },
+  {
+    "prompt": "In geography, what is a renewable resource?",
+    "answer": "A resource replenished naturally on human timescales",
+    "wrong": [
+      "A smaller river that flows into a larger river",
+      "The settling of transported sediment",
+      "The line of zero degrees longitude"
+    ],
+    "explanation": "A renewable resource: a resource replenished naturally on human timescales.",
+    "id": "g340"
+  },
+  {
+    "prompt": "In geography, what is a non-renewable resource?",
+    "answer": "A resource that cannot be replenished on human timescales",
+    "wrong": [
+      "The change of liquid water into water vapour",
+      "The line of zero degrees longitude",
+      "A region with very low precipitation"
+    ],
+    "explanation": "A non-renewable resource: a resource that cannot be replenished on human timescales.",
+    "id": "g341"
+  },
+  {
+    "prompt": "In geography, what is a biome?",
+    "answer": "A large ecological region characterised by its climate and life",
+    "wrong": [
+      "The settling of transported sediment",
+      "An increasing proportion of people living in towns and cities",
+      "Water stored beneath the ground in pores and cracks"
+    ],
+    "explanation": "A biome: a large ecological region characterised by its climate and life.",
+    "id": "g342"
+  },
+  {
+    "prompt": "In geography, what is tundra?",
+    "answer": "A cold biome with low vegetation and often permafrost",
+    "wrong": [
+      "Sediment deposited where a river enters a larger water body",
+      "Where river water meets and mixes with seawater",
+      "The line of zero degrees longitude"
+    ],
+    "explanation": "Tundra: a cold biome with low vegetation and often permafrost.",
+    "id": "g343"
+  },
+  {
+    "prompt": "In geography, what is taiga?",
+    "answer": "A cold-region forest dominated by coniferous trees",
+    "wrong": [
+      "The line of zero degrees latitude",
+      "Land surrounded by water on three sides",
+      "Land surrounded by water on all sides"
+    ],
+    "explanation": "Taiga: a cold-region forest dominated by coniferous trees.",
+    "id": "g344"
+  },
+  {
+    "prompt": "In geography, what is a tropical rainforest?",
+    "answer": "A warm forest with abundant rainfall throughout the year",
+    "wrong": [
+      "The number of people per unit of area",
+      "The removal and transport of rock or soil",
+      "A map symbol showing directions"
+    ],
+    "explanation": "A tropical rainforest: a warm forest with abundant rainfall throughout the year.",
+    "id": "g345"
+  },
+  {
+    "prompt": "In geography, what is a desert?",
+    "answer": "A region with very low precipitation",
+    "wrong": [
+      "A group of islands",
+      "Water falling from the atmosphere, such as rain or snow",
+      "The change of liquid water into water vapour"
+    ],
+    "explanation": "A desert: a region with very low precipitation.",
+    "id": "g346"
+  },
+  {
+    "prompt": "In geography, what is a savanna?",
+    "answer": "Tropical grassland with scattered trees",
+    "wrong": [
+      "The change of water vapour into liquid water",
+      "A cold biome with low vegetation and often permafrost",
+      "The place where a river enters another body of water"
+    ],
+    "explanation": "A savanna: tropical grassland with scattered trees.",
+    "id": "g347"
+  },
+  {
+    "prompt": "In geography, what is an ecosystem?",
+    "answer": "Living things interacting with each other and their environment",
+    "wrong": [
+      "A cold-region forest dominated by coniferous trees",
+      "An organism that makes its own food",
+      "The place where a river begins"
+    ],
+    "explanation": "An ecosystem: living things interacting with each other and their environment.",
+    "id": "g348"
+  },
+  {
+    "prompt": "In geography, what is biodiversity?",
+    "answer": "The variety of living things",
+    "wrong": [
+      "Land surrounded by water on three sides",
+      "The place where a river enters another body of water",
+      "Water falling from the atmosphere, such as rain or snow"
+    ],
+    "explanation": "Biodiversity: the variety of living things.",
+    "id": "g349"
+  },
+  {
+    "prompt": "In geography, what is conservation?",
+    "answer": "Protection and careful management of nature",
+    "wrong": [
+      "A cold-region forest dominated by coniferous trees",
+      "The place where a river begins",
+      "Atmospheric conditions at a particular place and time"
+    ],
+    "explanation": "Conservation: protection and careful management of nature.",
+    "id": "g350"
+  },
+  {
+    "prompt": "In geography, what is a food chain?",
+    "answer": "A sequence showing energy passing as organisms eat others",
+    "wrong": [
+      "The place where a river enters another body of water",
+      "A characteristic that helps an organism survive and reproduce",
+      "A cold-region forest dominated by coniferous trees"
+    ],
+    "explanation": "A food chain: a sequence showing energy passing as organisms eat others.",
+    "id": "g351"
+  },
+  {
+    "prompt": "In geography, what is a producer?",
+    "answer": "An organism that makes its own food",
+    "wrong": [
+      "Where river water meets and mixes with seawater",
+      "A resource that cannot be replenished on human timescales",
+      "A large mass of ice that moves slowly over land"
+    ],
+    "explanation": "A producer: an organism that makes its own food.",
+    "id": "g352"
+  },
+  {
+    "prompt": "In geography, what is an omnivore?",
+    "answer": "An animal that eats both plants and animals",
+    "wrong": [
+      "A resource that cannot be replenished on human timescales",
+      "A large mass of ice that moves slowly over land",
+      "The change of liquid water into water vapour"
+    ],
+    "explanation": "An omnivore: an animal that eats both plants and animals.",
+    "id": "g353"
+  },
+  {
+    "prompt": "In geography, what is an adaptation?",
+    "answer": "A characteristic that helps an organism survive and reproduce",
+    "wrong": [
+      "The number of people per unit of area",
+      "Tropical grassland with scattered trees",
+      "Living things interacting with each other and their environment"
+    ],
+    "explanation": "An adaptation: a characteristic that helps an organism survive and reproduce.",
+    "id": "g354"
+  },
+  {
+    "prompt": "In geography, what is an invasive species?",
+    "answer": "An introduced species that spreads and causes harm",
+    "wrong": [
+      "The breakdown of rock in place",
+      "The place where a river begins",
+      "Water stored beneath the ground in pores and cracks"
+    ],
+    "explanation": "An invasive species: an introduced species that spreads and causes harm.",
+    "id": "g355"
+  },
+  {
+    "prompt": "In geography, what is evaporation?",
+    "answer": "The change of liquid water into water vapour",
+    "wrong": [
+      "Sediment deposited where a river enters a larger water body",
+      "A key explaining the symbols on a map",
+      "Water vapour released by plants"
+    ],
+    "explanation": "Evaporation: the change of liquid water into water vapour.",
+    "id": "g356"
+  },
+  {
+    "prompt": "In geography, what is condensation?",
+    "answer": "The change of water vapour into liquid water",
+    "wrong": [
+      "A large ecological region characterised by its climate and life",
+      "A characteristic that helps an organism survive and reproduce",
+      "The removal and transport of rock or soil"
+    ],
+    "explanation": "Condensation: the change of water vapour into liquid water.",
+    "id": "g357"
+  },
+  {
+    "prompt": "In geography, what is precipitation?",
+    "answer": "Water falling from the atmosphere, such as rain or snow",
+    "wrong": [
+      "Sediment deposited where a river enters a larger water body",
+      "An introduced species that spreads and causes harm",
+      "Shaking caused by sudden movement in Earth’s crust"
+    ],
+    "explanation": "Precipitation: water falling from the atmosphere, such as rain or snow.",
+    "id": "g358"
+  },
+  {
+    "prompt": "In geography, what is transpiration?",
+    "answer": "Water vapour released by plants",
+    "wrong": [
+      "A key explaining the symbols on a map",
+      "The relationship between map distance and real distance",
+      "Shaking caused by sudden movement in Earth’s crust"
+    ],
+    "explanation": "Transpiration: water vapour released by plants.",
+    "id": "g359"
+  },
+  {
+    "prompt": "In geography, what is groundwater?",
+    "answer": "Water stored beneath the ground in pores and cracks",
+    "wrong": [
+      "Land surrounded by water on three sides",
+      "An introduced species that spreads and causes harm",
+      "An opening where magma can reach the surface"
+    ],
+    "explanation": "Groundwater: water stored beneath the ground in pores and cracks.",
+    "id": "g360"
+  },
+  {
+    "prompt": "In geography, what is a drought?",
+    "answer": "An unusually long period with insufficient precipitation",
+    "wrong": [
+      "The variety of living things",
+      "An increasing proportion of people living in towns and cities",
+      "Sediment deposited where a river enters a larger water body"
+    ],
+    "explanation": "A drought: an unusually long period with insufficient precipitation.",
+    "id": "g361"
+  },
+  {
+    "prompt": "In geography, what is weather?",
+    "answer": "Atmospheric conditions at a particular place and time",
+    "wrong": [
+      "Living things interacting with each other and their environment",
+      "An opening where magma can reach the surface",
+      "The variety of living things"
+    ],
+    "explanation": "Weather: atmospheric conditions at a particular place and time.",
+    "id": "g362"
+  },
+  {
+    "prompt": "In geography, what is climate?",
+    "answer": "Long-term patterns of weather in a region",
+    "wrong": [
+      "The place where a river begins",
+      "A large mass of ice that moves slowly over land",
+      "Map lines joining places of equal elevation"
+    ],
+    "explanation": "Climate: long-term patterns of weather in a region.",
+    "id": "g363"
+  }
+]
