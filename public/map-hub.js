@@ -48,7 +48,7 @@ function draw(now){if(!canvas||!w||!f)return;const box=canvas.getBoundingClientR
  const zone=document.getElementById('gj-zone');if(zone)zone.textContent=teacher?'FOOTHILLS → SUMMIT → CLOUDS → STARS':progress<.25?'THE FOOTHILLS':progress<.5?'ALPINE HEIGHTS':progress<.75?'CLOUD COUNTRY':'THE STAR KINGDOM';
  raf=requestAnimationFrame(draw);
 }
-async function transmit(){if(!v||v.role!=='student'||v.status!=='playing')return;if(pending){again=true;return;}pending=true;try{await api.send('jump:input',{...keys,seq:++seq});}finally{pending=false;if(again){again=false;transmit();}}}
+async function transmit(){if(!v||v.role!=='student'||v.status!=='playing')return;if(pending){again=true;return;}pending=true;try{await api.send('jump:input',{...keys,seq:(seq=Math.max(seq+1,Date.now()*1000))});}finally{pending=false;if(again){again=false;transmit();}}}
 function neutral(){keys={left:false,right:false,jump:false,shoot:false};transmit();}
 function clear(){if(!v)return;neutral();v=null;w=null;f=null;canvas=null;key='';cancelAnimationFrame(raf);}
 const mapping={ArrowLeft:'left',ArrowRight:'right',Space:'jump',ShiftLeft:'shoot',ShiftRight:'shoot'};
