@@ -6,11 +6,15 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function bounds(w,y){const summit=500*(w.scale||1),width=summit+(w.width-summit)*Math.pow(1-clamp(y/w.height,0,1),.8);return[(w.width-width)/2,(w.width+width)/2];}
 function platformX(p,t){return p.x+(p.move?Math.sin(t*2.1+p.phase)*p.move:0);}
 function hazardX(w,h,t){if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
-const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','seq'];
+const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','lightningCharges','lightningTime','lightningHeld','lightningCycle','strikeTargetId','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','seq'];
 function snapshot(s){return Object.fromEntries(fields.map(k=>[k,s[k]]));}
 function advance(w,s,keys,dt,t){
  for(const k of ['immune','stun','cool','hit','netFlash'])s[k]=Math.max(0,(s[k]||0)-dt);
+ if(s.strikeTargetId!=null){const p=w.platforms[s.strikeTargetId],targetY=p?.y||0,targetX=p?platformX(p,t):s.x;const remaining=Math.max(1,s.y-targetY);s.x+=(targetX-s.x)*Math.min(1,1100*dt/remaining);s.y=Math.max(targetY,s.y-1100*dt);s.vy=-1100;s.ground=false;if(s.y<=targetY){s.x=targetX;s.vy=0;s.ground=true;s.groundId=p?.id??null;s.stand=targetY;s.strikeTargetId=null;s.cool=.15;s.immune=Math.max(s.immune,1);}return true;}
  if(s.dazed>0){s.dazed=Math.max(0,s.dazed-dt);const recoil=Math.min(dt,s.recoil||0);if(recoil>0){s.x+=(s.kickVX||0)*recoil;s.y+=160*recoil;s.recoil=Math.max(0,s.recoil-dt);}const [left,right]=bounds(w,s.y);s.x=clamp(s.x,left+16,right-16);s.vx=0;s.vy=0;s.ground=false;s.groundId=null;return true;}
+ s.lightningTime=Math.max(0,(s.lightningTime||0)-dt);
+ if(keys.lightning&&!s.lightningHeld&&s.lightningCharges>0&&s.lightningTime===0){s.lightningCharges--;s.lightningTime=5;s.lightningCycle=(s.lightningCycle||0)+1;}
+ s.lightningHeld=!!keys.lightning;
  if(s.golden>0){s.golden=Math.max(0,s.golden-dt);s.y=Math.min(s.goldenTarget,s.y+1100*dt);s.vy=0;s.ground=false;s.best=Math.max(s.best,s.y);return true;}
  if(s.ground&&s.groundId!=null){const p=w.platforms[s.groundId];if(p)s.x+=platformX(p,t)-platformX(p,t-dt);}
  s.spring=Math.max(0,s.spring-dt);const jet=s.jet>0&&keys.jump&&s.stun===0&&s.knockFloor==null;
