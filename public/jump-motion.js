@@ -4,11 +4,13 @@
 const C={gravity:1100,jump:600,speed:300,metre:43.2,spring:30,jet:8,jetSpeed:500,water:100,waterDrain:18,netDrop:180,step:1/60};
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function bounds(w,y){const summit=500*(w.scale||1),width=summit+(w.width-summit)*Math.pow(1-clamp(y/w.height,0,1),.8);return[(w.width-width)/2,(w.width+width)/2];}
-function platformX(p,t){return p.x+(p.move?Math.sin(t*.9+p.phase)*p.move:0);}
-const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','checkpoint','checkpointLock','knockFloor','seq'];
+function platformX(p,t){return p.x+(p.move?Math.sin(t*2.1+p.phase)*p.move:0);}
+function hazardX(w,h,t){if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
+const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','seq'];
 function snapshot(s){return Object.fromEntries(fields.map(k=>[k,s[k]]));}
 function advance(w,s,keys,dt,t){
  for(const k of ['immune','stun','cool','hit','netFlash'])s[k]=Math.max(0,(s[k]||0)-dt);
+ if(s.dazed>0){s.dazed=Math.max(0,s.dazed-dt);const recoil=Math.min(dt,s.recoil||0);if(recoil>0){s.x+=(s.kickVX||0)*recoil;s.y+=160*recoil;s.recoil=Math.max(0,s.recoil-dt);}const [left,right]=bounds(w,s.y);s.x=clamp(s.x,left+16,right-16);s.vx=0;s.vy=0;s.ground=false;s.groundId=null;return true;}
  if(s.golden>0){s.golden=Math.max(0,s.golden-dt);s.y=Math.min(s.goldenTarget,s.y+1100*dt);s.vy=0;s.ground=false;s.best=Math.max(s.best,s.y);return true;}
  if(s.ground&&s.groundId!=null){const p=w.platforms[s.groundId];if(p)s.x+=platformX(p,t)-platformX(p,t-dt);}
  s.spring=Math.max(0,s.spring-dt);const jet=s.jet>0&&keys.jump&&s.stun===0&&s.knockFloor==null;
@@ -35,5 +37,5 @@ function advance(w,s,keys,dt,t){
  if(s.knockFloor==null&&s.y<s.checkpoint-500){const candidates=w.platforms.filter(p=>p.y<=s.checkpoint&&p.y>s.checkpoint-180);const p=candidates.sort((a,b)=>Math.abs(a.x-s.x)-Math.abs(b.x-s.x))[0];if(p){s.x=platformX(p,t);s.y=p.y;s.vy=0;s.ground=true;s.groundId=p.id;s.stand=p.y;s.immune=3;}}
  s.best=Math.max(s.best,s.y);return false;
 }
-return {C,bounds,platformX,snapshot,advance};
+return {C,bounds,platformX,hazardX,snapshot,advance};
 });

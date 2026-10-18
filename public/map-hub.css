@@ -12,3 +12,6 @@
 @media(pointer:fine){.gj-touch{display:none}.gj-game.student .gj-world{height:calc(100dvh - 225px)}}
 @media(max-width:900px){.gj-game.student,.gj-game.teacher{grid-template-columns:minmax(0,1fr)}.gj-game .gj-board{max-height:320px}.gj-game.student .gj-world{height:calc(100dvh - 280px);min-height:390px}}
 @media(max-width:600px){.gj-stage-heading{gap:7px}.gj-stage-heading>strong{font-size:13px}.gj-game.student .gj-world{height:calc(100dvh - 300px)}}
+
+/* Prevent flex intrinsic sizing and changing inventory content from shrinking the course. */
+.gj-game.student,.gj-game.teacher{width:100%;flex:0 0 auto;box-sizing:border-box;align-items:start}.gj-game .gj-stage{min-width:0;box-sizing:border-box}.gj-game.student .gj-world,.gj-game.teacher .gj-world{height:var(--gj-play-height,calc(100vh - 215px));min-height:430px;max-height:none;flex:none}.gj-game .gj-world canvas{position:absolute;inset:0;width:100%;height:100%}.gj-game .gj-board{width:100%;box-sizing:border-box}.gj-game .gj-stage-heading{min-height:44px}.gj-game .gj-inventory{min-height:48px}
