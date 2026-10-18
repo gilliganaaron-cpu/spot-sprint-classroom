@@ -31,6 +31,7 @@
         stream.onmessage=e=>{
           try { fire('room:update',JSON.parse(e.data)); } catch { /* malformed event */ }
         };
+        stream.addEventListener('maze:frame',e=>{try{fire('maze:frame',JSON.parse(e.data));}catch{}});
         stream.addEventListener('jump:frame',e=>{try{fire('jump:frame',JSON.parse(e.data));}catch{}});
         stream.addEventListener('replaced',()=>fire('session:replaced'));
         stream.addEventListener('room-closed',e=>{

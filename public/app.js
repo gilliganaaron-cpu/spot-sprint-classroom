@@ -582,7 +582,7 @@
     document.documentElement.classList.toggle('student-active', Boolean(active));
     if (!active) { studentHeaderInfo.innerHTML = ''; return; }
     const finished = view.status === 'finished';
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'geo' ? 'jump to the stars!' : view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'maze' ? 'find a key and escape!' : view.gameType === 'geo' ? 'jump to the stars!' : view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
   }
   // Keep teacher settings mounted while a room stays in the lobby.
   // Server push messages must not replace the range input mid-drag.
@@ -664,7 +664,7 @@
       '<option value="' + key + '"' + (key === view.theme ? ' selected' : '') + '>' +
       escape(THEME_META[key]?.icon || '✨') + ' ' + escape(THEME_META[key]?.label || key) + '</option>').join('') +
       '</select><span class="theme-chevron">▾</span></div></div>';
-    const topSettings = view.gameType && view.gameType !== 'spot' ? (view.gameType === 'geo' ? MapHub.settings(view) : view.status === 'lobby' ? WordHub.settings(view) : `<div class="game-status-settings"><b>${WordHub.GAMES[view.gameType].name}</b><span>${view.gameType === 'weave' ? '<span data-round-clock>' + roundClockLabel() + '</span>' : 'Find ' + view.wordSettings.wordCount + ' words'}</span></div>`) : view.status === 'lobby'
+    const topSettings = view.gameType && view.gameType !== 'spot' ? (view.gameType === 'maze' ? MazeHub.settings(view) : view.gameType === 'geo' ? MapHub.settings(view) : view.status === 'lobby' ? WordHub.settings(view) : `<div class="game-status-settings"><b>${WordHub.GAMES[view.gameType].name}</b><span>${view.gameType === 'weave' ? '<span data-round-clock>' + roundClockLabel() + '</span>' : 'Find ' + view.wordSettings.wordCount + ' words'}</span></div>`) : view.status === 'lobby'
       ? '<div class="cards-range-panel challenge-panel" data-win-mode="' + view.gameMode + '">' +
         modeControls + (timed ? secondsControl : cardsControl) + '</div>' + themeControl
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
@@ -876,7 +876,9 @@
     document.documentElement.classList.toggle('teacher-lobby', Boolean(view?.role === 'teacher' && view.status === 'lobby'));
     updateTeacherHeader();
     updateStudentHeader();
-    if (view?.gameType === 'geo') { WordHub.clear(); MapHub.render(view, {send, updateView, toast, playerList}); }
+    if(view?.gameType!=='maze')MazeHub.clear();
+    if(view?.gameType==='maze'){WordHub.clear();MapHub.clear();MazeHub.render(view,{send,updateView,toast,playerList});}
+    else if (view?.gameType === 'geo') { WordHub.clear(); MapHub.render(view, {send, updateView, toast, playerList}); }
     else if (wordGame) { MapHub.clear(); WordHub.render(view, {send, updateView, toast, playerList}); }
     else {
       MapHub.clear(); WordHub.clear();
@@ -995,6 +997,7 @@
     connection.innerHTML = '<span class="live-dot"></span>Reconnecting…';
     connection.classList.add('not-connected');
   });
+  socket.on('maze:frame',data=>{lastServerPushAt=Date.now();MazeHub.frame(data);});
   socket.on('jump:frame', data => { lastServerPushAt=Date.now(); MapHub.frame(data); });
   socket.on('room:update', data => { lastServerPushAt = Date.now(); updateView(data); });
   function handleTeacherRemoval(message) {

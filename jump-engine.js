@@ -11,7 +11,7 @@ function world(km,count,seed=randomInt(1e9)){const random=rng(seed),height=C.met
  for(let l=0;l<lanes;l++){
   let x=left+(l+.5)*(right-left)/lanes+(y===height?0:(random()-.5)*135);
   const parent=previous.length?previous.reduce((a,b)=>Math.abs(a.x-x)<Math.abs(b.x-x)?a:b):null;
-  if(parent)x=clamp(x,parent.x-95,parent.x+95);
+  if(parent){if(Math.abs(x-parent.x)<40)x=parent.x+((row+l)%2?65:-65);x=clamp(x,parent.x-95,parent.x+95);}
   x=clamp(x,left+55,right-55);
   const py=y===height?height:Math.min(height-35,Math.max(45,y+(random()-.5)*14));
   const p={id:platforms.length,x:Math.round(x),y:Math.round(py),w:y===height?230:Math.round(110-82*y/height+random()*8),move:y>height*.5&&random()<.30?22:0,phase:random()*6.28,row,parentId:parent?.id??null};
@@ -47,7 +47,7 @@ function step(r,dt,now,histories=new Map()){if(r.done)return;dt=Math.min(.05,dt)
   if(s.y>=w.height-2&&Math.abs(s.x-w.width/2)<200){s.finish=r.finished.length+1;r.finished.push(s.id);s.y=w.height;s.vy=0;s.ground=true;if(r.finished.length>=r.required){r.done=true;}continue;}
   if(s.immune===0){for(const h of w.hazards){const hx=Motion.hazardX(w,h,r.t);if(Math.abs(s.y+17-h.y)<h.r+14&&Math.abs(s.x-hx)<h.r+13){s.kickVX=(s.x>=hx?1:-1)*280;s.recoil=.24;s.dazed=4;s.vy=0;s.ground=false;s.groundId=null;s.immune=4.6;s.hit=.5;break;}}}
   if(s.dazed>0)continue;
-  if(keys.shoot&&s.water>0&&s.stun===0){s.shot=true;s.water=Math.max(0,s.water-C.waterDrain*dt);for(const other of r.players.values()){if(other===s||other.question||other.feedback||other.finish!==null||other.immune>0)continue;const dx=(other.x-s.x)*s.face;if(dx>0&&dx<230&&Math.abs(other.y-s.y)<40){other.knockFloor=Math.max(0,other.y-75*C.metre);other.checkpoint=Math.min(other.checkpoint,other.knockFloor);other.checkpointLock=other.best+1;other.vy=-1100;other.ground=false;other.immune=4;other.stun=.25;other.hit=.6;}}}
+  if(keys.shoot&&s.water>0&&s.stun===0){s.shot=true;s.water=Math.max(0,s.water-C.waterDrain*dt);for(const other of r.players.values()){if(other===s||other.question||other.feedback||other.finish!==null||other.immune>0)continue;const dx=(other.x-s.x)*s.face;if(dx>0&&dx<230&&Math.abs(other.y-s.y)<40){const floor=Math.max(0,other.y-40*C.metre),aim=other.x+s.face*200;let target=null;for(const p of w.platforms){if(p.y>floor)continue;if(!target||(floor-p.y)+Math.abs(p.x-aim)*.4<(floor-target.y)+Math.abs(target.x-aim)*.4)target=p;}other.strikeTargetId=target?.id??-1;other.waterPush=s.face;other.waterPushRemaining=.28;other.knockFloor=null;other.dazed=0;other.ground=false;other.vy=-1100;other.immune=Math.max(2,(other.y-(target?.y||0))/1100+1);other.hit=.6;other.checkpoint=Math.min(other.checkpoint,target?.y||0);other.checkpointLock=other.best+1;}}}
   for(const portal of w.portals||[]){if(s.portalUsed.has(portal.id)||(r.portalExpires[portal.id]!=null&&r.t>=r.portalExpires[portal.id]))continue;const a=w.platforms[portal.fromPid];if(Math.abs(s.x-platformX(a,r.t))<30&&Math.abs(s.y-a.y-26)<36){const b=w.platforms[portal.toPid];s.x=platformX(b,r.t);s.y=b.y;s.vy=0;s.ground=true;s.groundId=b.id;s.stand=b.y;s.best=Math.max(s.best,s.y);s.immune=2;s.knockFloor=null;s.portalUsed.add(portal.id);s.portalEvent++;r.portalExpires[portal.id]??=r.t+2;break;}}
   for(const item of w.items){if(s.used.has(item.id)||item.type==='gold'&&r.goldTaken.has(item.id))continue;const p=w.platforms[item.pid];if(Math.abs(s.x-platformX(p,r.t))<28&&Math.abs(s.y-item.y)<32){const history=histories.get(s.id)||new Set();histories.set(s.id,history);questionFor(s,item,history);break;}}
  }

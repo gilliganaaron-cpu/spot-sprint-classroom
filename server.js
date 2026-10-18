@@ -9,6 +9,7 @@ const { THEME_SYMBOLS, symbolsForTheme, DECK, getSharedSymbol } = require('./dec
 
 const { createWeave, createSearch, validatePath, TOPICS } = require('./wordgames');
 const Jump=require('./jump-engine');
+const Maze=require('./maze-engine');
 const rooms = new Map();
 const MAX_PLAYERS = 40;
 const CELEBRATION_MS = 1500;
@@ -54,7 +55,7 @@ function playerList(room) {
 function view(room, role, playerId) {
   const p = role === 'student' ? room.players.get(playerId) : null;
   return {
-    geoSettings:room.geoSettings, geo:room.geo?{world:room.geo.world,...Jump.frame(room.geo),self:p&&room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null}:null, code:room.code, role, gameType:room.gameType || 'spot', wordSettings:room.wordSettings, puzzle:room.puzzle && !['lobby','countdown'].includes(room.status) ? {id:room.puzzle.id, size:room.puzzle.size, grid:room.puzzle.grid, words:room.puzzle.words || [], solutionCount:room.puzzle.solutions?.size || 0, answers:room.status === 'finished' && room.gameType === 'weave' ? [...room.puzzle.solutions.keys()].sort((a,b)=>b.length-a.length || a.localeCompare(b)) : []} : null, foundWords:p?.foundWords || [], foundPaths:p?.foundPaths || [], status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
+    maze:room.maze?{world:room.maze.world,...Maze.frame(room.maze),self:p&&room.maze.players.has(p.id)?Maze.privateState(room.maze.players.get(p.id)):null}:null,geoSettings:room.geoSettings, geo:room.geo?{world:room.geo.world,...Jump.frame(room.geo),self:p&&room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null}:null, code:room.code, role, gameType:room.gameType || 'spot', wordSettings:room.wordSettings, puzzle:room.puzzle && !['lobby','countdown'].includes(room.status) ? {id:room.puzzle.id, size:room.puzzle.size, grid:room.puzzle.grid, words:room.puzzle.words || [], solutionCount:room.puzzle.solutions?.size || 0, answers:room.status === 'finished' && room.gameType === 'weave' ? [...room.puzzle.solutions.keys()].sort((a,b)=>b.length-a.length || a.localeCompare(b)) : []} : null, foundWords:p?.foundWords || [], foundPaths:p?.foundPaths || [], status:room.status, revision:room.revision || 0, cardsToWin:room.cardsToWin, gameMode:room.gameMode, timeLimitSec:room.timeLimitSec, timeEndsAt:room.timeEndsAt, timeRemainingMs:room.timeRemainingMs, winnerIds:room.winnerIds || [], theme: room.theme, availableThemes: Object.keys(THEME_SYMBOLS),
     players:playerList(room), teacherOnline:Boolean(room.hostStream),
     teacherCard:room.status === 'countdown' ? null : room.teacherCard, cardTurn:room.cardTurn,
     countdownEndsAt:room.status === 'countdown' ? room.countdownEndsAt : null,
@@ -152,7 +153,7 @@ function startRound(room) {
   if (room.players.size === 0) return failure('Wait for at least one student to join.');
   const nextPuzzle = room.gameType === 'weave' ? createWeave(room.wordSettings) : room.gameType === 'search' ? createSearch(room.wordSettings) : null;
   clearTimeout(room.geoTimer);room.geoTimer=null;
-  room.geo=room.gameType==='geo'?Jump.create(room.geoSettings.km,[...room.players.values()]):null;
+  room.geo=room.gameType==='geo'?Jump.create(room.geoSettings.km,[...room.players.values()]):null;clearInterval(room.mazeTimer);room.maze=room.gameType==='maze'?Maze.create([...room.players.values()]):null;
   clearTimeout(room.pendingTimer);
   clearTimeout(room.wrongTurnTimer);
   clearTimeout(room.startTimer);
@@ -173,14 +174,14 @@ function startRound(room) {
   room.streakCount = 0;
   const initial = crypto.randomInt(DECK.length);
   room.puzzle = nextPuzzle;
-  room.teacherCard = (nextPuzzle || room.gameType==='geo') ? null : cardView(initial, room.theme);
+  room.teacherCard = (nextPuzzle || ['geo','maze'].includes(room.gameType)) ? null : cardView(initial, room.theme);
   for (const student of room.players.values()) {
     student.inRound = true;
     student.foundWords = []; student.foundPaths = []; student.lastWordAt = 0;
     student.points = 0;
     student.lockUntil = 0;
     student.blockedTurn = 0;
-    student.hand = (nextPuzzle || room.gameType==='geo') ? [] : shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
+    student.hand = (nextPuzzle || ['geo','maze'].includes(room.gameType)) ? [] : shuffle(DECK.map((_, i) => i).filter(i => i !== initial)).slice(0, room.gameMode === 'timed' ? 25 : room.cardsToWin).map(id => cardView(id, room.theme));
   }
   broadcast(room);
   const code = room.code;
@@ -190,8 +191,8 @@ function startRound(room) {
     if (rooms.get(code) !== room || room.status !== 'countdown' || room.countdownEndsAt !== end) return;
     room.status = 'playing';
     room.countdownEndsAt = null;
-    if(room.gameType==='geo')beginGeo(room);
-    if (room.gameMode === 'timed' && room.gameType!=='geo') {
+    if(room.gameType==='geo')beginGeo(room);if(room.gameType==='maze')beginMaze(room);
+    if (room.gameMode === 'timed' && !['geo','maze'].includes(room.gameType)) {
       room.timeEndsAt = Date.now() + room.timeRemainingMs;
       scheduleTimedFinish(room);
     }
@@ -218,6 +219,7 @@ function beginGeo(room) {
  },1000/120);room.geoTimer.unref?.();
 }
 function finishGeo(room){clearInterval(room.geoTimer);room.geoTimer=null;room.status='finished';room.endedAt=Date.now();room.winnerIds=[room.geo.finished[0]].filter(Boolean);room.winnerId=room.winnerIds[0]||null;for(const [id,s] of room.geo.players){const p=room.players.get(id);if(p)p.points=Math.floor(s.best/Jump.C.metre);}broadcast(room);}
+function beginMaze(room){clearInterval(room.mazeTimer);let last=performance.now(),lastPush=last;room.mazeTimer=setInterval(()=>{if(rooms.get(room.code)!==room||!room.maze){clearInterval(room.mazeTimer);return;}const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;if(room.status!=='playing')return;Maze.step(room.maze,dt,Date.now());if(room.maze.done){clearInterval(room.mazeTimer);room.mazeTimer=null;room.status='finished';room.endedAt=Date.now();room.winnerId=room.maze.winner;room.winnerIds=[room.winnerId];for(const [id,p]of room.maze.players)room.players.get(id).points=p.points;broadcast(room);return;}if(now-lastPush>=50){lastPush=now;const f=Maze.frame(room.maze);if(room.hostStream)writeEvent(room.hostStream,f,'maze:frame');for(const p of room.players.values())if(p.stream)writeEvent(p.stream,{...f,self:room.maze.players.has(p.id)?Maze.privateState(room.maze.players.get(p.id)):null},'maze:frame');}},1000/60);room.mazeTimer.unref?.();}
 function revealGeo(){return false;}
 
 function resolveAuth(body, role) {
@@ -258,7 +260,7 @@ function action(body) {
     rooms.set(code, room);
     if (canReplace) {
       // A new class needs a new, empty room. Students do not carry over.
-      for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer'])
+      for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer','mazeTimer'])
         clearTimeout(previousRoom[timer]);
       previousRoom.status = 'closed';
       const message = { reason:'This class session has ended. Ask your teacher for the new game code.' };
@@ -304,7 +306,7 @@ function action(body) {
     return success({ code:room.code, view:view(room, data.role, auth.p?.id) });
   }
 
-  const role = ['game:match','word:submit','jump:input','jump:answer','jump:character'].includes(command) ? 'student' : 'teacher';
+  const role = ['game:match','word:submit','jump:input','jump:answer','jump:character','maze:input','maze:answer'].includes(command) ? 'student' : 'teacher';
   auth = resolveAuth(body, role);
   if (!auth) return failure('This game session has expired. Refresh and join again.');
   room = auth.room;
@@ -330,14 +332,14 @@ function action(body) {
   }
   if (command === 'room:select-game') {
     if (!['lobby','finished'].includes(room.status)) return failure('Return to the lobby before changing games.');
-    if (!['spot','weave','search','geo'].includes(data.gameType)) return failure('Choose a game from the picker.');
+    if (!['spot','weave','search','geo','maze'].includes(data.gameType)) return failure('Choose a game from the picker.');
     if (room.gameType === 'spot') room.spotSettings={cardsToWin:room.cardsToWin,gameMode:room.gameMode,timeLimitSec:room.timeLimitSec,theme:room.theme};
-    for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer']) { clearTimeout(room[timer]); room[timer]=null; }
+    for (const timer of ['startTimer','timeTimer','pendingTimer','wrongTurnTimer','geoTimer','mazeTimer']) { clearTimeout(room[timer]); room[timer]=null; }
     room.gameType=data.gameType;
     if (room.gameType === 'spot') Object.assign(room,room.spotSettings || {cardsToWin:10,gameMode:'cards',timeLimitSec:120,theme:'scifi'});
     else { room.gameMode=room.gameType==='weave'?'timed':'cards'; room.timeLimitSec=room.wordSettings.duration; room.cardsToWin=room.wordSettings.wordCount; }
     room.timeRemainingMs=room.timeLimitSec*1000; room.timeEndsAt=null; room.countdownEndsAt=null;
-    room.status='lobby'; room.geo=null; room.puzzle=null; room.teacherCard=null; room.pendingMatch=null; room.lastEvent=null;
+    room.status='lobby'; room.geo=null;clearInterval(room.mazeTimer);room.mazeTimer=null;room.maze=null; room.puzzle=null; room.teacherCard=null; room.pendingMatch=null; room.lastEvent=null;
     room.winnerId=null; room.winnerIds=[]; room.startedAt=null; room.endedAt=null;
     for (const student of room.players.values()) {student.points=0;student.inRound=false;student.hand=[];student.foundWords=[];student.foundPaths=[];student.blockedTurn=0;}
     broadcast(room);
@@ -351,6 +353,7 @@ function action(body) {
     if(room.status!=='lobby'||!Number.isInteger(data.character)||data.character<0||data.character>=30)return failure('Choose your character in the lobby.');
     p.character=data.character;broadcast(room);return success({view:view(room,'student',p.id)});
   }
+  if(command==='maze:input'||command==='maze:answer'){const s=room.maze?.players.get(p.id);if(room.gameType!=='maze'||room.status!=='playing'||!s)return failure('Wait for the maze to start.');if(command==='maze:input'){Maze.input(s,data,Date.now());return success({});}return Maze.answer(room.maze,s,data);}
   if(command==='jump:input'||command==='jump:answer'){
     const s=room.geo?.players.get(p.id);
     if(room.gameType!=='geo'||room.status!=='playing'||!s)return failure('Wait for the race to start.');
@@ -429,7 +432,7 @@ function action(body) {
     return success();
   }
   if (command === 'room:reset') {
-    clearTimeout(room.geoTimer);room.geoTimer=null;room.geo=null;
+    clearTimeout(room.geoTimer);room.geoTimer=null;room.geo=null;clearInterval(room.mazeTimer);room.mazeTimer=null;room.maze=null;
     clearTimeout(room.pendingTimer);
     clearTimeout(room.wrongTurnTimer);
     clearTimeout(room.startTimer);
@@ -568,7 +571,7 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/jump-motion.js':'jump-motion.js','/geo-jump.webp':'geo-jump.webp','/map-hub.js':'map-hub.js','/map-hub.css':'map-hub.css','/map-data.js':'map-data.js','/map-dash.webp':'map-dash.webp',
+  '/maze-motion.js':'maze-motion.js','/maze-hub.js':'maze-hub.js','/maze-hub.css':'maze-hub.css','/phantom-keys.svg':'phantom-keys.svg','/screen-fit.js':'screen-fit.js','/screen-fit.css':'screen-fit.css','/jump-motion.js':'jump-motion.js','/geo-jump.webp':'geo-jump.webp','/map-hub.js':'map-hub.js','/map-hub.css':'map-hub.css','/map-data.js':'map-data.js','/map-dash.webp':'map-dash.webp',
   '/flags/jp.svg':'flags/jp.svg','/flags/fr.svg':'flags/fr.svg','/flags/it.svg':'flags/it.svg','/flags/de.svg':'flags/de.svg','/flags/br.svg':'flags/br.svg','/flags/ca.svg':'flags/ca.svg','/flags/au.svg':'flags/au.svg','/flags/nz.svg':'flags/nz.svg','/flags/in.svg':'flags/in.svg','/flags/za.svg':'flags/za.svg','/flags/gb.svg':'flags/gb.svg','/flags/kr.svg':'flags/kr.svg','/flags/mx.svg':'flags/mx.svg','/flags/ch.svg':'flags/ch.svg','/flags/se.svg':'flags/se.svg','/flags/es.svg':'flags/es.svg',
   '/word-hub.js':'word-hub.js', '/word-hub.css':'word-hub.css', '/word-weave.webp':'word-weave.webp', '/find-a-word.webp':'find-a-word.webp',
   '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/symbols-festive.webp':'symbols-festive.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp', '/cosmic-sky-bg.jpg':'cosmic-sky-bg.jpg', '/spot-sprint-wordmark.webp':'spot-sprint-wordmark.webp', '/arcade-mountains.webp':'arcade-mountains.webp'
@@ -606,7 +609,7 @@ setInterval(() => {
     if (now - room.createdAt > 8*60*60*1000 || (!online && now - room.updatedAt > 45*60*1000)) {
       if (room.hostStream) room.hostStream.end();
       for (const p of room.players.values()) if (p.stream) p.stream.end();
-      for(const k of ['geoTimer','startTimer','timeTimer','pendingTimer','wrongTurnTimer'])clearTimeout(room[k]);
+      for(const k of ['mazeTimer','geoTimer','startTimer','timeTimer','pendingTimer','wrongTurnTimer'])clearTimeout(room[k]);
       rooms.delete(code);
     }
   }
