@@ -202,15 +202,20 @@ function startRound(room) {
 
 // Simulation is authoritative; clients send controls, never positions or scores.
 function beginGeo(room) {
- clearInterval(room.geoTimer); let ticks=0;room.jumpHistories ||= new Map();
+ clearInterval(room.geoTimer);let last=performance.now(),accumulator=0,lastPush=last;room.jumpHistories ||= new Map();
  room.geoTimer=setInterval(()=>{
   if(rooms.get(room.code)!==room||!room.geo){clearInterval(room.geoTimer);return;}
-  if(room.status!=='playing')return;
-  Jump.step(room.geo,1/30,Date.now(),room.jumpHistories);
-  for(const [id,s] of room.geo.players){const p=room.players.get(id);if(p)p.points=Math.floor(s.y/Jump.C.metre);}
+  const now=performance.now(),elapsed=Math.min(.15,(now-last)/1000);last=now;
+  if(room.status!=='playing'){accumulator=0;return;}
+  accumulator+=elapsed;
+  while(accumulator>=Jump.C.step&&!room.geo.done){Jump.step(room.geo,Jump.C.step,Date.now(),room.jumpHistories);accumulator-=Jump.C.step;}
   if(room.geo.done){finishGeo(room);return;}
-  if(++ticks%3===0){const f={...Jump.frame(room.geo),status:room.status};if(room.hostStream)writeEvent(room.hostStream,f,'jump:frame');for(const p of room.players.values())if(p.stream)writeEvent(p.stream,{...f,self:room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null},'jump:frame');}
- },1000/30);room.geoTimer.unref?.();
+  if(now-lastPush>=50){lastPush=now;
+   for(const [id,s] of room.geo.players){const p=room.players.get(id);if(p)p.points=Math.floor(s.y/Jump.C.metre);}
+   const f={...Jump.frame(room.geo),status:room.status};if(room.hostStream)writeEvent(room.hostStream,f,'jump:frame');
+   for(const p of room.players.values())if(p.stream)writeEvent(p.stream,{...f,self:room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null},'jump:frame');
+  }
+ },1000/120);room.geoTimer.unref?.();
 }
 function finishGeo(room){clearInterval(room.geoTimer);room.geoTimer=null;room.status='finished';room.endedAt=Date.now();room.winnerIds=[room.geo.finished[0]].filter(Boolean);room.winnerId=room.winnerIds[0]||null;for(const [id,s] of room.geo.players){const p=room.players.get(id);if(p)p.points=Math.floor(s.best/Jump.C.metre);}broadcast(room);}
 function revealGeo(){return false;}
@@ -563,7 +568,7 @@ function connectEvents(req, res, url) {
 }
 const allowFiles = {
   '/':'index.html', '/index.html':'index.html',
-  '/geo-jump.webp':'geo-jump.webp','/map-hub.js':'map-hub.js','/map-hub.css':'map-hub.css','/map-data.js':'map-data.js','/map-dash.webp':'map-dash.webp',
+  '/jump-motion.js':'jump-motion.js','/geo-jump.webp':'geo-jump.webp','/map-hub.js':'map-hub.js','/map-hub.css':'map-hub.css','/map-data.js':'map-data.js','/map-dash.webp':'map-dash.webp',
   '/flags/jp.svg':'flags/jp.svg','/flags/fr.svg':'flags/fr.svg','/flags/it.svg':'flags/it.svg','/flags/de.svg':'flags/de.svg','/flags/br.svg':'flags/br.svg','/flags/ca.svg':'flags/ca.svg','/flags/au.svg':'flags/au.svg','/flags/nz.svg':'flags/nz.svg','/flags/in.svg':'flags/in.svg','/flags/za.svg':'flags/za.svg','/flags/gb.svg':'flags/gb.svg','/flags/kr.svg':'flags/kr.svg','/flags/mx.svg':'flags/mx.svg','/flags/ch.svg':'flags/ch.svg','/flags/se.svg':'flags/se.svg','/flags/es.svg':'flags/es.svg',
   '/word-hub.js':'word-hub.js', '/word-hub.css':'word-hub.css', '/word-weave.webp':'word-weave.webp', '/find-a-word.webp':'find-a-word.webp',
   '/app.js':'app.js', '/realtime.js':'realtime.js', '/style.css':'style.css', '/symbols.webp':'symbols.webp', '/symbols-sports.webp':'symbols-sports.webp', '/symbols-animals.webp':'symbols-animals.webp', '/symbols-emojis.webp':'symbols-emojis.webp', '/symbols-scifi.webp':'symbols-scifi.webp', '/symbols-festive.webp':'symbols-festive.webp', '/logo-mark.svg':'logo-mark.svg', '/start-rocket.webp':'start-rocket.webp', '/cosmic-sky-bg.jpg':'cosmic-sky-bg.jpg', '/spot-sprint-wordmark.webp':'spot-sprint-wordmark.webp', '/arcade-mountains.webp':'arcade-mountains.webp'
