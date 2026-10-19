@@ -8,6 +8,12 @@ function platformX(p,t){return p.x+(p.move?Math.sin(t*2.1+p.phase)*p.move:0);}
 function hazardX(w,h,t){if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
 const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','lightningCharges','lightningTime','lightningHeld','lightningCycle','strikeTargetId','waterPush','waterPushRemaining','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','seq'];
 function snapshot(s){return Object.fromEntries(fields.map(k=>[k,s[k]]));}
+// Static altitude buckets: horizontal platform motion does not invalidate these.
+const altitudeIndexes=new WeakMap(),bucketSize=256;
+function nearby(list,low,high){let index=altitudeIndexes.get(list);if(!index||index.length!==list.length){const buckets=new Map();for(const item of list){const k=Math.floor(item.y/bucketSize);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(item);}index={length:list.length,buckets};altitudeIndexes.set(list,index);}const found=[];for(let k=Math.floor(low/bucketSize);k<=Math.floor(high/bucketSize);k++)for(const item of index.buckets.get(k)||[])if(item.y>=low&&item.y<=high)found.push(item);return found;}
+const flagFields=['question','spring','jet','golden','water','shot','lightning','dazed','hit','netFlash'];
+function packPlayers(players){return players.map(p=>[p.id,p.x,p.y,Math.round(p.vy*10)/10,p.face,p.best,p.finish,flagFields.reduce((bits,k,i)=>bits|(p[k]?1<<i:0),0),p.lightningRange]);}
+function unpackPlayers(rows,roster){const byId=new Map(roster.map(p=>[p.id,p]));return rows.map(a=>{const p={...byId.get(a[0]),id:a[0],x:a[1],y:a[2],vy:a[3],face:a[4],best:a[5],finish:a[6],lightningRange:a[8]};flagFields.forEach((k,i)=>p[k]=!!(a[7]&(1<<i)));return p;});}
 function advance(w,s,keys,dt,t){
  for(const k of ['immune','stun','cool','hit','netFlash'])s[k]=Math.max(0,(s[k]||0)-dt);
  if(s.strikeTargetId!=null){const p=w.platforms[s.strikeTargetId],targetY=p?.y||0,targetX=p?platformX(p,t):s.x;const remaining=Math.max(1,s.y-targetY);if(s.waterPushRemaining>0){s.x+=(s.waterPush||1)*650*dt;s.waterPushRemaining=Math.max(0,s.waterPushRemaining-dt);}else s.x+=(targetX-s.x)*Math.min(1,1100*dt/remaining);const [edgeL,edgeR]=bounds(w,s.y);s.x=clamp(s.x,edgeL+16,edgeR-16);s.y=Math.max(targetY,s.y-1100*dt);s.vy=-1100;s.ground=false;if(s.y<=targetY){s.x=targetX;s.vy=0;s.ground=true;s.groundId=p?.id??null;s.stand=targetY;s.strikeTargetId=null;s.cool=.15;s.immune=Math.max(s.immune,1);}return true;}
@@ -28,18 +34,18 @@ function advance(w,s,keys,dt,t){
   if(!s.ground)s.vy-=C.gravity*dt;
  }
  s.y+=s.vy*dt;
- if(jet){let ceiling=null;for(const p of w.platforms){const underside=p.y-14;if(oldY+40<=underside+.01&&s.y+40>=underside&&Math.abs(s.x-platformX(p,t))<p.w/2+12&&(!ceiling||p.y<ceiling.y))ceiling=p;}if(ceiling){s.y=ceiling.y-54;s.vy=0;}}
+ if(jet){let ceiling=null;for(const p of nearby(w.platforms,oldY+54-.01,s.y+54)){const underside=p.y-14;if(oldY+40<=underside+.01&&s.y+40>=underside&&Math.abs(s.x-platformX(p,t))<p.w/2+12&&(!ceiling||p.y<ceiling.y))ceiling=p;}if(ceiling){s.y=ceiling.y-54;s.vy=0;}}
  const [lo,hi]=bounds(w,s.y);s.x=clamp(s.x,lo+16,hi-16);
  if(s.vy<0&&!jet){
   if(s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(3);s.stand=s.y;s.immune=2;s.netFlash=.7;}
-  else {let landing=null;for(const p of w.platforms){if(p.y<s.y-2||p.y>oldY+2||Math.abs(s.x-platformX(p,t))>=p.w/2+10)continue;if(!landing||p.y>landing.y)landing=p;}
+  else {let landing=null;for(const p of nearby(w.platforms,s.y-2,oldY+2)){if(p.y<s.y-2||p.y>oldY+2||Math.abs(s.x-platformX(p,t))>=p.w/2+10)continue;if(!landing||p.y>landing.y)landing=p;}
    if(landing){s.knockFloor=null;s.y=landing.y;s.vy=0;s.ground=true;s.stand=landing.y;s.groundId=landing.id;s.cool=.035;}}
  }
  if(s.knockFloor!=null&&s.y<=s.knockFloor){s.y=s.knockFloor;s.knockFloor=null;s.vy=0;}
  if(s.y<=0){s.y=0;s.vy=0;s.ground=true;s.groundId=null;s.stand=0;}
  const checkpoint=Math.floor(s.best/(100*C.metre))*100*C.metre;if(s.best>=(s.checkpointLock||0))s.checkpoint=Math.max(s.checkpoint,checkpoint);
- if(s.knockFloor==null&&s.y<s.checkpoint-500){const candidates=w.platforms.filter(p=>p.y<=s.checkpoint&&p.y>s.checkpoint-180);const p=candidates.sort((a,b)=>Math.abs(a.x-s.x)-Math.abs(b.x-s.x))[0];if(p){s.x=platformX(p,t);s.y=p.y;s.vy=0;s.ground=true;s.groundId=p.id;s.stand=p.y;s.immune=3;}}
+ if(s.knockFloor==null&&s.y<s.checkpoint-500){const candidates=nearby(w.platforms,s.checkpoint-180,s.checkpoint).filter(p=>p.y>s.checkpoint-180);const p=candidates.sort((a,b)=>Math.abs(a.x-s.x)-Math.abs(b.x-s.x))[0];if(p){s.x=platformX(p,t);s.y=p.y;s.vy=0;s.ground=true;s.groundId=p.id;s.stand=p.y;s.immune=3;}}
  s.best=Math.max(s.best,s.y);return false;
 }
-return {C,bounds,platformX,hazardX,snapshot,advance};
+return {C,bounds,platformX,hazardX,snapshot,advance,nearby,packPlayers,unpackPlayers};
 });

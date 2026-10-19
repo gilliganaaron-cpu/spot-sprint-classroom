@@ -86,10 +86,9 @@ function writeEvent(stream, payload, event = 'message') {
 function broadcast(room) {
   room.revision = (room.revision || 0) + 1;
   room.updatedAt = Date.now();
-  if (room.hostStream) writeEvent(room.hostStream, view(room, 'teacher'));
-  for (const p of room.players.values()) {
-    if (p.stream) writeEvent(p.stream, view(room, 'student', p.id));
-  }
+  const sendView=(stream,role,id)=>{if(!stream)return;const state=view(room,role,id);if(state.geo?.world){const worldId=state.geo.world.id;if(stream.geoWorldId===worldId)delete state.geo.world;else stream.geoWorldId=worldId;}writeEvent(stream,state);};
+  sendView(room.hostStream,'teacher');
+  for (const p of room.players.values()) sendView(p.stream,'student',p.id);
 }
 // Timed races end at the authoritative server deadline, even when a student
 // is watching a match celebration. Scores awarded before the deadline count.
@@ -213,8 +212,12 @@ function beginGeo(room) {
   if(room.geo.done){finishGeo(room);return;}
   if(now-lastPush>=50){lastPush=now;
    for(const [id,s] of room.geo.players){const p=room.players.get(id);if(p)p.points=Math.floor(s.y/Jump.C.metre);}
-   const f={...Jump.frame(room.geo),status:room.status};if(room.hostStream)writeEvent(room.hostStream,f,'jump:frame');
-   for(const p of room.players.values())if(p.stream)writeEvent(p.stream,{...f,self:room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null},'jump:frame');
+   const f={...Jump.frame(room.geo),status:room.status};
+   f.rows=require('./public/jump-motion').packPlayers(f.players);delete f.players;f.t=Math.round(f.t*1000)/1000;
+   const shared=JSON.stringify(f).slice(0,-1);
+   const send=(stream,self)=>{if(!stream||stream.writableEnded||stream.destroyed||stream.writableLength>65536)return;try{stream.write('event: jump:frame\ndata: '+shared+',"self":'+JSON.stringify(self)+'}\n\n');}catch{}};
+   send(room.hostStream,null);
+   for(const p of room.players.values())if(p.stream)send(p.stream,room.geo.players.has(p.id)?Jump.privateState(room.geo.players.get(p.id)):null);
   }
  },1000/120);room.geoTimer.unref?.();
 }

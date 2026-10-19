@@ -5,6 +5,7 @@
     const listeners = new Map();
     let stream = null;
     let streamKey = null;
+    let geoWorld = null;
     const client = {
       connected:false,
       on(name,handler) {
@@ -29,7 +30,7 @@
         const url=`/events?code=${encodeURIComponent(session.code)}&role=${encodeURIComponent(session.role)}&token=${encodeURIComponent(session.token)}`;
         stream=new EventSource(url);
         stream.onmessage=e=>{
-          try { fire('room:update',JSON.parse(e.data)); } catch { /* malformed event */ }
+          try { const state=JSON.parse(e.data);if(state.geo){if(state.geo.world)geoWorld=state.geo.world;else if(geoWorld?.id===state.geo.id)state.geo.world=geoWorld;}fire('room:update',state); } catch { /* malformed event */ }
         };
         stream.addEventListener('maze:frame',e=>{try{fire('maze:frame',JSON.parse(e.data));}catch{}});
         stream.addEventListener('jump:frame',e=>{try{fire('jump:frame',JSON.parse(e.data));}catch{}});
