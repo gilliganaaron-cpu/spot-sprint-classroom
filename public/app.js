@@ -640,7 +640,7 @@
     if ((view.gameType || 'spot') === 'spot' && view.status === 'lobby' && teacherHeaderInfo.dataset.roomCode === view.code &&
       teacherHeaderInfo.dataset.gameMode === view.gameMode && currentTheme) {
       syncHeaderSettings(currentSlider,currentTheme);
-      teacherHeaderActions.innerHTML = teacherControls();
+      const nextControls=teacherControls();if(teacherHeaderActions.innerHTML!==nextControls)teacherHeaderActions.innerHTML=nextControls;
       return;
     }
     const timed = view.gameMode === 'timed';
@@ -670,10 +670,11 @@
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
         ' ' + escape(THEME_META[view.theme]?.label || 'Mixed') + '</span><b>' +
         (timed ? '⏱ <span data-round-clock>' + roundClockLabel() + '</span>' : 'First to ' + view.cardsToWin + ' cards') + '</b></div>';
-    teacherHeaderInfo.innerHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><strong class="fitted-join-url">${escape(location.host || 'spot-sprint.onrender.com')}</strong></div></div><div class="header-room-code"><span class="room-code-label"><span class="join-gamepad" aria-hidden="true">🎮</span><small>Code</small></span><div><strong class="fitted-room-code">${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
+    const nextHeaderHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><strong class="fitted-join-url">${escape(location.host || 'spot-sprint.onrender.com')}</strong></div></div><div class="header-room-code"><span class="room-code-label"><span class="join-gamepad" aria-hidden="true">🎮</span><small>Code</small></span><div><strong class="fitted-room-code">${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
+    if(teacherHeaderInfo.innerHTML!==nextHeaderHTML)teacherHeaderInfo.innerHTML=nextHeaderHTML;
     teacherHeaderInfo.dataset.roomCode = view.code;
     teacherHeaderInfo.dataset.gameMode = view.gameMode;
-    teacherHeaderActions.innerHTML = teacherControls();
+    const nextControls=teacherControls();if(teacherHeaderActions.innerHTML!==nextControls)teacherHeaderActions.innerHTML=nextControls;
   }
   function renderLanding() {
     screen.innerHTML = `<div class="home-hub">
@@ -870,7 +871,7 @@
     const gameMeta = wordGame ? WordHub.GAMES[view.gameType] : WordHub.GAMES.spot;
     if (!brand.src.endsWith(gameMeta.icon)) brand.src = gameMeta.icon;
     brand.alt = gameMeta.name;
-    document.getElementById('active-game-name').textContent = wordGame ? gameMeta.name : '';
+    const nameElement=document.getElementById('active-game-name'),nameText=wordGame?gameMeta.name:'';if(nameElement.textContent!==nameText)nameElement.textContent=nameText;
     document.title = gameMeta.name + ' · Classroom Arcade';
     document.documentElement.classList.toggle('student-card-view', Boolean(!wordGame && view?.role === 'student' && ['countdown','playing','paused'].includes(view.status) && (view.status === 'countdown' || view.me?.inRound)));
     document.documentElement.classList.toggle('teacher-lobby', Boolean(view?.role === 'teacher' && view.status === 'lobby'));

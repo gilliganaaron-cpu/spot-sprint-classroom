@@ -17,19 +17,20 @@ function unpackPlayers(rows,roster){const byId=new Map(roster.map(p=>[p.id,p]));
 function advance(w,s,keys,dt,t){
  for(const k of ['immune','stun','cool','hit','netFlash'])s[k]=Math.max(0,(s[k]||0)-dt);
  if(s.strikeTargetId!=null){const p=w.platforms[s.strikeTargetId],targetY=p?.y||0,targetX=p?platformX(p,t):s.x;const remaining=Math.max(1,s.y-targetY);if(s.waterPushRemaining>0){s.x+=(s.waterPush||1)*650*dt;s.waterPushRemaining=Math.max(0,s.waterPushRemaining-dt);}else s.x+=(targetX-s.x)*Math.min(1,1100*dt/remaining);const [edgeL,edgeR]=bounds(w,s.y);s.x=clamp(s.x,edgeL+16,edgeR-16);s.y=Math.max(targetY,s.y-1100*dt);s.vy=-1100;s.ground=false;if(s.y<=targetY){s.x=targetX;s.vy=0;s.ground=true;s.groundId=p?.id??null;s.stand=targetY;s.strikeTargetId=null;s.cool=.15;s.immune=Math.max(s.immune,1);}return true;}
- if(s.dazed>0){s.dazed=Math.max(0,s.dazed-dt);const recoil=Math.min(dt,s.recoil||0);if(recoil>0){s.x+=(s.kickVX||0)*recoil;s.y+=160*recoil;s.recoil=Math.max(0,s.recoil-dt);}const [left,right]=bounds(w,s.y);s.x=clamp(s.x,left+16,right-16);s.vx=0;s.vy=0;s.ground=false;s.groundId=null;return true;}
+ if(s.dazed>0){s.dazed=Math.max(0,s.dazed-dt);s.vx=0;s.vy=0;s.ground=false;s.groundId=null;return true;}
  s.lightningTime=Math.max(0,(s.lightningTime||0)-dt);
- if(keys.lightning&&!s.lightningHeld&&s.lightningCharges>0&&s.lightningTime===0){s.lightningCharges--;s.lightningTime=5;s.lightningCycle=(s.lightningCycle||0)+1;}
+ if(keys.lightning&&!s.lightningHeld&&s.lightningCharges>0&&s.lightningTime===0){s.lightningCharges--;s.lightningTime=2.5;s.lightningCycle=(s.lightningCycle||0)+1;}
  s.lightningHeld=!!keys.lightning;
  if(s.golden>0){s.golden=Math.max(0,s.golden-dt);s.y=Math.min(s.goldenTarget,s.y+1100*dt);s.vy=0;s.ground=false;s.best=Math.max(s.best,s.y);return true;}
  if(s.ground&&s.groundId!=null){const p=w.platforms[s.groundId];if(p)s.x+=platformX(p,t)-platformX(p,t-dt);}
+ if(s.ground){const p=w.platforms[s.groundId];if(s.groundId!=null&&(!p||Math.abs(s.x-platformX(p,t))>p.w/2||Math.abs(s.y-p.y)>.01)||s.groundId==null&&s.y>0){s.ground=false;s.groundId=null;}}
  s.spring=Math.max(0,s.spring-dt);const jet=s.jet>0&&keys.jump&&s.stun===0&&s.knockFloor==null;
  s.vx=s.stun>0?0:((keys.right?1:0)-(keys.left?1:0))*C.speed;if(s.vx)s.face=Math.sign(s.vx);s.x+=s.vx*dt;
  const oldY=s.y;
  if(s.knockFloor!=null){s.vy=-1100;s.ground=false;}
  else if(jet){s.jet=Math.max(0,s.jet-dt);s.vy=C.jetSpeed;s.ground=false;}
  else {
-  if(s.ground&&s.groundId!==null){const p=w.platforms[s.groundId];if(!p||Math.abs(s.x-platformX(p,t))>p.w/2+10){s.ground=false;s.groundId=null;}}
+  if(s.ground&&s.groundId!==null){const p=w.platforms[s.groundId];if(!p||Math.abs(s.x-platformX(p,t))>p.w/2){s.ground=false;s.groundId=null;}}
   if(keys.jump&&s.ground&&s.cool===0&&s.stun===0){s.vy=C.jump*(s.spring>0?Math.sqrt(3):1);s.ground=false;s.groundId=null;}
   if(!s.ground)s.vy-=C.gravity*dt;
  }
@@ -38,7 +39,7 @@ function advance(w,s,keys,dt,t){
  const [lo,hi]=bounds(w,s.y);s.x=clamp(s.x,lo+16,hi-16);
  if(s.vy<0&&!jet){
   if(s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(3);s.stand=s.y;s.immune=2;s.netFlash=.7;}
-  else {let landing=null;for(const p of nearby(w.platforms,s.y-2,oldY+2)){if(p.y<s.y-2||p.y>oldY+2||Math.abs(s.x-platformX(p,t))>=p.w/2+10)continue;if(!landing||p.y>landing.y)landing=p;}
+  else {let landing=null;for(const p of nearby(w.platforms,s.y,oldY+.001)){if(p.y<s.y||p.y>oldY+.001||Math.abs(s.x-platformX(p,t))>p.w/2)continue;if(!landing||p.y>landing.y)landing=p;}
    if(landing){s.knockFloor=null;s.y=landing.y;s.vy=0;s.ground=true;s.stand=landing.y;s.groundId=landing.id;s.cool=.035;}}
  }
  if(s.knockFloor!=null&&s.y<=s.knockFloor){s.y=s.knockFloor;s.knockFloor=null;s.vy=0;}
