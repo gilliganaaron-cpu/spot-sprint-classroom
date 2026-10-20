@@ -1,11 +1,11 @@
 /* Shared deterministic movement: client prediction never awards items or scores. */
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory();else root.JumpMotion=factory();})(typeof globalThis!=='undefined'?globalThis:this,()=>{
 'use strict';
-const C={gravity:1100,jump:600,speed:300,metre:43.2,spring:30,jet:8,jetSpeed:500,water:100,waterDrain:18,netDrop:180,step:1/60};
+const C={gravity:1100,jump:600,speed:300,metre:43.2,spring:30,jet:8,jetSpeed:500,water:100,waterDrain:18,netDrop:90,step:1/60};
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function bounds(w,y){const summit=500*(w.scale||1),width=summit+(w.width-summit)*Math.pow(1-clamp(y/w.height,0,1),.8);return[(w.width-width)/2,(w.width+width)/2];}
 function platformX(p,t){return p.x+(p.move?Math.sin(t*2.1+p.phase)*p.move:0);}
-function platformY(p,t){return p.y+(p.lift?Math.sin(t*.9+(p.phase||0))*p.lift:0);}
+function platformY(p,t){return p.y+(p.lift?Math.sin(t*1.8+(p.phase||0))*p.lift:0);}
 function hazardY(h,t){return h.y+(h.type==='comet'?180-((t*h.speed+h.phase)%900+900)%900*.4:0);}
 function hazardX(w,h,t){if(h.type==='comet'){const [l,r]=bounds(w,h.y),q=((t*h.speed+h.phase)%900+900)%900/900;return h.direction<0?r+80-q*(r-l+160):l-80+q*(r-l+160);}if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
 const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','lightningCharges','lightningTime','lightningHeld','lightningCycle','strikeTargetId','waterPush','waterPushRemaining','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','recoveryEvent','seq'];
@@ -40,7 +40,7 @@ function advance(w,s,keys,dt,t){
  if(jet){let ceiling=null;for(const p of nearby(w.platforms,oldY+54-24,s.y+54+24)){const underside=platformY(p,t)-14;if(oldY+40<=platformY(p,t-dt)-14+.01&&s.y+40>=underside&&Math.abs(s.x-platformX(p,t))<p.w/2+12&&(!ceiling||platformY(p,t)<platformY(ceiling,t)))ceiling=p;}if(ceiling){s.y=platformY(ceiling,t)-54;s.vy=0;}}
  const [lo,hi]=bounds(w,s.y);s.x=clamp(s.x,lo+16,hi-16);
  if(!jet){
-  if(s.vy<0&&s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(3);s.stand=s.y;s.immune=2;s.netFlash=.7;}
+  if(s.vy<0&&s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(6);s.stand=s.y;s.immune=2;s.netFlash=.7;}
   else if(!s.ground){let landing=null,landingY=-Infinity;for(const p of nearby(w.platforms,Math.min(s.y,oldY)-24,Math.max(s.y,oldY)+24)){const py=platformY(p,t),prevY=platformY(p,t-dt);if(oldY<prevY-.001||s.y>py||Math.abs(s.x-platformX(p,t))>p.w/2)continue;if(py>landingY){landing=p;landingY=py;}}
    if(landing){s.knockFloor=null;s.y=landingY;s.vy=0;s.ground=true;s.stand=landingY;s.groundId=landing.id;s.cool=.035;}}
  }
