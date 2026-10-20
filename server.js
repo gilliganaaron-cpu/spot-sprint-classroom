@@ -349,7 +349,7 @@ function action(body) {
     return success({view:view(room,'teacher')});
   }
   if(command==='room:geo-settings') {
-    if(room.gameType!=='geo'||room.status!=='lobby'||![1,2,3].includes(data.km))return failure('Choose a 1, 2 or 3 km dash in the lobby.');
+    if(room.gameType!=='geo'||room.status!=='lobby'||![.5,1,2,3].includes(data.km))return failure('Choose a 500 m, 1, 2 or 3 km dash in the lobby.');
     room.geoSettings={km:data.km};broadcast(room);return success({view:view(room,'teacher')});
   }
   if(command==='jump:character'){

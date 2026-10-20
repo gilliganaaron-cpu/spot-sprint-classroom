@@ -5,8 +5,10 @@ const C={gravity:1100,jump:600,speed:300,metre:43.2,spring:30,jet:8,jetSpeed:500
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function bounds(w,y){const summit=500*(w.scale||1),width=summit+(w.width-summit)*Math.pow(1-clamp(y/w.height,0,1),.8);return[(w.width-width)/2,(w.width+width)/2];}
 function platformX(p,t){return p.x+(p.move?Math.sin(t*2.1+p.phase)*p.move:0);}
-function hazardX(w,h,t){if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
-const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','lightningCharges','lightningTime','lightningHeld','lightningCycle','strikeTargetId','waterPush','waterPushRemaining','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','seq'];
+function platformY(p,t){return p.y+(p.lift?Math.sin(t*.9+(p.phase||0))*p.lift:0);}
+function hazardY(h,t){return h.y+(h.type==='comet'?180-((t*h.speed+h.phase)%900+900)%900*.4:0);}
+function hazardX(w,h,t){if(h.type==='comet'){const [l,r]=bounds(w,h.y),q=((t*h.speed+h.phase)%900+900)%900/900;return h.direction<0?r+80-q*(r-l+160):l-80+q*(r-l+160);}if(h.type==='plane'){const [left,right]=bounds(w,h.y),span=right-left+160,travel=((t*h.speed+h.phase)%span+span)%span;return h.direction<0?right+80-travel:left-80+travel;}return h.x+Math.sin(t*h.speed+h.phase)*h.range;}
+const fields=['x','y','vx','vy','face','ground','stand','groundId','best','spring','jet','jetCapacity','nets','water','waterCapacity','immune','stun','cool','golden','goldenTarget','hit','netFlash','lightningCharges','lightningTime','lightningHeld','lightningCycle','strikeTargetId','waterPush','waterPushRemaining','dazed','recoil','kickVX','checkpoint','checkpointLock','knockFloor','recoveryEvent','seq'];
 function snapshot(s){return Object.fromEntries(fields.map(k=>[k,s[k]]));}
 // Static altitude buckets: horizontal platform motion does not invalidate these.
 const altitudeIndexes=new WeakMap(),bucketSize=256;
@@ -16,14 +18,14 @@ function packPlayers(players){return players.map(p=>[p.id,p.x,p.y,Math.round(p.v
 function unpackPlayers(rows,roster){const byId=new Map(roster.map(p=>[p.id,p]));return rows.map(a=>{const p={...byId.get(a[0]),id:a[0],x:a[1],y:a[2],vy:a[3],face:a[4],best:a[5],finish:a[6],lightningRange:a[8]};flagFields.forEach((k,i)=>p[k]=!!(a[7]&(1<<i)));return p;});}
 function advance(w,s,keys,dt,t){
  for(const k of ['immune','stun','cool','hit','netFlash'])s[k]=Math.max(0,(s[k]||0)-dt);
- if(s.strikeTargetId!=null){const p=w.platforms[s.strikeTargetId],targetY=p?.y||0,targetX=p?platformX(p,t):s.x;const remaining=Math.max(1,s.y-targetY);if(s.waterPushRemaining>0){s.x+=(s.waterPush||1)*650*dt;s.waterPushRemaining=Math.max(0,s.waterPushRemaining-dt);}else s.x+=(targetX-s.x)*Math.min(1,1100*dt/remaining);const [edgeL,edgeR]=bounds(w,s.y);s.x=clamp(s.x,edgeL+16,edgeR-16);s.y=Math.max(targetY,s.y-1100*dt);s.vy=-1100;s.ground=false;if(s.y<=targetY){s.x=targetX;s.vy=0;s.ground=true;s.groundId=p?.id??null;s.stand=targetY;s.strikeTargetId=null;s.cool=.15;s.immune=Math.max(s.immune,1);}return true;}
+ if(s.strikeTargetId!=null){const p=w.platforms[s.strikeTargetId],targetY=p?platformY(p,t):0,targetX=p?platformX(p,t):s.x;const remaining=Math.max(1,s.y-targetY);if(s.waterPushRemaining>0){s.x+=(s.waterPush||1)*650*dt;s.waterPushRemaining=Math.max(0,s.waterPushRemaining-dt);}else s.x+=(targetX-s.x)*Math.min(1,1100*dt/remaining);const [edgeL,edgeR]=bounds(w,s.y);s.x=clamp(s.x,edgeL+16,edgeR-16);s.y=Math.max(targetY,s.y-1100*dt);s.vy=-1100;s.ground=false;if(s.y<=targetY){s.x=targetX;s.vy=0;s.ground=true;s.groundId=p?.id??null;s.stand=targetY;s.strikeTargetId=null;s.cool=.15;s.immune=Math.max(s.immune,1);}return true;}
  if(s.dazed>0){s.dazed=Math.max(0,s.dazed-dt);s.vx=0;s.vy=0;s.ground=false;s.groundId=null;return true;}
  s.lightningTime=Math.max(0,(s.lightningTime||0)-dt);
  if(keys.lightning&&!s.lightningHeld&&s.lightningCharges>0&&s.lightningTime===0){s.lightningCharges--;s.lightningTime=2.5;s.lightningCycle=(s.lightningCycle||0)+1;}
  s.lightningHeld=!!keys.lightning;
- if(s.golden>0){s.golden=Math.max(0,s.golden-dt);s.y=Math.min(s.goldenTarget,s.y+1100*dt);s.vy=0;s.ground=false;s.best=Math.max(s.best,s.y);return true;}
- if(s.ground&&s.groundId!=null){const p=w.platforms[s.groundId];if(p)s.x+=platformX(p,t)-platformX(p,t-dt);}
- if(s.ground){const p=w.platforms[s.groundId];if(s.groundId!=null&&(!p||Math.abs(s.x-platformX(p,t))>p.w/2||Math.abs(s.y-p.y)>.01)||s.groundId==null&&s.y>0){s.ground=false;s.groundId=null;}}
+ if(s.golden>0){s.golden=Math.max(0,s.golden-dt);s.y=Math.max(s.y,Math.min(s.goldenTarget,s.y+1100*dt));s.vy=0;s.ground=false;s.best=Math.max(s.best,s.y);return true;}
+ if(s.ground&&s.groundId!=null){const p=w.platforms[s.groundId];if(p){s.x+=platformX(p,t)-platformX(p,t-dt);s.y+=platformY(p,t)-platformY(p,t-dt);}}
+ if(s.ground){const p=w.platforms[s.groundId];if(s.groundId!=null&&(!p||Math.abs(s.x-platformX(p,t))>p.w/2||Math.abs(s.y-platformY(p,t))>.01)||s.groundId==null&&s.y>0){s.ground=false;s.groundId=null;}}
  s.spring=Math.max(0,s.spring-dt);const jet=s.jet>0&&keys.jump&&s.stun===0&&s.knockFloor==null;
  s.vx=s.stun>0?0:((keys.right?1:0)-(keys.left?1:0))*C.speed;if(s.vx)s.face=Math.sign(s.vx);s.x+=s.vx*dt;
  const oldY=s.y;
@@ -35,18 +37,19 @@ function advance(w,s,keys,dt,t){
   if(!s.ground)s.vy-=C.gravity*dt;
  }
  s.y+=s.vy*dt;
- if(jet){let ceiling=null;for(const p of nearby(w.platforms,oldY+54-.01,s.y+54)){const underside=p.y-14;if(oldY+40<=underside+.01&&s.y+40>=underside&&Math.abs(s.x-platformX(p,t))<p.w/2+12&&(!ceiling||p.y<ceiling.y))ceiling=p;}if(ceiling){s.y=ceiling.y-54;s.vy=0;}}
+ if(jet){let ceiling=null;for(const p of nearby(w.platforms,oldY+54-24,s.y+54+24)){const underside=platformY(p,t)-14;if(oldY+40<=platformY(p,t-dt)-14+.01&&s.y+40>=underside&&Math.abs(s.x-platformX(p,t))<p.w/2+12&&(!ceiling||platformY(p,t)<platformY(ceiling,t)))ceiling=p;}if(ceiling){s.y=platformY(ceiling,t)-54;s.vy=0;}}
  const [lo,hi]=bounds(w,s.y);s.x=clamp(s.x,lo+16,hi-16);
- if(s.vy<0&&!jet){
-  if(s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(3);s.stand=s.y;s.immune=2;s.netFlash=.7;}
-  else {let landing=null;for(const p of nearby(w.platforms,s.y,oldY+.001)){if(p.y<s.y||p.y>oldY+.001||Math.abs(s.x-platformX(p,t))>p.w/2)continue;if(!landing||p.y>landing.y)landing=p;}
-   if(landing){s.knockFloor=null;s.y=landing.y;s.vy=0;s.ground=true;s.stand=landing.y;s.groundId=landing.id;s.cool=.035;}}
+ if(!jet){
+  if(s.vy<0&&s.nets>0&&s.y<s.stand-C.netDrop){s.knockFloor=null;s.nets--;s.vy=C.jump*Math.sqrt(3);s.stand=s.y;s.immune=2;s.netFlash=.7;}
+  else if(!s.ground){let landing=null,landingY=-Infinity;for(const p of nearby(w.platforms,Math.min(s.y,oldY)-24,Math.max(s.y,oldY)+24)){const py=platformY(p,t),prevY=platformY(p,t-dt);if(oldY<prevY-.001||s.y>py||Math.abs(s.x-platformX(p,t))>p.w/2)continue;if(py>landingY){landing=p;landingY=py;}}
+   if(landing){s.knockFloor=null;s.y=landingY;s.vy=0;s.ground=true;s.stand=landingY;s.groundId=landing.id;s.cool=.035;}}
  }
+
  if(s.knockFloor!=null&&s.y<=s.knockFloor){s.y=s.knockFloor;s.knockFloor=null;s.vy=0;}
  if(s.y<=0){s.y=0;s.vy=0;s.ground=true;s.groundId=null;s.stand=0;}
  const checkpoint=Math.floor(s.best/(100*C.metre))*100*C.metre;if(s.best>=(s.checkpointLock||0))s.checkpoint=Math.max(s.checkpoint,checkpoint);
- if(s.knockFloor==null&&s.y<s.checkpoint-500){const candidates=nearby(w.platforms,s.checkpoint-180,s.checkpoint).filter(p=>p.y>s.checkpoint-180);const p=candidates.sort((a,b)=>Math.abs(a.x-s.x)-Math.abs(b.x-s.x))[0];if(p){s.x=platformX(p,t);s.y=p.y;s.vy=0;s.ground=true;s.groundId=p.id;s.stand=p.y;s.immune=3;}}
+ if(s.knockFloor==null&&s.y<s.checkpoint-500){const candidates=nearby(w.platforms,s.checkpoint-180,s.checkpoint).filter(p=>p.y>s.checkpoint-180);const p=candidates.sort((a,b)=>Math.abs(a.x-s.x)-Math.abs(b.x-s.x))[0];if(p){s.x=platformX(p,t);s.y=platformY(p,t);s.vy=0;s.ground=true;s.groundId=p.id;s.stand=s.y;s.immune=3;s.recoveryEvent=(s.recoveryEvent||0)+1;}}
  s.best=Math.max(s.best,s.y);return false;
 }
-return {C,bounds,platformX,hazardX,snapshot,advance,nearby,packPlayers,unpackPlayers};
+return {C,bounds,platformX,platformY,hazardX,hazardY,snapshot,advance,nearby,packPlayers,unpackPlayers};
 });
