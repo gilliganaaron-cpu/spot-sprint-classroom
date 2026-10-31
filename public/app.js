@@ -582,7 +582,7 @@
     document.documentElement.classList.toggle('student-active', Boolean(active));
     if (!active) { studentHeaderInfo.innerHTML = ''; return; }
     const finished = view.status === 'finished';
-    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'maze' ? 'find a key and escape!' : view.gameType === 'geo' ? 'jump to the stars!' : view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
+    studentHeaderInfo.innerHTML = `<div class="student-live-intro"><strong>${finished ? ((view.winnerId === view.me?.id || (view.winnerIds || []).includes(view.me?.id)) ? 'You won! 🏆' : 'Race finished!') : `Your turn ${escape(view.me?.name || 'player')}, ${view.gameType === 'maze' ? 'make your move!' : view.gameType === 'geo' ? 'jump to the stars!' : view.gameType === 'weave' ? 'weave your words!' : view.gameType === 'search' ? 'find them first!' : 'Spot it first!'}`}</strong>${finished ? '<div class="student-live-hint">Great spotting!</div>' : ''}</div>`;
   }
   // Keep teacher settings mounted while a room stays in the lobby.
   // Server push messages must not replace the range input mid-drag.
