@@ -43,7 +43,7 @@ function endContest(r,c,winner){if(!r.contests.has(c.id))return;const cop=r.play
 }
 function finish(r){r.done=true;r.winningTeam=r.scores.cop===r.scores.robber?null:r.scores.cop>r.scores.robber?'cop':'robber';r.winners=r.winningTeam?[...r.players.values()].filter(p=>p.team===r.winningTeam).map(p=>p.id):[];r.winner=r.winners[0]||null;for(const p of r.players.values()){p.question=null;p.feedback=null;p.input=null;}for(const k of r.items)k.reservedBy=null;r.contests.clear();}
 function answer(r,p,d){const q=p.question;if(r.done||!q||q.id!==d.id||q.answered||r.t>=q.ends||r.t>=RULES.duration||!Number.isInteger(d.choice)||d.choice<0||d.choice>=q.options.length)return {ok:false,error:'That question is no longer active.'};const correct=d.choice===q.correct;p.input=null;if(correct)p.correct++;
- if(q.kind==='contest'){const c=r.contests.get(q.contest);if(!c)return {ok:false,error:'The chase has ended.'};q.answered=true;if(correct)endContest(r,c,p);else{feedback(r,p,'Not quite. Your answer is locked.',RULES.questionTime);if([c.cop,c.robber].every(id=>r.players.get(id).question?.answered))endContest(r,c,null);}}
+ if(q.kind==='contest'){const c=r.contests.get(q.contest);if(!c)return {ok:false,error:'The chase has ended.'};q.answered=true;if(correct)endContest(r,c,p);else if(p.team==='cop')endContest(r,c,r.players.get(c.robber));else{feedback(r,p,'Not quite. Your answer is locked.',RULES.questionTime);if([c.cop,c.robber].every(id=>r.players.get(id).question?.answered))endContest(r,c,null);}}
 
  return {ok:true,correct};}
 function step(r,dt,now){if(r.done)return;dt=Math.min(.05,Math.max(0,dt));r.t+=dt;if(r.t>=RULES.duration){finish(r);return;}
