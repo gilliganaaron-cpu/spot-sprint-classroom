@@ -165,7 +165,8 @@ function startRound(room) {
   room.timeEndsAt = null;
   room.timeRemainingMs = room.timeLimitSec * 1000;
   room.startedAt = Date.now();
-  room.countdownEndsAt = room.startedAt + 3000;
+  const briefingMs=room.gameType==='maze'?Maze.RULES.briefing*1000:3000;
+  room.countdownEndsAt = room.startedAt + briefingMs;
   room.endedAt = null;
   room.cardTurn = 1;
   room.lastEvent = null;
@@ -196,7 +197,7 @@ function startRound(room) {
       scheduleTimedFinish(room);
     }
     broadcast(room);
-  }, 3000);
+  }, briefingMs);
   return success({ status:'countdown', code:room.code, countdownEndsAt:end, view:view(room,'teacher') });
 }
 

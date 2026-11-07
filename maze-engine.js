@@ -2,7 +2,7 @@
 // Midnight Heist: server-authoritative movement, loot ownership and question duels.
 const {randomInt,randomUUID}=require('node:crypto'),bank=require('./jump-questions'),M=require('./public/maze-motion');
 const LOOT=[{type:'cash',name:'Money pile',value:25000},{type:'diamonds',name:'Diamonds',value:100000},{type:'car',name:'Ferrari',value:250000},{type:'chain',name:'Gold chain',value:50000},{type:'vault',name:'Bank vault',value:500000},{type:'sneakers',name:'Sneakers',value:10000}];
-const RULES={duration:300,questionTime:20,jailTime:8,protection:5,respawn:8,arrestBonus:50000};
+const RULES={duration:300,briefing:8,questionTime:20,jailTime:8,protection:5,respawn:8,arrestBonus:50000};
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=randomInt(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
 function world(count){const width=35,height=23,grid=Array(width*height).fill(1),stack=[[1,1]];grid[width+1]=0;
  while(stack.length){const[x,y]=stack.at(-1),next=Object.values(M.dirs).filter(([dx,dy])=>!dx||!dy).map(([dx,dy])=>[x+dx*2,y+dy*2,dx,dy]).filter(([a,b])=>a>0&&b>0&&a<width-1&&b<height-1&&grid[b*width+a]);if(!next.length){stack.pop();continue;}const[a,b,dx,dy]=next[randomInt(next.length)];grid[(y+dy)*width+x+dx]=grid[b*width+a]=0;stack.push([a,b]);}
@@ -23,11 +23,11 @@ function relocate(r,item){const w=r.world,cells=[];for(let y=1;y<w.height-1;y++)
 function spawnBolt(r,b){const cells=[];for(let y=1;y<r.world.height-1;y++)for(let x=4;x<r.world.width-4;x++)if(M.open(r.world,x,y)&&(x!==b.x||y!==b.y)&&!r.bolts.some(k=>k!==b&&Math.hypot(k.x-x,k.y-y)<4)&&!r.items.some(k=>k.holder==null&&k.x===x&&k.y===y)&&![...r.players.values()].some(p=>Math.hypot(p.x-x,p.y-y)<2))cells.push({x,y});if(cells.length)Object.assign(b,cells[randomInt(cells.length)]);b.availableAt=0;}
 function askContest(r,c,message){const cop=r.players.get(c.cop),robber=r.players.get(c.robber),q=pick([cop,robber]);c.retryAt=0;c.ends=r.t+RULES.questionTime;for(const p of [cop,robber]){p.feedback=null;stop(p);p.question={...q,kind:'contest',contest:c.id,ends:c.ends,answered:false,opponent:p===cop?robber.name:cop.name,copName:cop.name,robberName:robber.name,message};}}
 function retryContest(r,c,message){c.retryAt=r.t+2;c.ends=c.retryAt+RULES.questionTime;for(const id of [c.cop,c.robber]){const p=r.players.get(id);p.question.answered=true;p.question.message=message;p.feedback={text:message,until:c.retryAt};}}
-function create(players){const w=world(players.length),r={world:w,t:0,players:new Map(),items:[],bolts:[],contests:new Map(),scores:{cop:0,robber:0},winner:null,winners:[],winningTeam:null,done:false,events:[]};const order=shuffle([...players]),cops=players.length<2?0:Math.max(1,Math.floor(players.length/2));
- for(const [i,p]of order.entries()){const team=i<cops?'cop':'robber',base=team==='cop'?w.station:w.safehouse;r.players.set(p.id,{id:p.id,name:p.name,character:p.character||0,avatar:i%30,team,x:base.x,y:base.y+(i%3-1),tx:null,ty:null,dir:null,input:null,inputAt:0,seq:-1,immune:4,lootCount:0,boostTicks:0,jailUntil:0,question:null,feedback:null,points:0,arrests:0,deliveries:0,correct:0,history:new Set(),retry:new Map(),epoch:0,motionTick:0,clockTick:0,timeline:false,inputSteps:new Map()});}
+function create(players){const w=world(players.length),r={world:w,t:0,round:1,brief:0,players:new Map(),items:[],bolts:[],contests:new Map(),scores:{cop:0,robber:0},winner:null,winners:[],winningTeam:null,done:false,events:[]};const order=shuffle([...players]),cops=players.length<2?0:Math.max(1,Math.floor(players.length/2));
+ for(const [i,p]of order.entries()){const team=i<cops?'cop':'robber',base=team==='cop'?w.station:w.safehouse;r.players.set(p.id,{id:p.id,name:p.name,character:p.character||0,avatar:i%30,team,firstTeam:team,firstPoints:0,x:base.x,y:base.y+(i%3-1),tx:null,ty:null,dir:null,input:null,inputAt:0,seq:-1,immune:4,lootCount:0,boostTicks:0,jailUntil:0,question:null,feedback:null,points:0,arrests:0,deliveries:0,correct:0,history:new Set(),retry:new Map(),epoch:0,motionTick:0,clockTick:0,timeline:false,inputSteps:new Map()});}
  for(let i=0;i<Math.max(12,Math.min(30,Math.ceil(players.length*.8/6)*6));i++){const item={id:i,...LOOT[i%LOOT.length],x:-100,y:-100,holder:null,reservedBy:null,availableAt:0};r.items.push(item);relocate(r,item);}for(let i=0;i<3;i++){const bolt={id:i,x:-1,y:-1,availableAt:0};r.bolts.push(bolt);spawnBolt(r,bolt);}return r;}
 function stop(p){p.input=null;p.dir=null;p.tx=null;p.ty=null;p.x=Math.round(p.x);p.y=Math.round(p.y);p.epoch++;p.motionTick=p.clockTick||0;p.inputSteps?.clear();}
-function input(p,d,now){if(!Number.isSafeInteger(d.seq)||d.seq<=p.seq)return false;p.seq=d.seq;p.input=p.question||p.feedback||p.travel||p.jailUntil>0?'stop':(M.dirs[d.dir]?d.dir:d.dir==='stop'?'stop':null);p.inputAt=now;
+function input(p,d,now){if(p.onBreak||(d.epoch!=null&&d.epoch!==p.epoch)||!Number.isSafeInteger(d.seq)||d.seq<=p.seq)return false;p.seq=d.seq;p.input=p.question||p.feedback||p.travel||p.jailUntil>0?'stop':(M.dirs[d.dir]?d.dir:d.dir==='stop'?'stop':null);p.inputAt=now;
  if(Array.isArray(d.steps)&&d.epoch===p.epoch&&!p.question&&!p.feedback&&!p.travel&&!p.jailUntil){if(!p.timeline){p.timeline=true;if(Number.isInteger(d.baseTick)&&d.baseTick>=0&&d.baseTick<=p.clockTick)p.motionTick=d.baseTick;}for(const h of d.steps.slice(-90))if(Number.isInteger(h.tick)&&h.tick>p.motionTick&&h.tick<=p.clockTick+30&&p.inputSteps.size<120)p.inputSteps.set(h.tick,M.dirs[h.dir]?h.dir:h.dir==='stop'?'stop':null);}
  return true;}
 
@@ -44,12 +44,27 @@ function endContest(r,c,winner){if(!r.contests.has(c.id))return;const cop=r.play
  else{releaseItem(r,robber);reset(r,cop);feedback(r,cop,'No correct answer. No points. Back to the station.');feedback(r,robber,'No correct answer. Loot dropped; you may escape.');robber.retry.set('loot',r.t+3);}
  r.contests.delete(c.id);
 }
-function finish(r){r.done=true;r.winningTeam=r.scores.cop===r.scores.robber?null:r.scores.cop>r.scores.robber?'cop':'robber';r.winners=r.winningTeam?[...r.players.values()].filter(p=>p.team===r.winningTeam).map(p=>p.id):[];r.winner=r.winners[0]||null;for(const p of r.players.values()){p.question=null;p.feedback=null;p.input=null;}for(const k of r.items)k.reservedBy=null;r.contests.clear();}
+function swapRoles(r){
+ r.round=2;r.brief=RULES.briefing;r.contests.clear();r.events=[];
+ for(const p of r.players.values()){
+  p.firstPoints=p.points;p.team=p.team==='cop'?'robber':'cop';
+  const base=p.team==='cop'?r.world.station:r.world.safehouse;
+  stop(p);Object.assign(p,{x:base.x,y:base.y+(p.avatar%3-1),question:null,feedback:null,travel:null,jailUntil:0,boostTicks:0,lootCount:0,immune:4,timeline:false,onBreak:true,clockTick:Math.round(r.t/M.STEP),motionTick:Math.round(r.t/M.STEP)});p.retry.clear();
+ }
+ for(const item of r.items){item.relocate=false;relocate(r,item);}
+ for(const b of r.bolts)spawnBolt(r,b);
+}
+function standings(r){
+ const rows=[...r.players.values()].map(p=>({id:p.id,name:p.name,points:p.points,correct:p.correct,cop:p.firstTeam==='cop'?p.firstPoints:p.points-p.firstPoints,robber:p.firstTeam==='robber'?p.firstPoints:p.points-p.firstPoints})).sort((a,b)=>b.points-a.points||b.correct-a.correct||a.name.localeCompare(b.name));
+ rows.forEach((p,i)=>{const prev=rows[i-1];p.rank=prev&&p.points===prev.points&&p.correct===prev.correct?prev.rank:i+1;});return rows;
+}
+function finish(r){r.done=true;r.standings=standings(r);r.winners=r.standings.filter(p=>p.rank===1).map(p=>p.id);r.winner=r.winners[0]||null;for(const p of r.players.values()){p.question=null;p.feedback=null;p.input=null;}for(const k of r.items)k.reservedBy=null;r.contests.clear();}
 function answer(r,p,d){const q=p.question;if(r.done||!q||q.id!==d.id||q.answered||r.t>=q.ends||r.t>=RULES.duration||!Number.isInteger(d.choice)||d.choice<0||d.choice>=q.options.length)return {ok:false,error:'That question is no longer active.'};const correct=d.choice===q.correct;p.input=null;if(correct)p.correct++;
  if(q.kind==='contest'){const c=r.contests.get(q.contest);if(!c)return {ok:false,error:'The chase has ended.'};q.answered=true;if(correct)endContest(r,c,p);else{feedback(r,p,'Not quite. Your answer is locked.',RULES.questionTime);if([c.cop,c.robber].every(id=>r.players.get(id).question?.answered))retryContest(r,c,'Both answers were wrong. New question in 2 seconds…');}}
 
  return {ok:true,correct};}
-function step(r,dt,now){if(r.done)return;dt=Math.min(.05,Math.max(0,dt));r.t+=dt;if(r.t>=RULES.duration){finish(r);return;}
+function step(r,dt,now){if(r.done)return;dt=Math.min(.05,Math.max(0,dt));if(r.brief>0){r.brief=Math.max(0,r.brief-dt);if(r.brief<1e-8){r.brief=0;for(const p of r.players.values())p.onBreak=false;}return;}
+ r.t+=dt;if(r.round===1&&r.t>=RULES.duration/2-1e-8){r.t=RULES.duration/2;swapRoles(r);return;}if(r.t>=RULES.duration-1e-8){r.t=RULES.duration;finish(r);return;}
  for(const c of [...r.contests.values()]){if(c.retryAt&&r.t>=c.retryAt)askContest(r,c,'Rematch — first correct answer wins!');else if(!c.retryAt&&r.t>=c.ends)retryContest(r,c,'No correct answer in time. New question in 2 seconds…');}
  for(const b of r.bolts)if(b.availableAt>0&&r.t>=b.availableAt)spawnBolt(r,b);
  for(const k of r.items)if(k.relocate&&r.t>=k.availableAt){k.relocate=false;relocate(r,k);}
@@ -72,5 +87,5 @@ function step(r,dt,now){if(r.done)return;dt=Math.min(.05,Math.max(0,dt));r.t+=dt
  }
 }
 function privateState(p){const q=p.question;return {motion:M.snapshot(p),motionTick:p.motionTick,epoch:p.epoch,question:q?{id:q.id,prompt:q.prompt,options:q.options,flag:q.flag,image:q.image,kind:q.kind,ends:q.ends,answered:q.answered,itemName:q.itemName,itemType:q.itemType,value:q.value,opponent:q.opponent,copName:q.copName,robberName:q.robberName,message:q.message}:null,feedback:p.feedback,seq:p.seq};}
-function frame(r){return {id:r.world.id,t:r.t,remaining:Math.max(0,RULES.duration-r.t),done:r.done,winningTeam:r.winningTeam,winner:r.winner,winners:r.winners,scores:{...r.scores},events:r.events,bolts:r.bolts.map(b=>({...b,hidden:b.availableAt>r.t})),items:r.items.map(({reservedBy,relocate,...k})=>({...k,busy:!!reservedBy,hidden:!!relocate||k.availableAt>r.t})),players:[...r.players.values()].map(p=>{const items=haul(r,p);return ({id:p.id,name:p.name,character:p.character,avatar:p.avatar,team:p.team,x:p.x,y:p.y,dir:p.dir,tx:p.tx,ty:p.ty,epoch:p.epoch,travel:p.travel||null,boost:p.boostTicks*M.STEP,immune:p.immune>0,jail:Math.max(0,p.jailUntil-r.t),question:!!p.question,blocked:!!p.travel||!!p.question||!!p.feedback||p.jailUntil>r.t,points:p.points,arrests:p.arrests,deliveries:p.deliveries,correct:p.correct,loot:items[0]?.id??null,lootIds:items.map(k=>k.id),lootCount:items.length,lootValue:items.reduce((sum,k)=>sum+k.value,0)});})};}
+function frame(r){return {id:r.world.id,t:r.t,round:r.round,brief:r.brief,roundRemaining:Math.max(0,RULES.duration*r.round/2-r.t),standings:r.standings,remaining:Math.max(0,RULES.duration-r.t),done:r.done,winningTeam:r.winningTeam,winner:r.winner,winners:r.winners,scores:{...r.scores},events:r.events,bolts:r.bolts.map(b=>({...b,hidden:b.availableAt>r.t})),items:r.items.map(({reservedBy,relocate,...k})=>({...k,busy:!!reservedBy,hidden:!!relocate||k.availableAt>r.t})),players:[...r.players.values()].map(p=>{const items=haul(r,p);return ({id:p.id,name:p.name,character:p.character,avatar:p.avatar,team:p.team,x:p.x,y:p.y,dir:p.dir,tx:p.tx,ty:p.ty,epoch:p.epoch,travel:p.travel||null,boost:p.boostTicks*M.STEP,immune:p.immune>0,jail:Math.max(0,p.jailUntil-r.t),question:!!p.question,blocked:!!p.onBreak||!!p.travel||!!p.question||!!p.feedback||p.jailUntil>r.t,points:p.points,arrests:p.arrests,deliveries:p.deliveries,correct:p.correct,loot:items[0]?.id??null,lootIds:items.map(k=>k.id),lootCount:items.length,lootValue:items.reduce((sum,k)=>sum+k.value,0)});})};}
 module.exports={world,create,input,answer,step,frame,privateState,reset,carrying,haul,RULES,LOOT};
