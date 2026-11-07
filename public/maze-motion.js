@@ -9,7 +9,19 @@ function speed(p){return (p.team==='cop'?5.2:5.1*(.55+.45/(1+.16*Math.max(0,p.lo
 function snapshot(p){return {x:p.x,y:p.y,tx:p.tx,ty:p.ty,dir:p.dir,team:p.team,lootCount:p.lootCount||0,boostTicks:p.boostTicks||0};}
 // Direct steering: no queued turns, continuation, auto-centering or inertia.
 // A compact hitbox and short swept steps prevent crossing walls at boosted speeds.
-function fits(w,p,x,y){const radius=.24;for(let yy=Math.floor(y+.5-radius);yy<=Math.floor(y+.5+radius);yy++)for(let xx=Math.floor(x+.5-radius);xx<=Math.floor(x+.5+radius);xx++)if(!allowed(w,p,xx,yy))return false;return true;}
+const CORNER=.18;
+function exposed(w,x,y,h,v){return open(w,x+h,y)&&open(w,x,y+v);}
+function fits(w,p,x,y){
+ const radius=.24;
+ for(let yy=Math.floor(y+.5-radius);yy<=Math.floor(y+.5+radius);yy++)for(let xx=Math.floor(x+.5-radius);xx<=Math.floor(x+.5+radius);xx++){
+  if(allowed(w,p,xx,yy))continue;
+  // Only masonry has rounded tips. Preserve the map boundary and restricted bases.
+  if(xx<0||yy<0||xx>=w.width||yy>=w.height||!w.grid[yy*w.width+xx])return false;
+  const dx=x-xx,dy=y-yy,a=Math.abs(dx)-radius-(.5-CORNER),b=Math.abs(dy)-radius-(.5-CORNER);
+  if(a<=0||b<=0||a*a+b*b<CORNER*CORNER||!exposed(w,xx,yy,Math.sign(dx),Math.sign(dy)))return false;
+ }
+ return true;
+}
 function move(w,p,wanted,dt,rate=speed(p)){
  const duration=Math.max(0,dt),d=dirs[wanted];p.boostTicks=Math.max(0,(p.boostTicks||0)-duration/STEP);
  p.tx=null;p.ty=null;if(!d||!duration)return;
@@ -18,4 +30,4 @@ function move(w,p,wanted,dt,rate=speed(p)){
 }
 
 function money(n){const v=Math.abs(n),m=v>=1e6;return (n<0?'−':'')+'$'+(m?Number((v/1e6).toFixed(2))+'M':v>=1000?Number((Math.floor(v/10)/100).toFixed(2))+'K':v);}
-return {money,dirs,steering,canStep,fits,open,move,inside,allowed,speed,snapshot,STEP};});
+return {CORNER,exposed,money,dirs,steering,canStep,fits,open,move,inside,allowed,speed,snapshot,STEP};});

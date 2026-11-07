@@ -4,15 +4,15 @@ const {randomInt,randomUUID}=require('node:crypto'),bank=require('./jump-questio
 const LOOT=[{type:'cash',name:'Money pile',value:25000},{type:'diamonds',name:'Diamonds',value:100000},{type:'car',name:'Ferrari',value:250000},{type:'chain',name:'Gold chain',value:50000},{type:'vault',name:'Bank vault',value:500000},{type:'sneakers',name:'Sneakers',value:10000}];
 const RULES={duration:300,briefing:8,questionTime:20,jailTime:8,protection:5,respawn:8,arrestBonus:50000};
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=randomInt(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
-function world(count){const width=35,height=23,grid=Array(width*height).fill(1),stack=[[1,1]];grid[width+1]=0;
+function world(count){const width=39,height=25,grid=Array(width*height).fill(1),stack=[[1,1]];grid[width+1]=0;
  while(stack.length){const[x,y]=stack.at(-1),next=Object.values(M.dirs).filter(([dx,dy])=>!dx||!dy).map(([dx,dy])=>[x+dx*2,y+dy*2,dx,dy]).filter(([a,b])=>a>0&&b>0&&a<width-1&&b<height-1&&grid[b*width+a]);if(!next.length){stack.pop();continue;}const[a,b,dx,dy]=next[randomInt(next.length)];grid[(y+dy)*width+x+dx]=grid[b*width+a]=0;stack.push([a,b]);}
  // Loops offer escape choices instead of forcing every chase into dead ends.
  for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++)if(grid[y*width+x]&&randomInt(3)===0&&((!grid[y*width+x-1]&&!grid[y*width+x+1])||(!grid[(y-1)*width+x]&&!grid[(y+1)*width+x])))grid[y*width+x]=0;
- const safehouse={x:2,y:11,x1:1,x2:3,y1:9,y2:13},station={x:32,y:11,x1:31,x2:33,y1:9,y2:13},jail={x:17,y:11};
- for(const b of [safehouse,station])for(let y=9;y<=13;y++)for(let x=b.x1;x<=b.x2;x++)grid[y*width+x]=0;
- for(const y of [9,13])for(let x=1;x<width-1;x++)grid[y*width+x]=0;
- for(let y=10;y<=12;y++)for(let x=16;x<=18;x++)grid[y*width+x]=0;
- grid[9*width+17]=grid[13*width+17]=0;
+ const cy=(height-1)/2,cx=(width-1)/2;
+ const safehouse={x:2,y:cy,x1:1,x2:3,y1:cy-2,y2:cy+2},station={x:width-3,y:cy,x1:width-4,x2:width-2,y1:cy-2,y2:cy+2},jail={x:cx,y:cy};
+ for(const b of [safehouse,station])for(let y=b.y1-1;y<=b.y2+1;y++)for(let x=b.x1;x<=b.x2;x++)grid[y*width+x]=0;
+ for(const y of [cy-3,cy+3])for(let x=1;x<width-1;x++)grid[y*width+x]=0;
+ for(let y=cy-2;y<=cy+2;y++)for(let x=cx-1;x<=cx+1;x++)grid[y*width+x]=0;
  return {id:randomUUID(),width,height,grid,safehouse,station,jail,rules:RULES,lootTypes:LOOT};
 }
 function protectedZone(r,p){return M.inside(p.team==='cop'?r.world.station:r.world.safehouse,p.x,p.y);}
@@ -35,7 +35,7 @@ function pick(players){let choices=bank.filter(q=>players.every(p=>!p.history.ha
 function notice(r,text){r.events.unshift({id:randomUUID(),text,t:r.t});r.events=r.events.slice(0,4);}
 function feedback(r,p,text,duration=.8){p.feedback={text,until:r.t+duration};}
 // A single compact route is sent with snapshots; clients animate it without extra messages.
-function returnTrip(r,p,to){const from={x:p.x,y:p.y},w=r.world,start=Math.round(from.y)*w.width+Math.round(from.x),end=to.y*w.width+to.x,queue=[start],prev=new Map([[start,null]]);for(let i=0;i<queue.length&&!prev.has(end);i++){const k=queue[i],x=k%w.width,y=Math.floor(k/w.width);for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy,n=ny*w.width+nx;if(M.open(w,nx,ny)&&!prev.has(n)){prev.set(n,k);queue.push(n);}}}let path=[];if(prev.has(end)){for(let k=end;k!=null;k=prev.get(k))path.push({x:k%w.width,y:Math.floor(k/w.width)});path.reverse();}else path=[from,{x:to.x,y:to.y}];path[0]=from;const duration=Math.max(.3,Math.min(1.8,path.length/28));p.travel={start:r.t,end:r.t+duration,path};Object.assign(p,{x:to.x,y:to.y});}
+function returnTrip(r,p,to){const from={x:p.x,y:p.y},w=r.world,start=Math.round(from.y)*w.width+Math.round(from.x),end=to.y*w.width+to.x,queue=[start],prev=new Map([[start,null]]);for(let i=0;i<queue.length&&!prev.has(end);i++){const k=queue[i],x=k%w.width,y=Math.floor(k/w.width);for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1]]){const nx=x+dx,ny=y+dy,n=ny*w.width+nx;if(M.open(w,nx,ny)&&!prev.has(n)){prev.set(n,k);queue.push(n);}}}let path=[];if(prev.has(end)){for(let k=end;k!=null;k=prev.get(k))path.push({x:k%w.width,y:Math.floor(k/w.width)});path.reverse();}else path=[from,{x:to.x,y:to.y}];path[0]=from;const duration=Math.max(.3,Math.min(1.8,path.length/34));p.travel={start:r.t,end:r.t+duration,path};Object.assign(p,{x:to.x,y:to.y});}
 function reset(r,p){const b=p.team==='cop'?r.world.station:r.world.safehouse;stop(p);returnTrip(r,p,b);Object.assign(p,{question:null,immune:RULES.protection,jailUntil:0});}
 function releaseItem(r,p,delay=0){const items=haul(r,p);for(const item of items)Object.assign(item,{holder:null,reservedBy:null,x:Math.round(p.x),y:Math.round(p.y),availableAt:r.t+delay});return items;}
 function endContest(r,c,winner){if(!r.contests.has(c.id))return;const cop=r.players.get(c.cop),robber=r.players.get(c.robber);for(const p of [cop,robber]){p.question=null;p.immune=RULES.protection;stop(p);}const items=haul(r,robber);
