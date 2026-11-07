@@ -11,3 +11,22 @@
 @media(max-width:800px){.pk-matchbar .pk-carry small,.pk-matchbar .pk-carry>span{display:none}.pk-matchbar .pk-clock{font-size:18px}.pk-matchbar small{font-size:8px}.pk-arena .pk-matchbar{gap:5px}.pk-arena .pk-matchbar button{font-size:19px;padding:4px}.pk-matchbar .pk-carry strong{font-size:9px}}
 /* Two short columns keep a full class visible without shrinking the city. */
 @media(min-width:651px){.pk-race:has(.pk-rank:nth-child(16)) #pk-ranks{display:grid;grid-template-rows:repeat(15,auto);grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px 4px}.pk-play .pk-race:has(.pk-rank:nth-child(16)) .pk-rank{display:grid;grid-template-columns:16px minmax(0,1fr);gap:0 3px;align-content:center;padding:3px 2px;line-height:1.1}.pk-race:has(.pk-rank:nth-child(16)) .pk-rank .pk-mini,.pk-race:has(.pk-rank:nth-child(16)) .pk-rank small{display:none}.pk-race:has(.pk-rank:nth-child(16)) .pk-rank>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pk-race:has(.pk-rank:nth-child(16)) .pk-rank strong{grid-column:2;font-size:9px}.pk-race:has(.pk-rank:nth-child(16)) .pk-rank>b{grid-row:span 2}}
+
+/* Give the city the actual space left by the classroom controls at any size. */
+html:has(.pk-play) .app-shell{width:100%;max-width:none;padding:0 4px;box-sizing:border-box}
+html.student-active:has(.pk-play) .topbar{display:none!important}
+html:has(.pk-play) #screen.screen{margin:0;padding:0;width:100%;max-width:none}
+.arcade-fit-stage:has(>.pk-play){height:100%;transform:none!important;margin-left:0!important}
+.pk-play{position:relative;height:100%;min-height:0;gap:5px;grid-template-columns:minmax(0,1fr)}
+.pk-play[data-view=teacher]:not([data-ladder=closed]){grid-template-columns:minmax(0,1fr) clamp(155px,17vw,225px)}
+.pk-play .pk-arena{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding:3px;border-radius:12px}
+.pk-play .pk-canvas-wrap{height:100%;min-height:0;border-radius:9px}
+.pk-play .pk-matchbar{margin-bottom:3px}
+.pk-play .pk-footer{gap:8px;padding:2px;min-height:22px}
+.pk-footer>button,.pk-close-ladder{border:0;border-radius:6px;background:#253c55;color:#e3effa;font:600 11px system-ui;padding:4px 8px;cursor:pointer}
+.pk-play .pk-race{position:relative;min-height:0;overflow:auto;padding:9px;border-radius:10px}
+.pk-play[data-view=student] .pk-race,.pk-play[data-ladder=closed] .pk-race{display:none}
+.pk-play[data-view=student][data-ladder=open] .pk-race{display:block;position:absolute;right:3px;bottom:34px;width:min(290px,88%);max-height:84%;z-index:4;box-shadow:0 4px 18px #0008}
+.pk-close-ladder{float:right;font-size:17px}
+@media(max-width:650px){.pk-play[data-view=teacher]:not([data-ladder=closed]){grid-template-columns:1fr}.pk-play[data-view=teacher][data-ladder=open] .pk-race{display:block;position:absolute;right:2px;bottom:35px;width:min(270px,86%);max-height:80%;z-index:4}.pk-play .pk-footer{justify-content:space-between}}
+html:has(.pk-play) .app-shell{height:100dvh!important;min-height:0!important}

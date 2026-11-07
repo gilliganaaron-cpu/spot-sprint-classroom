@@ -159,6 +159,11 @@
   function playSound(which) {
     if (localMuted || !audio) return;
     try {
+      if (which === 'bank') { tone(884,0,.055,.045,'triangle'); tone(1318,.075,.09,.045); tone(1976,.13,.32,.055); tone(2637,.13,.18,.018); }
+      if (which === 'pickup') tone(880,0,.08,.022,'triangle');
+      if (which === 'challenge') { tone(392,0,.10,.04,'triangle'); tone(523,.12,.16,.04,'triangle'); }
+      if (which === 'arrest') { tone(659,0,.13,.04,'triangle'); tone(440,.15,.20,.045,'triangle'); }
+      if (which === 'boost') [523,784,1047].forEach((f,i)=>tone(f,i*.05,.095,.03));
       if (which === 'correct') { tone(660, 0, .12); tone(990, .11, .22); }
       if (which === 'celebrate') { [740, 988, 1175, 1480].forEach((f,i)=>tone(f, i*.13, .22, .105, 'triangle')); tone(1960, .58, .27, .075); }
       if (which === 'wrong') { tone(230, 0, .18, .045, 'triangle'); tone(180, .12, .16, .035, 'triangle'); }
@@ -878,7 +883,7 @@
     updateTeacherHeader();
     updateStudentHeader();
     if(view?.gameType!=='maze')MazeHub.clear();
-    if(view?.gameType==='maze'){WordHub.clear();MapHub.clear();MazeHub.render(view,{send,updateView,toast,playerList});}
+    if(view?.gameType==='maze'){WordHub.clear();MapHub.clear();MazeHub.render(view,{send,updateView,toast,playerList,playSound,unlockAudio});}
     else if (view?.gameType === 'geo') { WordHub.clear(); MapHub.render(view, {send, updateView, toast, playerList}); }
     else if (wordGame) { MapHub.clear(); WordHub.render(view, {send, updateView, toast, playerList}); }
     else {
