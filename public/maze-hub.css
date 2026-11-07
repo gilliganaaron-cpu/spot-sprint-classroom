@@ -30,3 +30,5 @@ html:has(.pk-play) #screen.screen{margin:0;padding:0;width:100%;max-width:none}
 .pk-close-ladder{float:right;font-size:17px}
 @media(max-width:650px){.pk-play[data-view=teacher]:not([data-ladder=closed]){grid-template-columns:1fr}.pk-play[data-view=teacher][data-ladder=open] .pk-race{display:block;position:absolute;right:2px;bottom:35px;width:min(270px,86%);max-height:80%;z-index:4}.pk-play .pk-footer{justify-content:space-between}}
 html:has(.pk-play) .app-shell{height:100dvh!important;min-height:0!important}
+
+.pk-position{position:absolute;top:3px;left:4px;display:flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #e6ca8670;border-radius:8px;background:#102039ef;color:white;pointer-events:none;line-height:1}.pk-position small{font:800 9px system-ui;letter-spacing:.08em;color:#ffe1a7}.pk-position strong{font:900 clamp(20px,2.2vw,32px)/1 system-ui;font-variant-numeric:tabular-nums}.pk-position:has(~ #pk-overlay .pk-modal),.pk-position:has(~ #pk-overlay .pk-question){visibility:hidden}.pk-rank.cop>span:not(.pk-mini){color:#42baff}.pk-rank.robber>span:not(.pk-mini){color:white}
