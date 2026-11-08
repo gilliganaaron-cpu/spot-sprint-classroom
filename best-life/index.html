@@ -161,7 +161,10 @@ const RECOVERY_KEY='aarons-best-life-recovery-v1', CORRUPT_KEY='aarons-best-life
 function validSavedData(x){return !!x&&typeof x==='object'&&Array.isArray(x.routines)&&Array.isArray(x.completions)}
 function recordWeight(x){if(!validSavedData(x))return 0;return x.completions.length*100+x.routines.length*10+Object.keys(x.reflections||{}).length*2+Object.keys(x.intentions||{}).length}
 let db, savedDataUnreadable=false;try{const raw=localStorage.getItem(K);if(raw)db=JSON.parse(raw)}catch(e){savedDataUnreadable=true}
+// Older copies can have goals but no completion array: keep those goals rather than treating the whole save as empty.
+if(db&&Array.isArray(db.routines)&&!Array.isArray(db.completions))db.completions=[];
 if(!validSavedData(db))db={version:1,routines:[],completions:[],intentions:{},reflections:{},settings:{reminder:true},firstSeen:today(),quoteSeen:null};
+db.intentions=db.intentions||{};db.reflections=db.reflections||{};db.firstSeen=db.firstSeen||today();
 function preserveRichCopy(data){if(!validSavedData(data)||recordWeight(data)<=0)return;try{let previous;try{previous=JSON.parse(localStorage.getItem(RECOVERY_KEY)||'null')}catch(e){}if(recordWeight(data)>=recordWeight(previous))localStorage.setItem(RECOVERY_KEY,JSON.stringify(data))}catch(e){console.warn('Local recovery copy unavailable',e)}}
 function findSavedCopies(){let found=[];try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key===K||!/(aaron.*best.?life|best.?life.*aaron|^bestlife)/i.test(key))continue;try{const data=JSON.parse(localStorage.getItem(key)||'null');if(validSavedData(data)&&recordWeight(data)>0)found.push({key,data})}catch(e){}}}catch(e){console.warn('Could not inspect browser storage',e)}return found.sort((a,b)=>recordWeight(b.data)-recordWeight(a.data)).slice(0,8)}
 
