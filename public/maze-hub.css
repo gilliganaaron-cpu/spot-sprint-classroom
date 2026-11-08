@@ -42,3 +42,5 @@ html:has(.pk-play) .app-shell{height:100dvh!important;min-height:0!important}
 @container(max-width:56px){.pk-runner>div{justify-content:center}.pk-runner span{display:none}}
 @media(max-width:650px){.pk-play .pk-footer{gap:3px}.pk-footer>button{padding:4px;font-size:10px}.pk-touch{gap:2px}.pk-touch button{padding:6px 7px}}
 @media(prefers-reduced-motion:reduce){.pk-runner{transition:none}}
+
+.pk-versus{display:block;text-align:center;font-size:clamp(16px,2.3vw,25px);color:#233951;margin:3px 0 10px}.pk-question .pk-kicker{font-weight:800}.pk-toast{max-width:min(480px,90%)}

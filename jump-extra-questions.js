@@ -1,7 +1,7 @@
 'use strict';
 const facts=require('./data/jump-country-facts.json');
 const extra=[];function add(prompt,answer,wrong,explanation){extra.push({id:'extra-'+extra.length,prompt,answer,wrong,explanation:explanation||answer+' is the correct answer.'});}
-for(let i=0;i<facts.length;i++){const f=facts[i],other=facts.filter(x=>x.name!==f.name);add(`Which country has ${f.capital} as its capital?`,f.name,[other[(i+3)%other.length].name,other[(i+17)%other.length].name,other[(i+31)%other.length].name],`${f.capital} is the capital of ${f.name}.`);if(f.currency&&facts.filter(x=>x.currency===f.currency).length===1)add(`You are spending ${f.currency}. Which country are you visiting?`,f.name,[other[(i+5)%other.length].name,other[(i+19)%other.length].name,other[(i+37)%other.length].name],`${f.name} uses the ${f.currency}.`);}
+for(let i=0;i<facts.length;i++){const f=facts[i],other=facts.filter(x=>x.name!==f.name);add(`Which country has ${f.capital} as its capital?`,f.name,[other[(i+3)%other.length].name,other[(i+17)%other.length].name,other[(i+31)%other.length].name],`${f.capital} is the capital of ${f.name}.`);if(f.currency&&facts.filter(x=>x.currency===f.currency).length===1){const {bare,choices}=require('./currency-names'),answer=bare(f.currency);add(`You visit a market in ${f.capital}. Which currency belongs to ${f.name}?`,answer,choices(answer,[other[(i+5)%other.length].currency,other[(i+19)%other.length].currency,other[(i+37)%other.length].currency]),`${f.name} uses the ${f.currency}.`);}}
 const rows=[
 ['What does a map legend explain?','Symbols and colours','The age of the map|Tomorrow’s weather|The population of Earth'],
 ['Which lines measure distance north or south of the Equator?','Latitude','Longitude|Contour lines|Time zones'],
