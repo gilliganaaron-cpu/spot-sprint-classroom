@@ -32,3 +32,13 @@ html:has(.pk-play) #screen.screen{margin:0;padding:0;width:100%;max-width:none}
 html:has(.pk-play) .app-shell{height:100dvh!important;min-height:0!important}
 
 .pk-position{position:absolute;top:3px;left:4px;display:flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #e6ca8670;border-radius:8px;background:#102039ef;color:white;pointer-events:none;line-height:1}.pk-position small{font:800 9px system-ui;letter-spacing:.08em;color:#ffe1a7}.pk-position strong{font:900 clamp(20px,2.2vw,32px)/1 system-ui;font-variant-numeric:tabular-nums}.pk-position:has(~ #pk-overlay .pk-modal),.pk-position:has(~ #pk-overlay .pk-question){visibility:hidden}.pk-rank.cop>span:not(.pk-mini){color:#42baff}.pk-rank.robber>span:not(.pk-mini){color:white}
+
+/* The standings occupy the old instruction line without changing the map height. */
+.pk-play .pk-footer{justify-content:flex-start;flex-wrap:nowrap;min-width:0}
+.pk-ribbon{flex:1;min-width:0;height:21px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior-x:contain}.pk-ribbon::-webkit-scrollbar{display:none}
+#pk-runner-track{--num:1;position:relative;height:100%;width:100%;min-width:calc(var(--num)*40px)}
+.pk-runner{position:absolute;left:0;top:0;height:21px;width:min(110px,calc(100% / var(--num)));container-type:inline-size;transition:transform .38s cubic-bezier(.22,.76,.24,1);pointer-events:auto}
+.pk-runner>div{height:21px;margin-right:2px;display:flex;align-items:center;gap:2px;padding:0 3px;border-radius:6px;background:#253b50;color:#eef4fb;overflow:hidden}.pk-runner.pk-first>div{background:#594729;color:#ffe4a0}.pk-runner.pk-self>div{box-shadow:inset 0 0 0 1px #80dbf8}.pk-runner b{font:800 10px system-ui}.pk-runner i,.pk-runner svg{display:block;width:19px;height:19px;flex:none}.pk-runner span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px system-ui}
+@container(max-width:56px){.pk-runner>div{justify-content:center}.pk-runner span{display:none}}
+@media(max-width:650px){.pk-play .pk-footer{gap:3px}.pk-footer>button{padding:4px;font-size:10px}.pk-touch{gap:2px}.pk-touch button{padding:6px 7px}}
+@media(prefers-reduced-motion:reduce){.pk-runner{transition:none}}
