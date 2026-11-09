@@ -26,3 +26,14 @@ test('contact before safehouse arrival wins over banking in the same movement ba
  r.items[0].holder=robber.id;for(let i=1;i<=18;i++)robber.inputSteps.set(i,'left');
  H.step(r,.05,0);assert(robber.x<base.x2+.45);assert(cop.question);assert.equal(robber.points,0);assert.equal(r.items[0].holder,robber.id);
 });
+test('first and fifth shared duels show different local flags with four country choices; bystanders only get battle markers',()=>{
+ const {r,cop,robber}=scenario(),fs=require('node:fs'),path=require('node:path'),seen=new Set();
+ r.items[0].holder=robber.id;
+ for(let i=0;i<5;i++){
+  for(const p of [cop,robber])Object.assign(p,{x:9,y:9,immune:0,travel:null,feedback:null});
+  H.step(r,.02,20*i);const q=H.privateState(robber).question;
+  assert.equal(q.id,H.privateState(cop).question.id);assert.equal(!!q.flag,i%4===0);
+  if(q.flag){assert(!seen.has(q.flag));seen.add(q.flag);assert.equal(new Set(q.options).size,4);assert(fs.existsSync(path.join(__dirname,'../public/flags',q.flag+'.svg')));}
+  assert(H.frame(r).players.every(p=>p.question===true));H.answer(r,robber,{id:q.id,choice:robber.question.correct});assert(H.frame(r).players.every(p=>p.question===false));
+ }
+});
