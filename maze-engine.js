@@ -2,7 +2,7 @@
 // Midnight Heist: server-authoritative movement, loot ownership and question duels.
 const {randomInt,randomUUID}=require('node:crypto'),bank=require('./jump-questions'),M=require('./public/maze-motion');
 const LOOT=[{type:'cash',name:'Money pile',value:25000},{type:'diamonds',name:'Diamonds',value:100000},{type:'car',name:'Ferrari',value:250000},{type:'chain',name:'Gold chain',value:50000},{type:'vault',name:'Bank vault',value:500000},{type:'sneakers',name:'Sneakers',value:10000}];
-const RULES={duration:300,briefing:8,questionTime:20,jailTime:8,protection:5,respawn:8,arrestBonus:50000};
+const RULES={duration:300,briefing:8,questionTime:20,jailTime:8,protection:4,respawn:8};
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=randomInt(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
 function world(count){const width=39,height=25,grid=Array(width*height).fill(1),stack=[[1,1]];grid[width+1]=0;
  while(stack.length){const[x,y]=stack.at(-1),next=Object.values(M.dirs).filter(([dx,dy])=>!dx||!dy).map(([dx,dy])=>[x+dx*2,y+dy*2,dx,dy]).filter(([a,b])=>a>0&&b>0&&a<width-1&&b<height-1&&grid[b*width+a]);if(!next.length){stack.pop();continue;}const[a,b,dx,dy]=next[randomInt(next.length)];grid[(y+dy)*width+x+dx]=grid[b*width+a]=0;stack.push([a,b]);}
@@ -41,8 +41,8 @@ function releaseItem(r,p,delay=0){const items=haul(r,p);for(const item of items)
 function endContest(r,c,winner){if(!r.contests.has(c.id))return;const cop=r.players.get(c.cop),robber=r.players.get(c.robber);
  if(winner){const loser=winner===cop?robber:cop,q=loser.question;loser.lastBattle=q&&!q.answered?{id:q.id,correct:q.correct,until:r.t+1.5,winner:winner.name,round:r.round}:null;}
  for(const p of [cop,robber]){p.question=null;p.immune=RULES.protection;stop(p);}const items=haul(r,robber);
- if(winner===cop){const haulValue=items.reduce((sum,k)=>sum+k.value,0),bail=Math.round(Math.max(0,robber.points)*.10),value=haulValue+RULES.arrestBonus+bail;robber.points-=bail;r.scores.robber-=bail;robber.lootCount=0;cop.points+=value;cop.arrests++;r.scores.cop+=value;retire(r,items);returnTrip(r,robber,r.world.jail);robber.jailUntil=robber.travel.end+RULES.jailTime;feedback(r,cop,'You beat '+robber.name+'! +'+M.money(value)+', including '+M.money(bail)+' bail bonus.',3);feedback(r,robber,cop.name+' won. Haul lost; '+M.money(bail)+' bail deducted from your score. Eight seconds in jail.',3);notice(r,cop.name+' caught '+robber.name+' · '+M.money(value));}
- else if(winner===robber){reset(r,cop);feedback(r,cop,robber.name+' won! You lost this battle. Back to the station.',3);feedback(r,robber,'You won against '+cop.name+'! Clean getaway. Five seconds of protection.');robber.resultNotice={text:robber.feedback.text,until:r.t+3};notice(r,robber.name+' outsmarted '+cop.name);}
+ if(winner===cop){const value=items.reduce((sum,k)=>sum+k.value,0);robber.lootCount=0;cop.points+=value;cop.arrests++;r.scores.cop+=value;retire(r,items);returnTrip(r,robber,r.world.jail);robber.jailUntil=robber.travel.end+RULES.jailTime;feedback(r,cop,'You beat '+robber.name+'! +'+M.money(value)+' recovered.',3);feedback(r,robber,cop.name+' recovered your haul. Banked money is safe. Eight seconds in jail.',3);notice(r,cop.name+' caught '+robber.name+' · '+M.money(value));}
+ else if(winner===robber){reset(r,cop);feedback(r,cop,robber.name+' won! You lost this battle. Back to the station.',3);robber.feedback=null;robber.resultNotice={text:'You beat '+cop.name+'! Four seconds of protection — make your getaway.',until:r.t+3};notice(r,robber.name+' outsmarted '+cop.name);}
  else{releaseItem(r,robber);reset(r,cop);feedback(r,cop,'No correct answer. No points. Back to the station.');feedback(r,robber,'No correct answer. Loot dropped; you may escape.');robber.retry.set('loot',r.t+3);}
  r.contests.delete(c.id);
 }
@@ -57,8 +57,8 @@ function swapRoles(r){
  for(const b of r.bolts)spawnBolt(r,b);
 }
 function standings(r){
- const rows=[...r.players.values()].map(p=>({id:p.id,name:p.name,points:p.points,correct:p.correct,cop:p.firstTeam==='cop'?p.firstPoints:p.points-p.firstPoints,robber:p.firstTeam==='robber'?p.firstPoints:p.points-p.firstPoints})).sort((a,b)=>b.points-a.points||b.correct-a.correct||a.name.localeCompare(b.name));
- rows.forEach((p,i)=>{const prev=rows[i-1];p.rank=prev&&p.points===prev.points&&p.correct===prev.correct?prev.rank:i+1;});return rows;
+ const rows=[...r.players.values()].map(p=>({id:p.id,name:p.name,points:p.points,correct:p.correct,cop:p.firstTeam==='cop'?p.firstPoints:p.points-p.firstPoints,robber:p.firstTeam==='robber'?p.firstPoints:p.points-p.firstPoints})).sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name));
+ rows.forEach((p,i)=>{const prev=rows[i-1];p.rank=prev&&p.points===prev.points?prev.rank:i+1;});return rows;
 }
 function finish(r){r.done=true;r.standings=standings(r);r.winners=r.standings.filter(p=>p.rank===1).map(p=>p.id);r.winner=r.winners[0]||null;for(const p of r.players.values()){p.question=null;p.feedback=null;p.input=null;}for(const k of r.items)k.reservedBy=null;r.contests.clear();}
 function answer(r,p,d){const q=p.question,late=p.lastBattle;
@@ -75,9 +75,27 @@ function remember(p){
  const history=p.track||(p.track=new Array(48));
  for(const point of p.trace)history[((point.tick%48)+48)%48]=point;
 }
-function crossed(a,b,since){
+// Compare the two paths the server actually advanced this frame. A client
+// without an input batch stays at its authoritative position for the sweep.
+function sweptFrame(a,b,entry){
+ const A=a.trace,B=b.trace,m=A.length-1,n=B.length-1;
+ if(Math.abs(a.x-b.x)>5||Math.abs(a.y-b.y)>5)return false;
+ const first=b.carrySince>B[0].tick?B.findIndex(p=>p.tick>=b.carrySince):0;
+ if(first<0)return false;
+ const start=n?first/n:0,end=entry<0?1:entry/Math.max(n,1);
+ if(start>end)return false;
+ function at(path,count,t,key){const u=t*count,i=Math.floor(u),v=path[i][key];return v+((path[i+1]?.[key]??v)-v)*(u-i);}
+ let t=start,x=at(A,m,t,'x')-at(B,n,t,'x'),y=at(A,m,t,'y')-at(B,n,t,'y');
+ if(x*x+y*y<=.64)return true;
+ while(t<end){const next=Math.min(end,(Math.floor(t*m+1e-8)+1)/(m||1),(Math.floor(t*n+1e-8)+1)/(n||1));
+ const xx=at(A,m,next,'x')-at(B,n,next,'x'),yy=at(A,m,next,'y')-at(B,n,next,'y'),dx=xx-x,dy=yy-y;
+ const u=Math.max(0,Math.min(1,-(x*dx+y*dy)/(dx*dx+dy*dy||1)));
+ if((x+u*dx)**2+(y+u*dy)**2<=.64)return true;
+ t=next;x=xx;y=yy;}return false;
+}
+function crossed(a,b,since,until){
  if(!a.track||!b.track)return false;
- const hi=Math.min(a.motionTick,b.motionTick),lo=Math.max(hi-22,a.clockTick-30,since);
+ const hi=Math.min(a.motionTick,b.motionTick,until),lo=Math.max(hi-22,a.clockTick-30,since);
  for(let t=hi;t>=lo;t--){
   const at=a.track[(t+48)%48],bt=b.track[(t+48)%48];if(at?.tick!==t||bt?.tick!==t)continue;
   const dx=at.x-bt.x,dy=at.y-bt.y;if(dx*dx+dy*dy<.49)return true;
@@ -92,24 +110,25 @@ function step(r,dt,now){if(r.done)return;dt=Math.min(.05,Math.max(0,dt));if(r.br
  for(const c of [...r.contests.values()]){if(c.retryAt&&r.t>=c.retryAt)askContest(r,c,'Rematch — first correct answer wins!');else if(!c.retryAt&&r.t>=c.ends)retryContest(r,c,'No correct answer in time. New question in 2 seconds…');}
  for(const b of r.bolts)if(b.availableAt>0&&r.t>=b.availableAt)spawnBolt(r,b);
  for(const k of r.items)if(k.relocate&&r.t>=k.availableAt){k.relocate=false;relocate(r,k);}
- for(const p of r.players.values()){p.clockTick=Math.round(r.t/M.STEP);p.trace=[{x:p.x,y:p.y,tick:p.motionTick}];if(!p.feedback&&!p.travel)p.immune=Math.max(0,p.immune-dt);if(p.feedback&&r.t>=p.feedback.until){p.feedback=null;stop(p);}
+ for(const p of r.players.values()){p.clockTick=Math.round(r.t/M.STEP);p.trace=[{x:p.x,y:p.y,tick:p.motionTick}];if(!p.travel)p.immune=p.immune<=dt+1e-8?0:p.immune-dt;if(p.feedback&&r.t>=p.feedback.until){p.feedback=null;stop(p);}
  if(p.travel){p.motionTick=p.clockTick;if(r.t<p.travel.end)continue;p.travel=null;stop(p);}
  if(p.jailUntil){p.motionTick=p.clockTick;if(r.t>=p.jailUntil){reset(r,p);feedback(r,p,'Released! Back to the safehouse.');}continue;}
  if(p.question){p.motionTick=p.clockTick;continue;}
- if(p.feedback){p.motionTick=p.clockTick;continue;}if(p.timeline){for(let n=0;n<18;n++){const tick=p.motionTick+1;if(!p.inputSteps.has(tick))break;M.move(r.world,p,p.inputSteps.get(tick),M.STEP);p.inputSteps.delete(tick);p.motionTick=tick;p.trace.push({x:p.x,y:p.y,tick:p.motionTick});}}else{M.move(r.world,p,now-p.inputAt<700?p.input:'stop',dt);p.motionTick=p.clockTick;p.trace.push({x:p.x,y:p.y,tick:p.motionTick});}if(protectedZone(r,p))p.immune=Math.max(p.immune,2);
- // A deposit is final and atomic; the item respawns elsewhere after eight seconds.
- const items=haul(r,p);if(p.team==='robber'&&items.length&&protectedZone(r,p)){const value=items.reduce((sum,k)=>sum+k.value,0);p.points+=value;p.deliveries++;r.scores.robber+=value;retire(r,items);p.lootCount=0;feedback(r,p,'Banked '+items.length+' items! +'+M.money(value)+'.');stop(p);notice(r,p.name+' banked '+items.length+' items · '+M.money(value));}
+ if(p.feedback){p.motionTick=p.clockTick;continue;}if(p.timeline){for(let n=0;n<18;n++){const tick=p.motionTick+1;if(!p.inputSteps.has(tick))break;M.move(r.world,p,p.inputSteps.get(tick),M.STEP);p.inputSteps.delete(tick);p.motionTick=tick;p.trace.push({x:p.x,y:p.y,tick:p.motionTick});}}else{M.move(r.world,p,now-p.inputAt<700?p.input:'stop',dt);p.motionTick=p.clockTick;p.trace.push({x:p.x,y:p.y,tick:p.motionTick});}
+
  }
  const ready=p=>!p.question&&!p.feedback&&!p.travel&&!p.jailUntil;
  for(const p of r.players.values())if(ready(p))for(const b of r.bolts){if(b.availableAt>r.t)continue;if(p.trace.some(t=>(t.x-b.x)**2+(t.y-b.y)**2<.36)){p.boostTicks=7/M.STEP;b.availableAt=r.t+5;}}
- for(const p of r.players.values())if(ready(p)&&!p.immune)remember(p);else p.track=null;
- const cops=[...r.players.values()].filter(p=>p.team==='cop'&&ready(p)&&p.immune===0),robbers=[...r.players.values()].filter(p=>p.team==='robber'&&ready(p));
- for(const robber of robbers){if(!ready(robber)||protectedZone(r,robber))continue;
+ for(const p of r.players.values())if(ready(p)&&(p.team==='cop'||!p.immune))remember(p);else p.track=null;
+ const cops=[...r.players.values()].filter(p=>p.team==='cop'&&ready(p)),robbers=[...r.players.values()].filter(p=>p.team==='robber'&&ready(p));
+ for(const robber of robbers){if(!ready(robber))continue;
+ const entry=robber.trace.findIndex(t=>protectedZone(r,{team:'robber',x:t.x,y:t.y}));
 
- if(r.t<(robber.retry.get('loot')||0))continue;
- for(const item of r.items){if(item.holder!=null||item.availableAt>r.t||item.relocate)continue;const hit=robber.trace.find(t=>(t.x-item.x)**2+(t.y-item.y)**2<.36);if(hit){if(!robber.lootCount)robber.carrySince=hit.tick;item.holder=robber.id;item.reservedBy=null;robber.lootCount++;}}
- const cop=robber.immune===0&&carrying(r,robber)?cops.find(p=>ready(p)&&p.immune===0&&crossed(p,robber,robber.carrySince??0)):null;
+ if(r.t>=(robber.retry.get('loot')||0))
+ for(const item of r.items){if(item.holder!=null||item.availableAt>r.t||item.relocate)continue;const hit=robber.trace.find((t,i)=>(entry<0||i<entry)&&(t.x-item.x)**2+(t.y-item.y)**2<.36);if(hit){if(!robber.lootCount)robber.carrySince=hit.tick;item.holder=robber.id;item.reservedBy=null;robber.lootCount++;}}
+ const cop=robber.immune===0&&carrying(r,robber)?cops.find(p=>ready(p)&&((entry!==0&&sweptFrame(p,robber,entry))||crossed(p,robber,robber.carrySince??0,entry<0?Infinity:robber.trace[entry].tick-1))):null;
  if(cop){const id=randomUUID(),c={id,cop:cop.id,robber:robber.id};r.contests.set(id,c);askContest(r,c);continue;}
+ const p=robber;const items=haul(r,p);if(items.length&&entry>=0){const value=items.reduce((sum,k)=>sum+k.value,0);p.points+=value;p.deliveries++;r.scores.robber+=value;retire(r,items);p.lootCount=0;feedback(r,p,'Banked '+items.length+' items! +'+M.money(value)+'.');stop(p);notice(r,p.name+' banked '+items.length+' items · '+M.money(value));}
  }
 }
 function privateState(p){const q=p.question;return {motion:M.snapshot(p),motionTick:p.motionTick,epoch:p.epoch,question:q?{id:q.id,prompt:q.prompt,options:q.options,flag:q.flag,image:q.image,kind:q.kind,ends:q.ends,answered:q.answered,itemName:q.itemName,itemType:q.itemType,value:q.value,opponent:q.opponent,copName:q.copName,robberName:q.robberName,message:q.message}:null,feedback:p.feedback||(p.resultNotice?.until>p.clockTick*M.STEP?p.resultNotice:null),seq:p.seq};}

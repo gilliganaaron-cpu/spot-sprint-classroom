@@ -6,3 +6,23 @@ test('two correct answers name the quicker opponent, never pay or credit a win t
 test('remote display advances monotonically between batched input snapshots and never interpolates through a respawn',()=>{const tracks=new S.Tracks(),p={id:'a',epoch:0,x:0,y:0};let prev=0,active=0;for(let t=0;t<150;t++){if(t%6===0&&t%30!==18){p.motionTick=t;p.x=t*.07;tracks.record(p,t/60);}const x=tracks.position(p,t*1000/60).x;assert(x>=prev&&x<=p.x);if(x>prev)active++;prev=x;}assert(active>120);p.epoch++;p.x=32;tracks.record(p,2.5);assert.equal(tracks.position(p,2517).x,32);});
 test('classroom snapshots retain public data and reduce bytes',()=>{const r=H.create(Array.from({length:30},(_,i)=>({id:''+i,name:'Student '+i}))),f=H.frame(r),rows=S.pack(f.players),ps=S.unpack(JSON.parse(JSON.stringify(rows)));for(let i=0;i<30;i++){for(const k of Object.keys(ps[i]))assert.deepEqual(ps[i][k],f.players[i][k]);}assert(JSON.stringify(rows).length<JSON.stringify(f.players).length*.5);});
 test('currency questions have bare, distinct denominations and no demonyms in reverse clues',()=>{const bank=require('../jump-questions'),curr=bank.filter(q=>/currenc(?:y|ies)/i.test(q.prompt));assert(curr.length>90);for(const q of curr){const options=[q.answer,...q.wrong];assert(options.every(x=>!x.includes(' ')));assert.equal(new Set(options).size,4);}assert(!bank.some(q=>q.prompt.startsWith('You are spending')));});
+test('30-player room: delayed stationary clients and boosted passes start one private duel per pair',()=>{
+ const r=H.create(Array.from({length:30},(_,i)=>({id:String(i),name:'Student '+i})));r.world.grid.fill(0);r.t=10;
+ const cops=[...r.players.values()].filter(p=>p.team==='cop'),robbers=[...r.players.values()].filter(p=>p.team==='robber');
+ for(let i=0;i<15;i++){
+  const x=7+(i%5)*5,y=4+Math.floor(i/5)*6,c=cops[i],b=robbers[i];
+  Object.assign(b,{x,y,immune:0,timeline:true,motionTick:540,lootCount:1});
+  Object.assign(c,{x:x-.90,y,immune:2,timeline:true,motionTick:600,boostTicks:400});
+  for(let j=1;j<=18;j++)c.inputSteps.set(600+j,'right');
+  r.items[i].holder=b.id;
+ }
+ H.step(r,.05,0);assert.equal(r.contests.size,15);
+ for(let i=0;i<15;i++){assert.equal(H.privateState(cops[i]).question.id,H.privateState(robbers[i]).question.id);assert.equal(cops[i].question.opponent,robbers[i].name);assert(cops[i].x-robbers[i].x>.8);}
+ H.step(r,.05,50);assert.equal(r.contests.size,15);
+});
+test('contact before safehouse arrival wins over banking in the same movement batch',()=>{
+ const {r,cop,robber}=scenario(),base=r.world.safehouse;Object.assign(cop,{x:4.5,y:base.y});
+ Object.assign(robber,{x:4.6,y:base.y,timeline:true,boostTicks:400,lootCount:1});
+ r.items[0].holder=robber.id;for(let i=1;i<=18;i++)robber.inputSteps.set(i,'left');
+ H.step(r,.05,0);assert(robber.x<base.x2+.45);assert(cop.question);assert.equal(robber.points,0);assert.equal(r.items[0].holder,robber.id);
+});
