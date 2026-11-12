@@ -6,4 +6,4 @@ const available=Math.max(160,window.innerHeight-screen.getBoundingClientRect().t
 if(screen.style.height!==available+'px')screen.style.height=available+'px';if(stage.style.width!==width+'px')stage.style.width=width+'px';
 const natural=Math.max(stage.scrollHeight,stage.offsetHeight,1),scale=Math.min(1,available/natural),transform=`scale(${scale})`,margin=width*(1-scale)/2+'px';
 if(stage.style.transform!==transform)stage.style.transform=transform;if(stage.style.marginLeft!==margin)stage.style.marginLeft=margin;}
-function schedule(){if(!timer)timer=setTimeout(fit,80);}new MutationObserver(schedule).observe(screen,{childList:true});window.addEventListener('resize',schedule);document.addEventListener('fullscreenchange',schedule);document.fonts?.ready.then(schedule);schedule();})();
+function schedule(){if(!timer)timer=requestAnimationFrame(fit);}new MutationObserver(schedule).observe(screen,{childList:true});window.addEventListener('resize',schedule);document.addEventListener('fullscreenchange',schedule);document.fonts?.ready.then(schedule);schedule();})();

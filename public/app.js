@@ -636,7 +636,7 @@
     teacherHeaderInfo.hidden = !isTeacher;
     teacherHeaderActions.hidden = !isTeacher;
     document.documentElement.classList.toggle('teacher-active', isTeacher);
-    if (!isTeacher) { teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
+    if (!isTeacher) { teacherHeaderInfo._spotHeader=null; teacherHeaderInfo.innerHTML = ''; teacherHeaderActions.innerHTML = ''; return; }
     // Updating a scoreboard or receiving a network ping must not destroy the
     // control with which the teacher is currently interacting.
 
@@ -674,9 +674,11 @@
         modeControls + (timed ? secondsControl : cardsControl) + '</div>' + themeControl
       : '<div class="game-status-settings"><span>' + escape(THEME_META[view.theme]?.icon || '✨') +
         ' ' + escape(THEME_META[view.theme]?.label || 'Mixed') + '</span><b>' +
-        (timed ? '⏱ <span data-round-clock>' + roundClockLabel() + '</span>' : 'First to ' + view.cardsToWin + ' cards') + '</b></div>';
+        (timed ? '⏱ <span data-round-clock></span>' : 'First to ' + view.cardsToWin + ' cards') + '</b></div>';
     const nextHeaderHTML = `<div class="header-join-site"><span class="join-globe" aria-hidden="true">🌐</span><div><strong class="fitted-join-url">${escape(location.host || 'spot-sprint.onrender.com')}</strong></div></div><div class="header-room-code"><span class="room-code-label"><span class="join-gamepad" aria-hidden="true">🎮</span><small>Code</small></span><div><strong class="fitted-room-code">${escape(view.code)}</strong></div></div><div class="header-game-settings" aria-label="Game options">${topSettings}</div>`;
-    if(teacherHeaderInfo.innerHTML!==nextHeaderHTML)teacherHeaderInfo.innerHTML=nextHeaderHTML;
+    const activeSpot=(view.gameType||'spot')==='spot' && view.status!=='lobby';
+    if(activeSpot ? teacherHeaderInfo._spotHeader!==nextHeaderHTML : teacherHeaderInfo.innerHTML!==nextHeaderHTML)teacherHeaderInfo.innerHTML=nextHeaderHTML;
+    teacherHeaderInfo._spotHeader=activeSpot?nextHeaderHTML:null;
     teacherHeaderInfo.dataset.roomCode = view.code;
     teacherHeaderInfo.dataset.gameMode = view.gameMode;
     const nextControls=teacherControls();if(teacherHeaderActions.innerHTML!==nextControls)teacherHeaderActions.innerHTML=nextControls;
@@ -729,21 +731,25 @@
     const celebrating = Boolean(view.pendingMatch);
     const countdownActive = view.status === 'countdown';
     const champions = view.players.filter(p => (view.winnerIds || []).includes(p.id));
-    screen.innerHTML = `<div class="classroom-dashboard">
-      ${done && (winner || view.gameMode === 'timed') ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>${view.gameMode === 'timed' ? (champions.length > 1 ? 'JOINT CHAMPIONS' : 'TIME IS UP!') : 'CLASS CHAMPION'}</small><strong>${champions.length ? champions.map(p=>escape(p.name)).join(' & ') : (winner ? escape(winner.name) : 'Great effort!')}</strong><span>${view.gameMode === 'timed' ? `Highest score after ${view.timeLimitSec} seconds` : `First to ${view.cardsToWin} matching pictures!`}</span></div><span class="banner-star">✦</span></div>` : ''}
-      <div class="classroom-game-grid">
-        <div class="classroom-left-column">
-          <section class="classroom-card-area ${playing ? 'active-board' : ''}" aria-label="Shared matching card">
-            <div class="classroom-card-stage ${view.status === 'paused' ? 'stage-paused' : ''}" style="--spot-celebration-ms:${view.pendingMatch?.celebrationMs || 1500}ms">${view.status === 'lobby' ? '<div class="lobby-card-aura" aria-hidden="true"><i></i><i></i></div>' : ''}${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard, highlightSymbolId: view.pendingMatch?.symbolId ?? null })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">${view.pendingMatch.onFire ? '🔥 THREE IN A ROW!' : 'GREAT SPOT!'}</div><strong class="celebration-name">${view.pendingMatch.onFire ? `${escape(view.pendingMatch.playerName)}'s on fire! 🔥` : `${escape(view.pendingMatch.playerName)}!`}</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">${(view.pendingMatch.celebrationMs / 1000).toFixed(1)}s</span></div><div class="celebration-progress" style="--spot-celebration-ms:${view.pendingMatch.celebrationMs}ms"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}</div>
-            <div class="classroom-card-status">${playing && view.lastEvent ? `✨ ${escape(view.lastEvent.playerName)} spotted the match!` : ''}</div>
-          </section>
-        </div>
-        <aside class="arcade-leaderboard" aria-label="Leaderboard">
-          <div class="sidebar-title"><h2>🏆 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} players</span></div>
-          ${playerList()}
-        </aside>
-      </div>
-    </div>`;
+    // Keep the measured stage mounted: replacing #screen exposes an unscaled
+    // board until the viewport fitter runs again on the next layout pass.
+    let dashboard=screen.querySelector('.classroom-dashboard');
+    if(!dashboard){
+      const stage=screen.querySelector(':scope > .arcade-fit-stage') || screen;
+      stage.innerHTML='<div class="classroom-dashboard"><div class="classroom-game-grid"><div class="classroom-left-column"><section class="classroom-card-area" aria-label="Shared matching card"><div class="classroom-card-stage"></div><div class="classroom-card-status"></div></section></div><aside class="arcade-leaderboard" aria-label="Leaderboard"></aside></div></div>';
+      dashboard=stage.firstElementChild;
+    }
+    function content(node,html){if(node._spotMarkup!==html){node.innerHTML=html;node._spotMarkup=html;}}
+    const banner=`${done && (winner || view.gameMode === 'timed') ? `<div class="winner-banner"><span class="trophy">🏆</span><div><small>${view.gameMode === 'timed' ? (champions.length > 1 ? 'JOINT CHAMPIONS' : 'TIME IS UP!') : 'CLASS CHAMPION'}</small><strong>${champions.length ? champions.map(p=>escape(p.name)).join(' & ') : (winner ? escape(winner.name) : 'Great effort!')}</strong><span>${view.gameMode === 'timed' ? `Highest score after ${view.timeLimitSec} seconds` : `First to ${view.cardsToWin} matching pictures!`}</span></div><span class="banner-star">✦</span></div>` : ''}`;
+    if(banner!==dashboard._spotBanner){dashboard.querySelector('.winner-banner')?.remove();if(banner)dashboard.insertAdjacentHTML('afterbegin',banner);dashboard._spotBanner=banner;}
+    const area=dashboard.querySelector('.classroom-card-area'),stage=area.firstElementChild;
+    area.classList.toggle('active-board',playing);stage.classList.toggle('stage-paused',view.status==='paused');
+    stage.style.setProperty('--spot-celebration-ms',(view.pendingMatch?.celebrationMs||1500)+'ms');
+    content(stage,`${view.status === 'lobby' ? '<div class="lobby-card-aura" aria-hidden="true"><i></i><i></i></div>' : ''}${countdownActive ? '<div class="countdown-card-placeholder" aria-hidden="true"></div>' : symbolCard(view.teacherCard || preview, { faded: !view.teacherCard, highlightSymbolId: view.pendingMatch?.symbolId ?? null })}${startCountdownOverlay('teacher')}${celebrating ? `<div class="celebration-overlay" role="status" aria-live="assertive"><div class="celebration-spark">✨ ⭐ ✨</div><div class="celebration-label">${view.pendingMatch.onFire ? '🔥 THREE IN A ROW!' : 'GREAT SPOT!'}</div><strong class="celebration-name">${view.pendingMatch.onFire ? `${escape(view.pendingMatch.playerName)}'s on fire! 🔥` : `${escape(view.pendingMatch.playerName)}!`}</strong><div class="celebration-symbol">${escape(view.pendingMatch.symbol)} MATCHED!</div><div class="celebration-next">Next card in <span class="celebration-countdown">${(view.pendingMatch.celebrationMs / 1000).toFixed(1)}s</span></div><div class="celebration-progress" style="--spot-celebration-ms:${view.pendingMatch.celebrationMs}ms"></div></div>` : ''}${view.status === 'paused' ? '<div class="pause-overlay"><strong>⏸ PAUSED</strong><span>Teacher will resume soon</span></div>' : ''}`);
+    const status=playing && view.lastEvent ? '✨ '+view.lastEvent.playerName+' spotted the match!' : '';
+    if(area.lastElementChild.textContent!==status)area.lastElementChild.textContent=status;
+    content(dashboard.querySelector('.arcade-leaderboard'),`<div class="sidebar-title"><h2>🏆 Leaderboard</h2><span class="player-count">${view.players.filter(p => p.online).length} players</span></div>
+          ${playerList()}`);
     if (done && view.lastEvent?.id !== winningEventShown) {
       winningEventShown = view.lastEvent?.id;
       launchConfetti();
